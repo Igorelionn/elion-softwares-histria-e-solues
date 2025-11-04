@@ -415,6 +415,4 @@ export function CountrySelector({
   );
 }
 
-export { countries };
 export type { Country };
-
