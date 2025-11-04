@@ -86,39 +86,6 @@ const VideoPlayer = ({ src }: { src: string }) => {
     }
   }, []);
 
-  // Forçar qualidade máxima ao carregar o vídeo
-  React.useEffect(() => {
-    if (videoRef.current) {
-      const video = videoRef.current;
-      
-      // Otimizações de qualidade
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('preload', 'auto');
-      
-      // Forçar renderização em alta qualidade
-      const handleLoadedMetadata = () => {
-        // Garantir que o vídeo seja renderizado na resolução máxima
-        if (video.videoWidth && video.videoHeight) {
-          video.style.width = '100%';
-          video.style.height = '100%';
-        }
-      };
-      
-      const handleCanPlay = () => {
-        // Forçar renderização otimizada quando o vídeo estiver pronto
-        video.style.imageRendering = 'high-quality';
-      };
-      
-      video.addEventListener('loadedmetadata', handleLoadedMetadata);
-      video.addEventListener('canplay', handleCanPlay);
-      
-      return () => {
-        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        video.removeEventListener('canplay', handleCanPlay);
-      };
-    }
-  }, [src]);
-
   const handleSeek = React.useCallback((value: number) => {
     if (videoRef.current && videoRef.current.duration) {
       const time = (value / 100) * videoRef.current.duration;
@@ -169,14 +136,14 @@ const VideoPlayer = ({ src }: { src: string }) => {
         onClick={togglePlay}
         preload="auto"
         playsInline
-        crossOrigin="anonymous"
         style={{
           imageRendering: 'high-quality',
-          WebkitFontSmoothing: 'subpixel-antialiased',
+          WebkitFontSmoothing: 'antialiased',
           backfaceVisibility: 'hidden',
           transform: 'translateZ(0)',
-          filter: 'contrast(1.05) saturate(1.1) brightness(1.02)',
-          WebkitFilter: 'contrast(1.05) saturate(1.1) brightness(1.02)',
+          filter: 'contrast(1.08) saturate(1.05) brightness(1.03) blur(0px) sharpen(1.2)',
+          WebkitFilter: 'contrast(1.08) saturate(1.05) brightness(1.03) blur(0px)',
+          sharpness: '1.2',
         }}
       />
 
