@@ -1,7 +1,7 @@
  'use client'
 
 import React from "react";
-import YouTubePlayer from "@/components/ui/youtube-player";
+import VideoPlayer from "@/components/ui/video-player";
 import { OnboardingChecklist } from "@/components/ui/onboarding-checklist";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { TextEffect } from "@/components/ui/text-effect";
@@ -112,7 +112,7 @@ ${t.developments.subtitle}`}
           }}
           className="w-full xl:flex-[1.35] xl:max-w-3xl order-first xl:order-last"
         >
-          <YouTubePlayer videoId="ucmpZlXJ9Go" />
+          <VideoPlayer src="https://15b1vmaomz9x23vo.public.blob.vercel-storage.com/Sistema%20leil%C3%A3o.mp4" />
         </AnimatedGroup>
         
         {/* Checklist - segunda no mobile/iPad/iPad Pro, lado esquerdo no desktop */}
