@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react'
 
-export default function RedefinirSenhaPage() {
+function RedefinirSenhaContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [newPassword, setNewPassword] = useState('')
@@ -269,4 +269,17 @@ export default function RedefinirSenhaPage() {
     )
 }
 
-
+export default function RedefinirSenhaPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-black mb-4" />
+                    <p className="text-gray-600">Carregando...</p>
+                </div>
+            </div>
+        }>
+            <RedefinirSenhaContent />
+        </Suspense>
+    )
+}
