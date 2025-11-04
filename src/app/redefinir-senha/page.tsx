@@ -122,7 +122,7 @@ function RedefinirSenhaContent() {
     if (success) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-8">
-                <div className="max-w-2xl w-full text-center">
+                <div className="max-w-xl w-full text-center">
                     <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-6" />
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
                         Senha Redefinida com Sucesso!
@@ -144,7 +144,7 @@ function RedefinirSenhaContent() {
     if (error && !validatingToken) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-8">
-                <div className="max-w-2xl w-full text-center">
+                <div className="max-w-xl w-full text-center">
                     <XCircle className="w-20 h-20 text-red-600 mx-auto mb-6" />
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
                         Link Inválido ou Expirado
@@ -165,7 +165,7 @@ function RedefinirSenhaContent() {
 
     return (
         <div className="min-h-screen bg-white flex items-start justify-center pt-16 p-8">
-            <div className="max-w-2xl w-full">
+            <div className="max-w-xl w-full">
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="relative w-36 h-36 mx-auto mb-4">
