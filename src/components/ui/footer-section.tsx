@@ -2,7 +2,7 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Mail, MapPin, Instagram, Facebook, Youtube } from 'lucide-react';
+import { Mail, MapPin, Instagram, Facebook, Youtube, Phone } from 'lucide-react';
 import { useTranslation } from '@/contexts/LanguageContext';
 
 interface FooterLink {
@@ -40,7 +40,8 @@ export function Footer() {
 		{
 			label: t.footer.contact,
 			links: [
-				{ title: 'oficialelionsoftwares@gmail.com', href: '#', icon: Mail },
+				{ title: '+55 82 98888-0909', href: 'tel:+5582988880909', icon: Phone },
+				{ title: 'oficialelionsoftwares@gmail.com', href: 'mailto:oficialelionsoftwares@gmail.com', icon: Mail },
 				{ title: 'Maceió, AL', href: '#', icon: MapPin },
 			],
 		},
