@@ -22,27 +22,50 @@ function RedefinirSenhaContent() {
     const [validatingToken, setValidatingToken] = useState(true)
 
     useEffect(() => {
-        // Check if we have a valid session (user clicked the link)
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            
-            // Check for error or access_token in URL (from email link)
-            const error_code = searchParams.get('error_code')
-            const error_description = searchParams.get('error_description')
-            
-            if (error_code) {
-                setError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
-                setValidatingToken(false)
-                return
-            }
+            try {
+                // Verificar se há um erro nos parâmetros da URL
+                const error_code = searchParams.get('error_code')
+                const error_description = searchParams.get('error_description')
+                
+                if (error_code) {
+                    setError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
+                    setValidatingToken(false)
+                    return
+                }
 
-            if (!session) {
-                setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
-                setValidatingToken(false)
-                return
-            }
+                // Verificar se há um token de recuperação na URL (type=recovery)
+                const type = searchParams.get('type')
+                const access_token = searchParams.get('access_token')
+                
+                if (type === 'recovery' && access_token) {
+                    // Token válido do email, permitir redefinição
+                    setValidatingToken(false)
+                    return
+                }
 
-            setValidatingToken(false)
+                // Se não há token de recovery, verificar sessão normal
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+                
+                if (sessionError) {
+                    console.error('Session error:', sessionError)
+                    setError('Erro ao validar sessão. Tente novamente.')
+                    setValidatingToken(false)
+                    return
+                }
+
+                if (!session && !access_token) {
+                    setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
+                    setValidatingToken(false)
+                    return
+                }
+
+                setValidatingToken(false)
+            } catch (err) {
+                console.error('Error checking session:', err)
+                setError('Erro ao validar link. Tente novamente.')
+                setValidatingToken(false)
+            }
         }
 
         checkSession()
