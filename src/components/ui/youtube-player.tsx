@@ -89,11 +89,19 @@ const YouTubePlayer = ({ videoId }: { videoId: string }) => {
             showinfo: 0,
             fs: 0,
             playsinline: 1,
+            hd: 1,
+            vq: 'hd1080', // Força qualidade máxima disponível
+            autoplay: 0,
           },
           events: {
             onReady: (event: any) => {
               setIsReady(true);
               setDuration(event.target.getDuration());
+              // Definir qualidade para a mais alta disponível
+              const availableQualityLevels = event.target.getAvailableQualityLevels();
+              if (availableQualityLevels && availableQualityLevels.length > 0) {
+                event.target.setPlaybackQuality(availableQualityLevels[0]);
+              }
             },
             onStateChange: (event: any) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
@@ -134,6 +142,17 @@ const YouTubePlayer = ({ videoId }: { videoId: string }) => {
     }, 100);
 
     return () => clearInterval(interval);
+  }, [isReady]);
+
+  // Aplicar bordas arredondadas ao iframe do YouTube
+  useEffect(() => {
+    if (!isReady || !containerRef.current) return;
+
+    const iframe = containerRef.current.querySelector('iframe');
+    if (iframe) {
+      iframe.style.borderRadius = '0.75rem'; // rounded-xl
+      iframe.style.overflow = 'hidden';
+    }
   }, [isReady]);
 
   const togglePlay = React.useCallback(() => {
@@ -190,10 +209,16 @@ const YouTubePlayer = ({ videoId }: { videoId: string }) => {
       transition={{ duration: 0.5 }}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
+      style={{
+        aspectRatio: '16/9',
+      }}
     >
       <div 
         ref={containerRef}
-        className="w-full aspect-video"
+        className="w-full h-full rounded-xl overflow-hidden"
+        style={{
+          aspectRatio: '16/9',
+        }}
         onClick={togglePlay}
       />
 
