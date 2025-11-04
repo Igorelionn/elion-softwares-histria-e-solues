@@ -1,7 +1,7 @@
  'use client'
 
 import React from "react";
-import VideoPlayer from "@/components/ui/video-player";
+import YouTubePlayer from "@/components/ui/youtube-player";
 import { OnboardingChecklist } from "@/components/ui/onboarding-checklist";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { TextEffect } from "@/components/ui/text-effect";
@@ -112,7 +112,10 @@ ${t.developments.subtitle}`}
           }}
           className="w-full xl:flex-[1.35] xl:max-w-3xl order-first xl:order-last"
         >
-          <VideoPlayer src="/video-leilao-arthur-lira.mp4.mp4" />
+          <YouTubePlayer 
+            videoId="ucmpZlXJ9Go" 
+            title="Sistema de Leilão Arthur Lira"
+          />
         </AnimatedGroup>
         
         {/* Checklist - segunda no mobile/iPad/iPad Pro, lado esquerdo no desktop */}
