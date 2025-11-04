@@ -168,7 +168,7 @@ function RedefinirSenhaContent() {
             <div className="max-w-2xl w-full">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="relative w-48 h-48 mx-auto mb-4">
+                    <div className="relative w-36 h-36 mx-auto mb-4">
                         <Image
                             src="/logo.png"
                             alt="Elion Softwares"
@@ -184,10 +184,10 @@ function RedefinirSenhaContent() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {/* New Password */}
                     <div>
-                        <Label htmlFor="newPassword" className="text-gray-900 font-medium text-sm mb-2 block">
+                        <Label htmlFor="newPassword" className="text-gray-900 font-medium text-sm mb-1.5 block">
                             Nova Senha
                         </Label>
                         <div className="relative">
@@ -197,7 +197,7 @@ function RedefinirSenhaContent() {
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Digite sua nova senha"
-                                className="h-12 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
+                                className="h-10 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
                                 style={{ boxShadow: 'none' }}
                                 required
                                 disabled={loading}
@@ -206,24 +206,24 @@ function RedefinirSenhaContent() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 disabled={loading}
                             >
                                 {showPassword ? (
-                                    <EyeOff className="w-5 h-5" />
+                                    <EyeOff className="w-4 h-4" />
                                 ) : (
-                                    <Eye className="w-5 h-5" />
+                                    <Eye className="w-4 h-4" />
                                 )}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 mt-1">
                             Mínimo de 6 caracteres
                         </p>
                     </div>
 
                     {/* Confirm Password */}
                     <div>
-                        <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-sm mb-2 block">
+                        <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-sm mb-1.5 block">
                             Confirmar Nova Senha
                         </Label>
                         <div className="relative">
@@ -233,7 +233,7 @@ function RedefinirSenhaContent() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Digite sua nova senha novamente"
-                                className="h-12 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
+                                className="h-10 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
                                 style={{ boxShadow: 'none' }}
                                 required
                                 disabled={loading}
@@ -242,13 +242,13 @@ function RedefinirSenhaContent() {
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 disabled={loading}
                             >
                                 {showConfirmPassword ? (
-                                    <EyeOff className="w-5 h-5" />
+                                    <EyeOff className="w-4 h-4" />
                                 ) : (
-                                    <Eye className="w-5 h-5" />
+                                    <Eye className="w-4 h-4" />
                                 )}
                             </button>
                         </div>
@@ -256,7 +256,7 @@ function RedefinirSenhaContent() {
 
                     {/* Error Message */}
                     {error && (
-                        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-800 text-sm">
+                        <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-sm">
                             {error}
                         </div>
                     )}
@@ -265,7 +265,7 @@ function RedefinirSenhaContent() {
                     <Button
                         type="submit"
                         disabled={loading || !newPassword || !confirmPassword}
-                        className="w-full h-12 text-base bg-black text-white hover:bg-gray-800 transition-colors font-medium"
+                        className="w-full h-10 text-sm bg-black text-white hover:bg-gray-800 transition-colors font-medium"
                     >
                         {loading ? (
                             <>
