@@ -184,15 +184,55 @@ nextjs-portal {
   scrollbar-width: thin;
 }
 
-/* Otimizações de vídeo para qualidade máxima */
+/* Otimizações avançadas de vídeo para qualidade máxima */
 video {
+  /* Renderização de alta qualidade */
   image-rendering: -webkit-optimize-contrast;
+  image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: high-quality;
+  
+  /* Aceleração por GPU e performance */
   -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  backface-visibility: hidden;
   -webkit-transform: translateZ(0) scale(1.0, 1.0);
-  transform: translateZ(0);
+  -moz-transform: translateZ(0) scale(1.0, 1.0);
+  transform: translateZ(0) scale(1.0, 1.0);
+  -webkit-perspective: 1000;
+  -moz-perspective: 1000;
+  perspective: 1000;
+  
+  /* Anti-aliasing e suavização */
   -webkit-font-smoothing: subpixel-antialiased;
-  will-change: transform;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Otimização de composição */
+  will-change: transform, filter;
+  transform-style: preserve-3d;
+  
+  /* Prevenção de blur */
+  -webkit-transform: translate3d(0, 0, 0);
+  -moz-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  
+  /* Forçar aceleração de hardware */
+  -webkit-transform: translateZ(0);
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  
+  /* Otimização de display */
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Remover controles nativos */
+video::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none;
 }
 
 video::-webkit-media-controls-panel {
@@ -208,4 +248,20 @@ video::-webkit-media-controls-play-button {
 video::-webkit-media-controls-start-playback-button {
   display: none !important;
   opacity: 0 !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+video::-webkit-media-controls-overlay-enclosure {
+  display: none !important;
+}
+
+/* Melhorias de qualidade visual específicas */
+video[src*="vercel-storage"] {
+  filter: contrast(1.05) saturate(1.1) brightness(1.02) blur(0px);
+  -webkit-filter: contrast(1.05) saturate(1.1) brightness(1.02) blur(0px);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
