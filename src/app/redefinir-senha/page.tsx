@@ -110,10 +110,10 @@ function RedefinirSenhaContent() {
 
     if (validatingToken) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-white flex items-center justify-center p-8">
                 <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-black mb-4" />
-                    <p className="text-gray-600">Validando link...</p>
+                    <Loader2 className="w-12 h-12 animate-spin mx-auto text-black mb-6" />
+                    <p className="text-gray-600 text-lg">Validando link...</p>
                 </div>
             </div>
         )
@@ -121,18 +121,18 @@ function RedefinirSenhaContent() {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-                    <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="min-h-screen bg-white flex items-center justify-center p-8">
+                <div className="max-w-2xl w-full text-center">
+                    <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-6" />
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
                         Senha Redefinida com Sucesso!
                     </h1>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-gray-600 text-lg mb-8">
                         Você será redirecionado para a página inicial em alguns segundos...
                     </p>
                     <Button
                         onClick={() => router.push('/')}
-                        className="bg-green-600 text-white hover:bg-green-700"
+                        className="h-14 px-8 text-base bg-green-600 text-white hover:bg-green-700"
                     >
                         Ir para Página Inicial
                     </Button>
@@ -143,18 +143,18 @@ function RedefinirSenhaContent() {
 
     if (error && !validatingToken) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-                    <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="min-h-screen bg-white flex items-center justify-center p-8">
+                <div className="max-w-2xl w-full text-center">
+                    <XCircle className="w-20 h-20 text-red-600 mx-auto mb-6" />
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
                         Link Inválido ou Expirado
                     </h1>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-gray-600 text-lg mb-8">
                         {error}
                     </p>
                     <Button
                         onClick={() => router.push('/')}
-                        className="bg-black text-white hover:bg-gray-800"
+                        className="h-14 px-8 text-base bg-black text-white hover:bg-gray-800"
                     >
                         Voltar para Página Inicial
                     </Button>
@@ -164,11 +164,11 @@ function RedefinirSenhaContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="min-h-screen bg-white flex items-center justify-center p-8">
+            <div className="max-w-2xl w-full">
                 {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="relative w-32 h-32 mx-auto mb-4">
+                <div className="text-center mb-12">
+                    <div className="relative w-40 h-40 mx-auto mb-6">
                         <Image
                             src="/logo.png"
                             alt="Elion Softwares"
@@ -176,28 +176,28 @@ function RedefinirSenhaContent() {
                             className="object-contain"
                         />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-3">
                         Redefinir Senha
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-lg">
                         Digite sua nova senha abaixo
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     {/* New Password */}
                     <div>
-                        <Label htmlFor="newPassword" className="text-gray-900 font-medium text-sm">
+                        <Label htmlFor="newPassword" className="text-gray-900 font-medium text-base mb-3 block">
                             Nova Senha
                         </Label>
-                        <div className="relative mt-2">
+                        <div className="relative">
                             <Input
                                 id="newPassword"
                                 type={showPassword ? "text" : "password"}
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Digite sua nova senha"
-                                className="h-11 pr-10 focus:outline-none focus:ring-0 focus:border-black"
+                                className="h-14 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
                                 style={{ boxShadow: 'none' }}
                                 required
                                 disabled={loading}
@@ -206,34 +206,34 @@ function RedefinirSenhaContent() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 disabled={loading}
                             >
                                 {showPassword ? (
-                                    <EyeOff className="w-5 h-5" />
+                                    <EyeOff className="w-6 h-6" />
                                 ) : (
-                                    <Eye className="w-5 h-5" />
+                                    <Eye className="w-6 h-6" />
                                 )}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 mt-2">
                             Mínimo de 6 caracteres
                         </p>
                     </div>
 
                     {/* Confirm Password */}
                     <div>
-                        <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-sm">
+                        <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-base mb-3 block">
                             Confirmar Nova Senha
                         </Label>
-                        <div className="relative mt-2">
+                        <div className="relative">
                             <Input
                                 id="confirmPassword"
                                 type={showConfirmPassword ? "text" : "password"}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Digite sua nova senha novamente"
-                                className="h-11 pr-10 focus:outline-none focus:ring-0 focus:border-black"
+                                className="h-14 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
                                 style={{ boxShadow: 'none' }}
                                 required
                                 disabled={loading}
@@ -242,13 +242,13 @@ function RedefinirSenhaContent() {
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 disabled={loading}
                             >
                                 {showConfirmPassword ? (
-                                    <EyeOff className="w-5 h-5" />
+                                    <EyeOff className="w-6 h-6" />
                                 ) : (
-                                    <Eye className="w-5 h-5" />
+                                    <Eye className="w-6 h-6" />
                                 )}
                             </button>
                         </div>
@@ -256,7 +256,7 @@ function RedefinirSenhaContent() {
 
                     {/* Error Message */}
                     {error && (
-                        <div className="p-4 bg-red-50 rounded-lg text-red-800 text-sm">
+                        <div className="p-5 bg-red-50 border-l-4 border-red-500 text-red-800 text-base">
                             {error}
                         </div>
                     )}
@@ -265,11 +265,11 @@ function RedefinirSenhaContent() {
                     <Button
                         type="submit"
                         disabled={loading || !newPassword || !confirmPassword}
-                        className="w-full h-11 bg-black text-white hover:bg-gray-800 transition-colors"
+                        className="w-full h-14 text-base bg-black text-white hover:bg-gray-800 transition-colors font-medium"
                     >
                         {loading ? (
                             <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                                 Redefinindo...
                             </>
                         ) : (
@@ -279,10 +279,10 @@ function RedefinirSenhaContent() {
                 </form>
 
                 {/* Back to Home */}
-                <div className="mt-6 text-center">
+                <div className="mt-8 text-center">
                     <button
                         onClick={() => router.push('/')}
-                        className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                        className="text-base text-gray-600 hover:text-gray-900 transition-colors underline"
                     >
                         Voltar para página inicial
                     </button>
@@ -295,10 +295,10 @@ function RedefinirSenhaContent() {
 export default function RedefinirSenhaPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-white flex items-center justify-center p-8">
                 <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-black mb-4" />
-                    <p className="text-gray-600">Carregando...</p>
+                    <Loader2 className="w-12 h-12 animate-spin mx-auto text-black mb-6" />
+                    <p className="text-gray-600 text-lg">Carregando...</p>
                 </div>
             </div>
         }>
