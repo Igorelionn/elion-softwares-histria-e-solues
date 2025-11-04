@@ -265,7 +265,7 @@ function RedefinirSenhaContent() {
                     <Button
                         type="submit"
                         disabled={loading || !newPassword || !confirmPassword}
-                        className="w-full h-10 text-sm bg-black text-white hover:bg-gray-800 transition-colors font-medium"
+                        className="w-full h-10 text-sm bg-black text-white hover:bg-gray-800 transition-colors font-medium rounded-full"
                     >
                         {loading ? (
                             <>
