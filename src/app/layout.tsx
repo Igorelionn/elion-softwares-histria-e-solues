@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
-import ErrorReporter from "@/components/ErrorReporter";
-import Script from "next/script";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { Toaster } from "@/components/ui/sonner";
+import { BlockGuard } from "@/components/BlockGuard";
+import { SecurityURLCleaner } from "@/components/SecurityURLCleaner";
 
 export const metadata: Metadata = {
-  title: "Elion Softwares | Enterprise Software Development",
-  description: "Pioneering software solutions that transform businesses. Trusted by industry leaders for mission-critical applications.",
+  title: "Elion Softwares",
+  description: "História e Soluções",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -15,21 +19,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        <ErrorReporter />
-        <Script
-          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"
-          strategy="afterInteractive"
-          data-target-origin="*"
-          data-message-type="ROUTE_CHANGE"
-          data-include-search-params="true"
-          data-only-in-iframe="true"
-          data-debug="true"
-          data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
-        />
-        {children}
-        <VisualEditsMessenger />
+    <html lang="pt-BR" style={{ position: 'relative' }}>
+      <head>
+        {/* Preconnect para recursos externos críticos */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      </head>
+      <body className="antialiased relative" style={{ position: 'relative' }}>
+        <SecurityURLCleaner />
+        <LanguageProvider>
+          <BlockGuard>
+            {children}
+          </BlockGuard>
+        </LanguageProvider>
+        <Toaster />
       </body>
     </html>
   );
