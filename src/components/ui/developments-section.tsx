@@ -112,10 +112,7 @@ ${t.developments.subtitle}`}
           }}
           className="w-full xl:flex-[1.35] xl:max-w-3xl order-first xl:order-last"
         >
-          <YouTubePlayer 
-            videoId="ucmpZlXJ9Go" 
-            title="Sistema de Leilão Arthur Lira"
-          />
+          <YouTubePlayer videoId="ucmpZlXJ9Go" />
         </AnimatedGroup>
         
         {/* Checklist - segunda no mobile/iPad/iPad Pro, lado esquerdo no desktop */}
