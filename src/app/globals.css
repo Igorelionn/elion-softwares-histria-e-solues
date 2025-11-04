@@ -183,3 +183,29 @@ nextjs-portal {
 .scrollbar-track-transparent {
   scrollbar-width: thin;
 }
+
+/* Otimizações de vídeo para qualidade máxima */
+video {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0) scale(1.0, 1.0);
+  transform: translateZ(0);
+  -webkit-font-smoothing: subpixel-antialiased;
+  will-change: transform;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+video::-webkit-media-controls-play-button {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  opacity: 0 !important;
+}
