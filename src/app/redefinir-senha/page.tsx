@@ -164,11 +164,11 @@ function RedefinirSenhaContent() {
     }
 
     return (
-        <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="min-h-screen bg-white flex items-start justify-center pt-16 p-8">
             <div className="max-w-2xl w-full">
                 {/* Logo */}
-                <div className="text-center mb-12">
-                    <div className="relative w-40 h-40 mx-auto mb-6">
+                <div className="text-center mb-8">
+                    <div className="relative w-48 h-48 mx-auto mb-4">
                         <Image
                             src="/logo.png"
                             alt="Elion Softwares"
@@ -176,18 +176,18 @@ function RedefinirSenhaContent() {
                             className="object-contain"
                         />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
                         Redefinir Senha
                     </h1>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-gray-600 text-base">
                         Digite sua nova senha abaixo
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     {/* New Password */}
                     <div>
-                        <Label htmlFor="newPassword" className="text-gray-900 font-medium text-base mb-3 block">
+                        <Label htmlFor="newPassword" className="text-gray-900 font-medium text-sm mb-2 block">
                             Nova Senha
                         </Label>
                         <div className="relative">
@@ -197,7 +197,7 @@ function RedefinirSenhaContent() {
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Digite sua nova senha"
-                                className="h-14 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
+                                className="h-12 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
                                 style={{ boxShadow: 'none' }}
                                 required
                                 disabled={loading}
@@ -210,20 +210,20 @@ function RedefinirSenhaContent() {
                                 disabled={loading}
                             >
                                 {showPassword ? (
-                                    <EyeOff className="w-6 h-6" />
+                                    <EyeOff className="w-5 h-5" />
                                 ) : (
-                                    <Eye className="w-6 h-6" />
+                                    <Eye className="w-5 h-5" />
                                 )}
                             </button>
                         </div>
-                        <p className="text-sm text-gray-500 mt-2">
+                        <p className="text-xs text-gray-500 mt-1.5">
                             Mínimo de 6 caracteres
                         </p>
                     </div>
 
                     {/* Confirm Password */}
                     <div>
-                        <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-base mb-3 block">
+                        <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-sm mb-2 block">
                             Confirmar Nova Senha
                         </Label>
                         <div className="relative">
@@ -233,7 +233,7 @@ function RedefinirSenhaContent() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Digite sua nova senha novamente"
-                                className="h-14 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
+                                className="h-12 text-base pr-12 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
                                 style={{ boxShadow: 'none' }}
                                 required
                                 disabled={loading}
@@ -246,9 +246,9 @@ function RedefinirSenhaContent() {
                                 disabled={loading}
                             >
                                 {showConfirmPassword ? (
-                                    <EyeOff className="w-6 h-6" />
+                                    <EyeOff className="w-5 h-5" />
                                 ) : (
-                                    <Eye className="w-6 h-6" />
+                                    <Eye className="w-5 h-5" />
                                 )}
                             </button>
                         </div>
@@ -256,7 +256,7 @@ function RedefinirSenhaContent() {
 
                     {/* Error Message */}
                     {error && (
-                        <div className="p-5 bg-red-50 border-l-4 border-red-500 text-red-800 text-base">
+                        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-800 text-sm">
                             {error}
                         </div>
                     )}
@@ -265,11 +265,11 @@ function RedefinirSenhaContent() {
                     <Button
                         type="submit"
                         disabled={loading || !newPassword || !confirmPassword}
-                        className="w-full h-14 text-base bg-black text-white hover:bg-gray-800 transition-colors font-medium"
+                        className="w-full h-12 text-base bg-black text-white hover:bg-gray-800 transition-colors font-medium"
                     >
                         {loading ? (
                             <>
-                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 Redefinindo...
                             </>
                         ) : (
@@ -279,10 +279,10 @@ function RedefinirSenhaContent() {
                 </form>
 
                 {/* Back to Home */}
-                <div className="mt-8 text-center">
+                <div className="mt-6 text-center">
                     <button
                         onClick={() => router.push('/')}
-                        className="text-base text-gray-600 hover:text-gray-900 transition-colors underline"
+                        className="text-sm text-gray-600 hover:text-gray-900 transition-colors underline"
                     >
                         Voltar para página inicial
                     </button>
