@@ -57,10 +57,13 @@ export default function PerfilPage() {
         let isSubscribed = true
         let authSubscription: { unsubscribe: () => void } | null = null
         
+        // AbortController para cancelar requisições ao desmontar
+        const abortController = new AbortController()
+        
         const initProfile = async () => {
             if (FORCE_LOGS) console.error('[PERFIL] 🎬 Init profile...')
             if (isSubscribed) {
-                await checkUser()
+                await checkUser(abortController.signal)
             }
         }
         
@@ -175,6 +178,10 @@ export default function PerfilPage() {
             isSubscribed = false
             isLoadingRef.current = false
             
+            // Cancelar requisições pendentes
+            if (FORCE_LOGS) console.error('[PERFIL] 🚫 Cancelando requisições pendentes')
+            abortController.abort()
+            
             // Cancelar listener de autenticação
             if (authSubscription) {
                 if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener')
@@ -200,10 +207,16 @@ export default function PerfilPage() {
         }
     }, [error])
 
-    const checkUser = async () => {
+    const checkUser = async (abortSignal?: AbortSignal) => {
         // Prevenir múltiplas chamadas simultâneas
         if (isLoadingRef.current) {
             if (FORCE_LOGS) console.error('[PERFIL] ⏸️ CheckUser já em execução, ignorando chamada')
+            return
+        }
+
+        // Verificar se já foi cancelado antes de começar
+        if (abortSignal?.aborted) {
+            if (FORCE_LOGS) console.error('[PERFIL] 🚫 CheckUser cancelado antes de iniciar')
             return
         }
 
@@ -223,6 +236,15 @@ export default function PerfilPage() {
         try {
             if (FORCE_LOGS) console.error('[PERFIL] 📡 1/5 Buscando sessão...')
             const sessionStart = Date.now()
+            
+            // Verificar cancelamento
+            if (abortSignal?.aborted) {
+                if (FORCE_LOGS) console.error('[PERFIL] 🚫 CheckUser cancelado durante busca')
+                clearTimeout(globalTimeoutId)
+                isLoadingRef.current = false
+                setLoading(false)
+                return
+            }
             
             // Criar timeout de 8 segundos para getSession (aumentado)
             const sessionPromise = supabase.auth.getSession()
@@ -272,6 +294,15 @@ export default function PerfilPage() {
             const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
             if (FORCE_LOGS) console.error('[PERFIL] 🔑 Senha:', hasEmailIdentity, 'Providers:', identities.map((i: any) => i.provider).join(','))
             setHasPassword(hasEmailIdentity)
+            
+            // Verificar cancelamento antes de carregar perfil
+            if (abortSignal?.aborted) {
+                if (FORCE_LOGS) console.error('[PERFIL] 🚫 CheckUser cancelado antes de carregar perfil')
+                clearTimeout(globalTimeoutId)
+                isLoadingRef.current = false
+                setLoading(false)
+                return
+            }
             
             // Load user profile data
             if (FORCE_LOGS) console.error('[PERFIL] 📡 4/5 Carregando perfil do banco...')
