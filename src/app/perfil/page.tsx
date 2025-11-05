@@ -93,28 +93,94 @@ export default function PerfilPage() {
         
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
-            if (!session || !isSubscribed) return
+            if (FORCE_LOGS) console.error('[PERFIL] 📡 Iniciando carregarPerfil...')
+            
+            // ✅ VALIDAÇÃO 1: Componente ainda montado?
+            if (!isSubscribed) {
+                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, abortando carregarPerfil')
+                return
+            }
+            
+            // ✅ VALIDAÇÃO 2: Sessão válida?
+            if (!session) {
+                console.warn('[PERFIL] ⚠️ Sessão inválida (null/undefined)')
+                setLoading(false)
+                isLoadingRef.current = false
+                return
+            }
+            
+            // ✅ VALIDAÇÃO 3: User ID existe?
+            if (!session.user?.id) {
+                console.warn('[PERFIL] ⚠️ Sessão sem user.id:', session)
+                setLoading(false)
+                isLoadingRef.current = false
+                return
+            }
             
             try {
-                if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil...')
+                if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil para user:', session.user.id.substring(0, 8) + '...')
                 const startTime = Date.now()
                 
+                // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
                 
+                // ✅ Usar maybeSingle() em vez de single() para evitar erro se não existir
                 const { data: profile, error: profileError } = await supabase
                     .from('users')
                     .select('*')
                     .eq('id', session.user.id)
-                    .single()
+                    .maybeSingle()
                 
                 const loadTime = Date.now() - startTime
-                if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms')
+                if (FORCE_LOGS) console.error('[PERFIL] 📥 Query completada em', loadTime, 'ms')
 
+                // ✅ TRATAMENTO DE ERRO: Se houve erro na query
                 if (profileError) {
                     console.error('[PERFIL] ❌ Erro ao carregar perfil:', profileError)
+                    console.error('[PERFIL] 📋 Detalhes do erro:', {
+                        message: profileError.message,
+                        code: profileError.code,
+                        details: profileError.details,
+                        hint: profileError.hint
+                    })
+                    setLoading(false)
+                    isLoadingRef.current = false
+                    return
                 }
 
-                if (profile && isSubscribed) {
+                // ✅ TRATAMENTO DE VAZIO: Se não retornou dados
+                if (!profile) {
+                    console.warn('[PERFIL] ⚠️ Nenhum dado de perfil retornado!')
+                    console.warn('[PERFIL] 📋 User ID buscado:', session.user.id)
+                    console.warn('[PERFIL] 💡 Possível causa: Usuário não existe na tabela users')
+                    
+                    // Ainda assim, configurar dados básicos do user_metadata
+                    setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                    
+                    // Check if user has password mesmo sem perfil
+                    const identities = session.user.identities || []
+                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    setHasPassword(hasEmailIdentity)
+                    
+                    setLoading(false)
+                    isLoadingRef.current = false
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Loading encerrado (perfil vazio)')
+                    return
+                }
+
+                // ✅ SUCESSO: Dados retornados
+                if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados recebidos:', {
+                    full_name: profile.full_name,
+                    email: profile.email,
+                    company: profile.company,
+                    avatar_url: profile.avatar_url ? 'SIM' : 'NÃO',
+                    // @ts-ignore
+                    language: profile.language,
+                    // @ts-ignore
+                    role: profile.role
+                })
+
+                if (isSubscribed) {
                     setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                     setCompany(profile.company || '')
                     setAvatarUrl(profile.avatar_url || '')
@@ -135,16 +201,21 @@ export default function PerfilPage() {
                     // @ts-ignore
                     setIsAdmin(profile.role === 'admin')
                     
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO em', Date.now() - startTime, 'ms')
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO COMPLETO em', Date.now() - startTime, 'ms')
+                } else {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado durante carregamento')
                 }
             } catch (err) {
-                console.error('[PERFIL] ❌ Erro ao carregar perfil:', err)
+                console.error('[PERFIL] ❌ Exceção ao carregar perfil:', err)
+                console.error('[PERFIL] 📋 Stack trace:', err instanceof Error ? err.stack : 'N/A')
             } finally {
-                // SEMPRE desativar loading
+                // ✅ SEMPRE desativar loading (GARANTIDO)
                 if (isSubscribed) {
-                    if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF')
+                    if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF (finally)')
                     setLoading(false)
                     isLoadingRef.current = false
+                } else {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, não alterando loading')
                 }
             }
         }
