@@ -19,6 +19,7 @@ export default function PerfilPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const isSavingRef = useRef(false)
+    const isLoadingRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
     
     const [user, setUser] = useState<SupabaseUser | null>(null)
@@ -50,9 +51,11 @@ export default function PerfilPage() {
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
+        console.log('[PERFIL] 🚀 Componente montado')
         let isSubscribed = true
         
         const initProfile = async () => {
+            console.log('[PERFIL] 🎬 Iniciando initProfile')
             if (isSubscribed) {
                 await checkUser()
             }
@@ -61,17 +64,26 @@ export default function PerfilPage() {
         initProfile()
 
         // Listener para mudanças de autenticação
+        console.log('[PERFIL] 👂 Configurando listener de autenticação')
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!isSubscribed) return
+            console.log('[PERFIL] 🔔 Auth event:', event, 'isSubscribed:', isSubscribed, 'isSaving:', isSavingRef.current)
+            
+            if (!isSubscribed) {
+                console.log('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
+                return
+            }
             
             // Don't interfere during save operation
             if (isSavingRef.current && event === 'USER_UPDATED') {
+                console.log('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
                 return
             }
 
             if (event === 'SIGNED_OUT' || !session) {
+                console.log('[PERFIL] 👋 Usuário deslogado')
                 router.push('/')
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                console.log('[PERFIL] ✅ SIGNED_IN/TOKEN_REFRESHED')
                 setUser(session.user)
                 // Recarregar dados do perfil
                 const { data: profile } = await supabase
@@ -81,6 +93,7 @@ export default function PerfilPage() {
                     .single()
 
                 if (profile && isSubscribed) {
+                    console.log('[PERFIL] 📥 Perfil recarregado:', profile.full_name)
                     setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                     setCompany(profile.company || '')
                     setAvatarUrl(profile.avatar_url || '')
@@ -94,9 +107,11 @@ export default function PerfilPage() {
                 
                 // Garantir que loading seja desativado
                 if (isSubscribed) {
+                    console.log('[PERFIL] ✅ Desativando loading após evento')
                     setLoading(false)
                 }
             } else if (event === 'USER_UPDATED') {
+                console.log('[PERFIL] 🔄 USER_UPDATED')
                 // Update user state but don't reload profile data to avoid conflicts
                 if (session && isSubscribed) {
                     setUser(session.user)
@@ -104,39 +119,14 @@ export default function PerfilPage() {
             }
         })
 
-        // Listener para quando o usuário volta à aba
-        const handleVisibilityChange = async () => {
-            if (!document.hidden && isSubscribed) {
-                // Usuário voltou à aba, revalidar sessão
-                const { data: { session }, error } = await supabase.auth.getSession()
-                
-                if (error || !session) {
-                    router.push('/')
-                    return
-                }
-
-                // Atualizar usuário se mudou
-                setUser(session.user)
-                
-                // Recarregar avatar caso tenha sido atualizado em outra aba
-                const { data: profile } = await supabase
-                    .from('users')
-                    .select('avatar_url')
-                    .eq('id', session.user.id)
-                    .single()
-                
-                if (profile?.avatar_url !== avatarUrl && isSubscribed) {
-                    setAvatarUrl(profile?.avatar_url || '')
-                }
-            }
-        }
-
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-
+        // Listener para quando o usuário volta à aba - REMOVIDO para evitar múltiplas requisições
+        // A sessão do Supabase já é mantida automaticamente
+        
         return () => {
+            console.log('[PERFIL] 🛑 Desmontando componente')
             isSubscribed = false
+            isLoadingRef.current = false
             subscription.unsubscribe()
-            document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
     }, [router])
 
@@ -157,76 +147,126 @@ export default function PerfilPage() {
     }, [error])
 
     const checkUser = async () => {
+        // Prevenir múltiplas chamadas simultâneas
+        if (isLoadingRef.current) {
+            console.log('[PERFIL] ⏸️ CheckUser já em execução, ignorando chamada')
+            return
+        }
+
+        isLoadingRef.current = true
+        console.log('[PERFIL] 🔍 Iniciando checkUser')
+        console.log('[PERFIL] 📊 Estado atual - loading:', loading, 'user:', !!user)
+        
         // Timeout de segurança para evitar loading infinito
         const timeoutId = setTimeout(() => {
+            console.warn('[PERFIL] ⏰ TIMEOUT de 10s atingido!')
             setLoading(false)
+            isLoadingRef.current = false
         }, 10000) // 10 segundos
 
         try {
-            const { data: { session } } = await supabase.auth.getSession()
+            console.log('[PERFIL] 📡 Buscando sessão...')
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+            
+            console.log('[PERFIL] 📥 Resposta da sessão:', {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                email: session?.user?.email,
+                error: sessionError
+            })
             
             if (!session) {
+                console.warn('[PERFIL] ❌ Sem sessão, redirecionando')
                 clearTimeout(timeoutId)
+                isLoadingRef.current = false
                 router.push('/')
                 return
             }
 
             // Verificar se o usuário está bloqueado
+            console.log('[PERFIL] 🔒 Verificando bloqueio...')
             try {
                 const blockStatus = await checkUserBlockStatus(session.user.id)
+                console.log('[PERFIL] 📊 Status de bloqueio:', blockStatus)
                 
                 if (blockStatus.isBlocked) {
+                    console.warn('[PERFIL] 🚫 Usuário bloqueado!')
                     clearTimeout(timeoutId)
+                    isLoadingRef.current = false
                     await supabase.auth.signOut()
                     router.push('/conta-bloqueada')
                     return
                 }
             } catch (blockError) {
                 // Se falhar ao verificar bloqueio, continuar normalmente
-                console.error('Erro ao verificar bloqueio:', blockError)
+                console.error('[PERFIL] ⚠️ Erro ao verificar bloqueio (continuando):', blockError)
             }
 
+            console.log('[PERFIL] ✅ Sessão válida, atualizando user state')
             setUser(session.user)
             
             // Check if user has password (email provider) or only OAuth (Google)
             const identities = session.user.identities || []
             const hasEmailIdentity = identities.some(identity => identity.provider === 'email')
+            console.log('[PERFIL] 🔑 Tem senha:', hasEmailIdentity, 'Identities:', identities.map(i => i.provider))
             setHasPassword(hasEmailIdentity)
             
             // Load user profile data
+            console.log('[PERFIL] 📡 Carregando perfil do banco...')
+            const startTime = Date.now()
             const { data: profile, error: profileError } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', session.user.id)
                 .single()
+            
+            const loadTime = Date.now() - startTime
+            console.log('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms:', {
+                profile: profile ? {
+                    full_name: profile.full_name,
+                    company: profile.company,
+                    role: profile.role,
+                    language: profile.language
+                } : null,
+                error: profileError
+            })
 
             if (profile) {
+                console.log('[PERFIL] ✅ Atualizando estados do perfil')
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                 setCompany(profile.company || '')
                 setAvatarUrl(profile.avatar_url || '')
                 
                 // Check if user is admin
                 // @ts-ignore
-                setIsAdmin(profile.role === 'admin')
+                const isAdminUser = profile.role === 'admin'
+                console.log('[PERFIL] 👤 É admin:', isAdminUser)
+                setIsAdmin(isAdminUser)
                 
                 // Load language preference and set both local and global
                 // @ts-ignore - language column exists but not in current types
                 if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
+                    console.log('[PERFIL] 🌐 Configurando idioma:', profile.language)
                     // @ts-ignore
                     setLocalLanguage(profile.language)
                     // @ts-ignore
                     setLanguage(profile.language)
                 }
             } else {
+                console.warn('[PERFIL] ⚠️ Sem perfil no banco, usando user_metadata')
                 setFullName(session.user.user_metadata?.full_name || '')
             }
             
+            console.log('[PERFIL] ✅ CheckUser concluído com sucesso')
             clearTimeout(timeoutId)
         } catch (err) {
-            console.error('Erro ao carregar perfil:', err)
+            console.error('[PERFIL] ❌ Erro ao carregar perfil:', err)
+            console.error('[PERFIL] 📄 Stack:', (err as Error).stack)
             clearTimeout(timeoutId)
         } finally {
+            console.log('[PERFIL] 🏁 Finalizando checkUser, desativando loading')
             setLoading(false)
+            isLoadingRef.current = false
         }
     }
 
@@ -483,19 +523,38 @@ export default function PerfilPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
-        if (!user) return
+        console.log('[PERFIL] 💾 HandleSubmit iniciado')
+        console.log('[PERFIL] 📊 Estado - user:', !!user, 'saving:', saving, 'isSavingRef:', isSavingRef.current)
+        
+        if (!user) {
+            console.warn('[PERFIL] ⚠️ Sem usuário, cancelando save')
+            return
+        }
         
         // Prevent multiple simultaneous saves
-        if (isSavingRef.current) return
+        if (isSavingRef.current) {
+            console.log('[PERFIL] ⏸️ Já está salvando, ignorando')
+            return
+        }
 
         isSavingRef.current = true
         setSaving(true)
         setError('')
         setSuccess('')
+        
+        console.log('[PERFIL] 📤 Dados a salvar:', {
+            full_name: fullName,
+            company: company,
+            language: localLanguage,
+            userId: user.id
+        })
 
         try {
+            console.log('[PERFIL] 📡 Enviando atualização para Supabase...')
+            const startTime = Date.now()
+            
             // Update users table
-            const { error: updateError } = await supabase
+            const { data, error: updateError } = await supabase
                 .from('users')
                 .update({
                     full_name: fullName,
@@ -504,21 +563,39 @@ export default function PerfilPage() {
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', user.id)
+            
+            const saveTime = Date.now() - startTime
+            console.log('[PERFIL] 📥 Resposta do Supabase em', saveTime, 'ms:', { data, error: updateError })
 
-            if (updateError) throw updateError
+            if (updateError) {
+                console.error('[PERFIL] ❌ Erro na atualização:', updateError)
+                throw updateError
+            }
+
+            console.log('[PERFIL] ✅ Perfil atualizado no banco com sucesso')
 
             // Update global language
+            console.log('[PERFIL] 🌐 Atualizando idioma global para:', localLanguage)
             setLanguage(localLanguage as any)
 
             // Set success message
+            console.log('[PERFIL] ✅ Mostrando mensagem de sucesso')
             setSuccess(t.profile.profileUpdated)
         } catch (err: any) {
-            console.error('Error updating profile:', err)
+            console.error('[PERFIL] ❌ Erro ao salvar perfil:', err)
+            console.error('[PERFIL] 📄 Detalhes do erro:', {
+                message: err.message,
+                code: err.code,
+                details: err.details,
+                hint: err.hint
+            })
             setError(err.message || 'Erro ao atualizar perfil')
         } finally {
+            console.log('[PERFIL] 🏁 Finalizando handleSubmit, resetando estado saving')
             // Always reset saving state
             isSavingRef.current = false
             setSaving(false)
+            console.log('[PERFIL] 📊 Estado final - saving:', false, 'isSavingRef:', false)
         }
     }
 
