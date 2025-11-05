@@ -24,69 +24,105 @@ function RedefinirSenhaContent() {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                console.log('🔍 Checking session...')
-                console.log('URL params:', {
-                    type: searchParams.get('type'),
-                    error_code: searchParams.get('error_code'),
-                    access_token: searchParams.get('access_token') ? 'present' : 'missing'
+                console.log('🔍 [REDEFINIR] Iniciando verificação de sessão/token...')
+                
+                // Obter hash da URL
+                const hash = window.location.hash
+                console.log('🔗 [REDEFINIR] Hash completo:', hash)
+                
+                // Parse hash parameters (Supabase coloca erros no hash)
+                const hashParams = new URLSearchParams(hash.substring(1))
+                const hashError = hashParams.get('error')
+                const hashErrorCode = hashParams.get('error_code')
+                const hashErrorDescription = hashParams.get('error_description')
+                const hashAccessToken = hashParams.get('access_token')
+                
+                console.log('📊 [REDEFINIR] Hash params:', {
+                    error: hashError,
+                    error_code: hashErrorCode,
+                    error_description: hashErrorDescription,
+                    access_token: hashAccessToken ? 'present' : 'missing'
                 })
-
-                // Verificar se há um erro nos parâmetros da URL
+                
+                // Verificar se há erro no hash
+                if (hashError || hashErrorCode) {
+                    console.error('❌ [REDEFINIR] Erro encontrado no hash:', hashErrorCode || hashError)
+                    
+                    let errorMessage = 'Link inválido ou expirado'
+                    
+                    if (hashErrorCode === 'otp_expired' || hashErrorDescription?.includes('expired')) {
+                        errorMessage = 'Este link de redefinição expirou. Links de redefinição são válidos por 1 hora. Por favor, solicite um novo link.'
+                    } else if (hashErrorDescription) {
+                        errorMessage = decodeURIComponent(hashErrorDescription)
+                    }
+                    
+                    setError(errorMessage)
+                    setValidatingToken(false)
+                    return
+                }
+                
+                // Verificar se há access_token no hash (token válido)
+                if (hashAccessToken) {
+                    console.log('✅ [REDEFINIR] Access token encontrado no hash')
+                    setValidatingToken(false)
+                    return
+                }
+                
+                // Verificar query params também (fallback)
+                const type = searchParams.get('type')
+                const access_token = searchParams.get('access_token')
                 const error_code = searchParams.get('error_code')
                 const error_description = searchParams.get('error_description')
                 
+                console.log('📊 [REDEFINIR] Query params:', {
+                    type,
+                    error_code,
+                    access_token: access_token ? 'present' : 'missing'
+                })
+                
+                // Verificar erro nos query params
                 if (error_code) {
-                    console.error('❌ Error in URL:', error_code)
+                    console.error('❌ [REDEFINIR] Erro nos query params:', error_code)
                     setError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
                     setValidatingToken(false)
                     return
                 }
 
-                // Verificar se há um token de recuperação na URL
-                const type = searchParams.get('type')
-                const access_token = searchParams.get('access_token')
-                const hash = window.location.hash
-                
-                console.log('Hash:', hash)
-
-                // Verificar se há token no hash (formato antigo do Supabase)
-                if (hash.includes('access_token')) {
-                    console.log('✅ Token found in hash')
-                    setValidatingToken(false)
-                    return
-                }
-
-                // Verificar se há token nos query params
+                // Verificar token nos query params
                 if (type === 'recovery' && access_token) {
-                    console.log('✅ Recovery token found in params')
+                    console.log('✅ [REDEFINIR] Token de recuperação encontrado nos query params')
                     setValidatingToken(false)
                     return
                 }
 
-                // Verificar sessão
+                // Verificar sessão existente
+                console.log('📡 [REDEFINIR] Verificando sessão do Supabase...')
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession()
                 
-                console.log('Session:', session ? 'present' : 'missing')
+                console.log('📥 [REDEFINIR] Resultado da sessão:', {
+                    hasSession: !!session,
+                    error: sessionError
+                })
                 
                 if (sessionError) {
-                    console.error('❌ Session error:', sessionError)
+                    console.error('❌ [REDEFINIR] Erro ao obter sessão:', sessionError)
                     setError('Erro ao validar sessão. Tente novamente.')
                     setValidatingToken(false)
                     return
                 }
 
                 if (session) {
-                    console.log('✅ Valid session found')
+                    console.log('✅ [REDEFINIR] Sessão válida encontrada')
                     setValidatingToken(false)
                     return
                 }
 
                 // Se chegou aqui, não há token nem sessão válida
-                console.warn('⚠️ No valid token or session found')
+                console.warn('⚠️ [REDEFINIR] Nenhum token ou sessão válida encontrado')
                 setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
                 setValidatingToken(false)
             } catch (err) {
-                console.error('❌ Error checking session:', err)
+                console.error('❌ [REDEFINIR] Erro ao verificar sessão:', err)
                 setError('Erro ao validar link. Tente novamente.')
                 setValidatingToken(false)
             }
