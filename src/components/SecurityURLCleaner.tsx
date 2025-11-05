@@ -31,12 +31,13 @@ export function SecurityURLCleaner() {
         const hasTokens = hash.includes('access_token=') || hash.includes('refresh_token=')
 
         if (hasTokens) {
-                    // 1. Supabase já processou os tokens automaticamente
+          // 1. Supabase já processou os tokens automaticamente
           // Verificar se a sessão foi estabelecida
           const { data: { session } } = await supabase.auth.getSession()
           
           if (session) {
-                      }
+            console.log('✅ Sessão estabelecida após OAuth')
+          }
 
           // 2. Limpar a URL IMEDIATAMENTE
           // Usar replaceState para não criar entrada no histórico
@@ -61,8 +62,7 @@ export function SecurityURLCleaner() {
           } catch (e) {
             // Ignorar erro se não puder manipular histórico
           }
-
-                            }
+        }
       } catch (error) {
         console.error('❌ Erro ao limpar URL:', error)
       }

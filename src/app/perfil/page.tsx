@@ -19,12 +19,9 @@ const FORCE_LOGS = true
 
 // 🛡️ CONTROLE GLOBAL: Evitar múltiplas cargas simultâneas
 let lastLoadTimestamp = 0
-let lastSuccessfulLoadTimestamp = 0 // Novo: rastrear última carga bem-sucedida
 let isCurrentlyLoading = false
 let loadAttempts = 0
-let activeRequestController: AbortController | null = null // Novo: controlar requisições ativas
 const DEBOUNCE_TIME = 100 // ms (reduzido para ser mais responsivo)
-const COOLDOWN_TIME = 2000 // ms (2s de cooldown após carga bem-sucedida)
 const MAX_LOAD_ATTEMPTS = 2
 
 export default function PerfilPage() {
@@ -112,19 +109,6 @@ export default function PerfilPage() {
         const carregarPerfil = async (session: any) => {
             const now = Date.now()
             
-            // 🛡️ PROTEÇÃO 0: COOLDOWN - Se carregou com sucesso recentemente, usar cache
-            if (lastSuccessfulLoadTimestamp > 0 && (now - lastSuccessfulLoadTimestamp < COOLDOWN_TIME)) {
-                const timeSinceLastLoad = now - lastSuccessfulLoadTimestamp
-                if (FORCE_LOGS) console.warn(`[PERFIL] ⏸️ COOLDOWN: Dados recentes (carregou há ${timeSinceLastLoad}ms), usando cache`)
-                // Desativar loading se ainda estiver ativo
-                if (loading) {
-                    setLoading(false)
-                    isCurrentlyLoading = false
-                    loadingInProgressRef.current = false
-                }
-                return
-            }
-            
             // 🛡️ PROTEÇÃO 1: Debounce - Evitar chamadas muito próximas
             if (now - lastLoadTimestamp < DEBOUNCE_TIME) {
                 if (FORCE_LOGS) console.error('[PERFIL] 🚫 Debounce: Chamada ignorada (muito próxima da anterior)')
@@ -136,15 +120,6 @@ export default function PerfilPage() {
                 if (FORCE_LOGS) console.error('[PERFIL] 🚫 Carga já em andamento, ignorando duplicata')
                 return
             }
-            
-            // 🛡️ PROTEÇÃO 3: Cancelar requisição anterior se existir
-            if (activeRequestController) {
-                if (FORCE_LOGS) console.warn('[PERFIL] ❌ Cancelando requisição anterior')
-                activeRequestController.abort()
-            }
-            
-            // Criar novo AbortController para esta requisição
-            activeRequestController = new AbortController()
             
             // 🛡️ Marcar que está carregando
             isCurrentlyLoading = true
@@ -303,9 +278,6 @@ export default function PerfilPage() {
                     // @ts-ignore
                     setIsAdmin(profile.role === 'admin')
                     
-                    // 🎯 Marcar timestamp de sucesso para ativar cooldown
-                    lastSuccessfulLoadTimestamp = Date.now()
-                    
                     if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO COMPLETO em', Date.now() - startTime, 'ms')
             } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado durante carregamento')
@@ -332,11 +304,6 @@ export default function PerfilPage() {
                 // 🛡️ SEMPRE limpar flags globais
                 isCurrentlyLoading = false
                 loadingInProgressRef.current = false
-                
-                // 🛡️ Limpar AbortController se finalizado
-                if (activeRequestController) {
-                    activeRequestController = null
-                }
                 
                 // 🔄 Resetar contador de tentativas ao completar
                 loadAttempts = 0
@@ -423,13 +390,6 @@ export default function PerfilPage() {
             
             // 🛡️ Limpar flags globais
             isCurrentlyLoading = false
-            
-            // 🛡️ Cancelar requisição ativa se existir
-            if (activeRequestController) {
-                if (FORCE_LOGS) console.warn('[PERFIL] 🛑 Cancelando requisição ativa no cleanup')
-                activeRequestController.abort()
-                activeRequestController = null
-            }
             
             // 🛡️ Cancelar timeout de segurança
             clearTimeout(safetyTimeoutId)
