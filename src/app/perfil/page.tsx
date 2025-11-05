@@ -91,6 +91,64 @@ export default function PerfilPage() {
             }
         }
         
+        // Função para carregar perfil (reutilizável)
+        const carregarPerfil = async (session: any) => {
+            if (!session || !isSubscribed) return
+            
+            try {
+                if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil...')
+                const startTime = Date.now()
+                
+                setUser(session.user)
+                
+                const { data: profile, error: profileError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single()
+                
+                const loadTime = Date.now() - startTime
+                if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms')
+
+                if (profileError) {
+                    console.error('[PERFIL] ❌ Erro ao carregar perfil:', profileError)
+                }
+
+                if (profile && isSubscribed) {
+                    setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
+                    setCompany(profile.company || '')
+                    setAvatarUrl(profile.avatar_url || '')
+                    
+                    // Check if user has password
+                    const identities = session.user.identities || []
+                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    setHasPassword(hasEmailIdentity)
+                    
+                    // @ts-ignore
+                    if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
+                        // @ts-ignore
+                        setLocalLanguage(profile.language)
+                        // @ts-ignore
+                        setLanguage(profile.language)
+                    }
+                    
+                    // @ts-ignore
+                    setIsAdmin(profile.role === 'admin')
+                    
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO em', Date.now() - startTime, 'ms')
+                }
+            } catch (err) {
+                console.error('[PERFIL] ❌ Erro ao carregar perfil:', err)
+            } finally {
+                // SEMPRE desativar loading
+                if (isSubscribed) {
+                    if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF')
+                    setLoading(false)
+                    isLoadingRef.current = false
+                }
+            }
+        }
+        
         const setupListener = () => {
             // Configurar listener de autenticação (apenas uma vez)
             if (FORCE_LOGS) console.error('[PERFIL] 👂 Configurando listener...')
@@ -130,59 +188,7 @@ export default function PerfilPage() {
                         isLoadingRef.current = false
                     }
                     
-                    setUser(session.user)
-                    
-                    // Carregar perfil completo via listener
-                    try {
-                        if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil (via listener)...')
-                        const startTime = Date.now()
-                        
-                        const { data: profile, error: profileError } = await supabase
-                            .from('users')
-                            .select('*')
-                            .eq('id', session.user.id)
-                            .single()
-                        
-                        const loadTime = Date.now() - startTime
-                        if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms (via listener)')
-
-                        if (profileError) {
-                            console.error('[PERFIL] ❌ Erro ao carregar perfil:', profileError)
-                        }
-
-                        if (profile && isSubscribed) {
-                            setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                            setCompany(profile.company || '')
-                            setAvatarUrl(profile.avatar_url || '')
-                            
-                            // Check if user has password
-                            const identities = session.user.identities || []
-                            const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                            setHasPassword(hasEmailIdentity)
-                            
-                            // @ts-ignore
-                            if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
-                                // @ts-ignore
-                                setLocalLanguage(profile.language)
-                                // @ts-ignore
-                                setLanguage(profile.language)
-                            }
-                            
-                            // @ts-ignore
-                            setIsAdmin(profile.role === 'admin')
-                            
-                            if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO (via listener) em', Date.now() - startTime, 'ms')
-                        }
-                    } catch (err) {
-                        console.error('[PERFIL] ❌ Erro ao carregar perfil via listener:', err)
-                    } finally {
-                        // SEMPRE desativar loading
-                        if (isSubscribed) {
-                            if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF (via listener)')
-                            setLoading(false)
-                            isLoadingRef.current = false
-                        }
-                    }
+                    await carregarPerfil(session)
                 } else if (event === 'USER_UPDATED') {
                     if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
                     // Apenas atualizar user, não recarregar perfil
@@ -190,17 +196,51 @@ export default function PerfilPage() {
                         setUser(session.user)
                     }
                 } else if (event === 'INITIAL_SESSION') {
-                    if (FORCE_LOGS) console.error('[PERFIL] 📌 INITIAL_SESSION (ignorado, checkUser() já está rodando)')
-                    // Não fazer nada, checkUser() já está carregando
+                    if (FORCE_LOGS) console.error('[PERFIL] 📌 INITIAL_SESSION (ignorado)')
+                    // Não fazer nada, busca imediata abaixo já cobre
                 }
             })
             
             authSubscription = subscription
             if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener registrado')
+            
+            // 🔧 BUSCA IMEDIATA: Forçar getSession() logo após listener ser registrado
+            // Isso garante que mesmo se o evento já tiver disparado, ainda obtemos a sessão
+            supabase.auth.getSession().then(({ data, error }) => {
+                if (!isSubscribed) {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado antes da busca imediata')
+                    return
+                }
+                
+                if (error) {
+                    console.error('[PERFIL] ❌ Erro ao buscar sessão imediata:', error)
+                    setLoading(false)
+                    isLoadingRef.current = false
+                    return
+                }
+                
+                if (data.session) {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⚡ Sessão encontrada imediatamente!')
+                    // Cancelar checkUser() se ainda estiver rodando
+                    if (isLoadingRef.current) {
+                        if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Cancelando checkUser(), usando busca imediata')
+                        isLoadingRef.current = false
+                    }
+                    carregarPerfil(data.session)
+                } else {
+                    if (FORCE_LOGS) console.error('[PERFIL] 💤 Nenhuma sessão ativa ainda, aguardando listener...')
+                    // O listener vai pegar o SIGNED_IN quando vier
+                }
+            }).catch(err => {
+                console.error('[PERFIL] ❌ Erro na busca imediata:', err)
+                if (isSubscribed) {
+                    setLoading(false)
+                    isLoadingRef.current = false
+                }
+            })
         }
         
-        // Iniciar carregamento e listener
-        initProfile()
+        // Apenas configurar listener (não chamar mais initProfile/checkUser)
         setupListener()
 
         // Cleanup ao desmontar
