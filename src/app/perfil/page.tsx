@@ -470,7 +470,7 @@ export default function PerfilPage() {
             
             // Tratar erro de rate limit de forma mais amigável
             if (err.status === 429 || err.message?.includes('rate limit')) {
-                setError('⏰ Você solicitou muitos emails em pouco tempo. Por favor, aguarde alguns minutos e tente novamente.')
+                setError('Você solicitou muitos emails em pouco tempo. Por favor, aguarde alguns minutos e tente novamente.')
             } else {
                 setError(err.message || 'Erro ao enviar link de redefinição')
             }
