@@ -17,11 +17,15 @@ import { useTranslation } from '@/contexts/LanguageContext'
 // Flag para forçar logs em produção
 const FORCE_LOGS = true
 
+// Ref global para controlar se o listener está ativo
+let listenerActiveGlobal = false
+
 export default function PerfilPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const isSavingRef = useRef(false)
     const isLoadingRef = useRef(false)
+    const listenerActiveRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
     
     const [user, setUser] = useState<SupabaseUser | null>(null)
@@ -60,134 +64,169 @@ export default function PerfilPage() {
         // AbortController para cancelar requisições ao desmontar
         const abortController = new AbortController()
         
+        // Verificar se já existe um listener ativo (de montagem anterior)
+        if (listenerActiveGlobal) {
+            console.warn('[PERFIL] ⚠️ Listener anterior ainda ativo! Aguardando limpeza...')
+            // Aguardar um pouco para o listener anterior ser limpo
+            setTimeout(() => {
+                if (!listenerActiveGlobal && isSubscribed) {
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener anterior limpo, continuando')
+                    initProfile()
+                    setupListener()
+                }
+            }, 100)
+            return
+        }
+        
         const initProfile = async () => {
+            // Evitar checkUser duplicado se listener já está ativo
+            if (listenerActiveRef.current) {
+                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Listener já ativo, pulando checkUser()')
+                return
+            }
+            
             if (FORCE_LOGS) console.error('[PERFIL] 🎬 Init profile...')
             if (isSubscribed) {
                 await checkUser(abortController.signal)
             }
         }
         
-        // Iniciar carregamento
-        initProfile()
-
-        // Configurar listener de autenticação (apenas uma vez)
-        if (FORCE_LOGS) console.error('[PERFIL] 👂 Configurando listener...')
-        
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (FORCE_LOGS) console.error('[PERFIL] 🔔 Event:', event, 'subscribed:', isSubscribed, 'saving:', isSavingRef.current, 'isLoading:', isLoadingRef.current)
+        const setupListener = () => {
+            // Configurar listener de autenticação (apenas uma vez)
+            if (FORCE_LOGS) console.error('[PERFIL] 👂 Configurando listener...')
             
-            // Ignorar eventos se componente foi desmontado
-            if (!isSubscribed) {
-                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
-                return
-            }
+            // Marcar listener como ativo
+            listenerActiveRef.current = true
+            listenerActiveGlobal = true
             
-            // Ignorar USER_UPDATED durante save para evitar conflitos
-            if (isSavingRef.current && event === 'USER_UPDATED') {
-                if (FORCE_LOGS) console.error('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
-                return
-            }
-
-            // Tratar eventos de autenticação
-            if (event === 'SIGNED_OUT' || !session) {
-                if (FORCE_LOGS) console.error('[PERFIL] 👋 Deslogado, redirecionando')
-                router.push('/')
-                return
-            }
-            
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED - carregando via listener')
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                if (FORCE_LOGS) console.error('[PERFIL] 🔔 Event:', event, 'subscribed:', isSubscribed, 'saving:', isSavingRef.current, 'isLoading:', isLoadingRef.current)
                 
-                // Cancelar checkUser() se ainda estiver rodando
-                if (isLoadingRef.current) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Cancelando checkUser(), usando listener')
-                    isLoadingRef.current = false
+                // Ignorar eventos se componente foi desmontado
+                if (!isSubscribed) {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
+                    return
                 }
                 
-                setUser(session.user)
+                // Ignorar USER_UPDATED durante save para evitar conflitos
+                if (isSavingRef.current && event === 'USER_UPDATED') {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
+                    return
+                }
+
+                // Tratar eventos de autenticação
+                if (event === 'SIGNED_OUT' || !session) {
+                    if (FORCE_LOGS) console.error('[PERFIL] 👋 Deslogado, redirecionando')
+                    router.push('/')
+                    return
+                }
                 
-                // Carregar perfil completo via listener
-                try {
-                    if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil (via listener)...')
-                    const startTime = Date.now()
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED - carregando via listener')
                     
-                    const { data: profile, error: profileError } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .single()
-                    
-                    const loadTime = Date.now() - startTime
-                    if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms (via listener)')
-
-                    if (profileError) {
-                        console.error('[PERFIL] ❌ Erro ao carregar perfil:', profileError)
-                    }
-
-                    if (profile && isSubscribed) {
-                        setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                        setCompany(profile.company || '')
-                        setAvatarUrl(profile.avatar_url || '')
-                        
-                        // Check if user has password
-                        const identities = session.user.identities || []
-                        const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                        setHasPassword(hasEmailIdentity)
-                        
-                        // @ts-ignore
-                        if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
-                            // @ts-ignore
-                            setLocalLanguage(profile.language)
-                            // @ts-ignore
-                            setLanguage(profile.language)
-                        }
-                        
-                        // @ts-ignore
-                        setIsAdmin(profile.role === 'admin')
-                        
-                        if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO (via listener) em', Date.now() - startTime, 'ms')
-                    }
-                } catch (err) {
-                    console.error('[PERFIL] ❌ Erro ao carregar perfil via listener:', err)
-                } finally {
-                    // SEMPRE desativar loading
-                    if (isSubscribed) {
-                        if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF (via listener)')
-                        setLoading(false)
+                    // Cancelar checkUser() se ainda estiver rodando
+                    if (isLoadingRef.current) {
+                        if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Cancelando checkUser(), usando listener')
                         isLoadingRef.current = false
                     }
-                }
-            } else if (event === 'USER_UPDATED') {
-                if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
-                // Apenas atualizar user, não recarregar perfil
-                if (session && isSubscribed) {
+                    
                     setUser(session.user)
+                    
+                    // Carregar perfil completo via listener
+                    try {
+                        if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil (via listener)...')
+                        const startTime = Date.now()
+                        
+                        const { data: profile, error: profileError } = await supabase
+                            .from('users')
+                            .select('*')
+                            .eq('id', session.user.id)
+                            .single()
+                        
+                        const loadTime = Date.now() - startTime
+                        if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms (via listener)')
+
+                        if (profileError) {
+                            console.error('[PERFIL] ❌ Erro ao carregar perfil:', profileError)
+                        }
+
+                        if (profile && isSubscribed) {
+                            setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
+                            setCompany(profile.company || '')
+                            setAvatarUrl(profile.avatar_url || '')
+                            
+                            // Check if user has password
+                            const identities = session.user.identities || []
+                            const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                            setHasPassword(hasEmailIdentity)
+                            
+                            // @ts-ignore
+                            if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
+                                // @ts-ignore
+                                setLocalLanguage(profile.language)
+                                // @ts-ignore
+                                setLanguage(profile.language)
+                            }
+                            
+                            // @ts-ignore
+                            setIsAdmin(profile.role === 'admin')
+                            
+                            if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO (via listener) em', Date.now() - startTime, 'ms')
+                        }
+                    } catch (err) {
+                        console.error('[PERFIL] ❌ Erro ao carregar perfil via listener:', err)
+                    } finally {
+                        // SEMPRE desativar loading
+                        if (isSubscribed) {
+                            if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF (via listener)')
+                            setLoading(false)
+                            isLoadingRef.current = false
+                        }
+                    }
+                } else if (event === 'USER_UPDATED') {
+                    if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
+                    // Apenas atualizar user, não recarregar perfil
+                    if (session && isSubscribed) {
+                        setUser(session.user)
+                    }
+                } else if (event === 'INITIAL_SESSION') {
+                    if (FORCE_LOGS) console.error('[PERFIL] 📌 INITIAL_SESSION (ignorado, checkUser() já está rodando)')
+                    // Não fazer nada, checkUser() já está carregando
                 }
-            } else if (event === 'INITIAL_SESSION') {
-                if (FORCE_LOGS) console.error('[PERFIL] 📌 INITIAL_SESSION (ignorado, checkUser() já está rodando)')
-                // Não fazer nada, checkUser() já está carregando
-            }
-        })
+            })
+            
+            authSubscription = subscription
+            if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener registrado')
+        }
         
-        authSubscription = subscription
-        if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener registrado')
+        // Iniciar carregamento e listener
+        initProfile()
+        setupListener()
 
         // Cleanup ao desmontar
         return () => {
             if (FORCE_LOGS) console.error('[PERFIL] 🛑 DESMONTANDO componente')
             isSubscribed = false
             isLoadingRef.current = false
+            listenerActiveRef.current = false
+            listenerActiveGlobal = false
             
             // Cancelar requisições pendentes
             if (FORCE_LOGS) console.error('[PERFIL] 🚫 Cancelando requisições pendentes')
             abortController.abort()
             
-            // Cancelar listener de autenticação
+            // Cancelar listener de autenticação (PRIORITÁRIO)
             if (authSubscription) {
-                if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener')
-                authSubscription.unsubscribe()
+                if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener IMEDIATAMENTE')
+                try {
+                    authSubscription.unsubscribe()
+                } catch (err) {
+                    console.error('[PERFIL] ⚠️ Erro ao remover listener:', err)
+                }
                 authSubscription = null
             }
+            
+            if (FORCE_LOGS) console.error('[PERFIL] ✅ Cleanup completo')
         }
     }, [])
 
