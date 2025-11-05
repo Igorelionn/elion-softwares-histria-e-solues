@@ -211,9 +211,12 @@ export default function PerfilPage() {
                 profile: profile ? {
                     full_name: profile.full_name,
                     company: profile.company,
+                    // @ts-ignore - role existe no banco mas não no tipo
                     role: profile.role,
+                    // @ts-ignore - language existe no banco mas não no tipo
                     language: profile.language,
-                    is_blocked: profile.is_blocked // Verificação direta
+                    // @ts-ignore - is_blocked existe no banco mas não no tipo
+                    is_blocked: profile.is_blocked
                 } : null,
                 error: profileError
             })
@@ -244,6 +247,7 @@ export default function PerfilPage() {
                 // Load language preference and set both local and global
                 // @ts-ignore - language column exists but not in current types
                 if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
+                    // @ts-ignore - language existe no banco mas não no tipo
                     console.log('[PERFIL] 🌐 Configurando idioma:', profile.language)
                     // @ts-ignore
                     setLocalLanguage(profile.language)
