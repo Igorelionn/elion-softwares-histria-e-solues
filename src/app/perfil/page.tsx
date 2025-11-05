@@ -17,11 +17,17 @@ import { useTranslation } from '@/contexts/LanguageContext'
 // Flag para forçar logs em produção
 const FORCE_LOGS = true
 
+// 🛡️ CONTROLE GLOBAL: Evitar múltiplas cargas simultâneas
+let lastLoadTimestamp = 0
+let isCurrentlyLoading = false
+const DEBOUNCE_TIME = 300 // ms
+
 export default function PerfilPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const isSavingRef = useRef(false)
     const isLoadingRef = useRef(false)
+    const loadingInProgressRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
     
     const [user, setUser] = useState<SupabaseUser | null>(null)
@@ -58,11 +64,32 @@ export default function PerfilPage() {
         
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
-            if (FORCE_LOGS) console.error('[PERFIL] 📡 Iniciando carregarPerfil...')
+            const now = Date.now()
+            
+            // 🛡️ PROTEÇÃO 1: Debounce - Evitar chamadas muito próximas
+            if (now - lastLoadTimestamp < DEBOUNCE_TIME) {
+                if (FORCE_LOGS) console.error('[PERFIL] 🚫 Debounce: Chamada ignorada (muito próxima da anterior)')
+                return
+            }
+            
+            // 🛡️ PROTEÇÃO 2: Já está carregando? Ignorar
+            if (isCurrentlyLoading || loadingInProgressRef.current) {
+                if (FORCE_LOGS) console.error('[PERFIL] 🚫 Carga já em andamento, ignorando duplicata')
+                return
+            }
+            
+            // 🛡️ Marcar que está carregando
+            isCurrentlyLoading = true
+            loadingInProgressRef.current = true
+            lastLoadTimestamp = now
+            
+            if (FORCE_LOGS) console.error('[PERFIL] 📡 Iniciando carregarPerfil...', new Date().toISOString())
             
             // ✅ VALIDAÇÃO 1: Componente ainda montado?
             if (!isSubscribed) {
                 if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, abortando carregarPerfil')
+                isCurrentlyLoading = false
+                loadingInProgressRef.current = false
                 return
             }
             
@@ -71,6 +98,8 @@ export default function PerfilPage() {
                 console.warn('[PERFIL] ⚠️ Sessão inválida (null/undefined)')
                 setLoading(false)
                 isLoadingRef.current = false
+                isCurrentlyLoading = false
+                loadingInProgressRef.current = false
                 return
             }
             
@@ -79,6 +108,8 @@ export default function PerfilPage() {
                 console.warn('[PERFIL] ⚠️ Sessão sem user.id:', session)
                 setLoading(false)
                 isLoadingRef.current = false
+                isCurrentlyLoading = false
+                loadingInProgressRef.current = false
                 return
             }
             
@@ -110,6 +141,8 @@ export default function PerfilPage() {
                     })
                     setLoading(false)
                     isLoadingRef.current = false
+                    isCurrentlyLoading = false
+                    loadingInProgressRef.current = false
                     return
                 }
 
@@ -129,6 +162,8 @@ export default function PerfilPage() {
                     
                     setLoading(false)
                     isLoadingRef.current = false
+                    isCurrentlyLoading = false
+                    loadingInProgressRef.current = false
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Loading encerrado (perfil vazio)')
                     return
                 }
@@ -174,7 +209,7 @@ export default function PerfilPage() {
                 console.error('[PERFIL] ❌ Exceção ao carregar perfil:', err)
                 console.error('[PERFIL] 📋 Stack trace:', err instanceof Error ? err.stack : 'N/A')
             } finally {
-                // ✅ SEMPRE desativar loading (GARANTIDO)
+                // ✅ SEMPRE desativar loading e flags (GARANTIDO)
                 if (isSubscribed) {
                     if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF (finally)')
                     setLoading(false)
@@ -182,6 +217,11 @@ export default function PerfilPage() {
                 } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, não alterando loading')
                 }
+                
+                // 🛡️ SEMPRE limpar flags globais
+                isCurrentlyLoading = false
+                loadingInProgressRef.current = false
+                if (FORCE_LOGS) console.error('[PERFIL] 🔓 Flags de controle liberados')
             }
         }
         
@@ -259,6 +299,10 @@ export default function PerfilPage() {
             if (FORCE_LOGS) console.error('[PERFIL] 🛑 DESMONTANDO componente')
             isSubscribed = false
             isLoadingRef.current = false
+            loadingInProgressRef.current = false
+            
+            // 🛡️ Limpar flags globais
+            isCurrentlyLoading = false
             
             // Cancelar listener de autenticação (PRIORITÁRIO)
             if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener...')
