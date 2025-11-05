@@ -165,7 +165,12 @@ function RedefinirSenhaContent() {
             console.error('Mensagem:', err.message)
             console.error('Stack:', err.stack)
             setError(err.message || 'Erro ao redefinir senha')
-            setLoading(false)
+        } finally {
+            console.log('🏁 FINALLY: Resetando loading state')
+            // Só reseta o loading se não foi sucesso
+            if (!success) {
+                setLoading(false)
+            }
         }
     }
 
