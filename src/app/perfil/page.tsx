@@ -13,7 +13,6 @@ import { Camera, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { useTranslation } from '@/contexts/LanguageContext'
-import { checkUserBlockStatus } from '@/middleware/auth-check'
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -154,19 +153,21 @@ export default function PerfilPage() {
         }
 
         isLoadingRef.current = true
-        console.log('[PERFIL] 🔍 Iniciando checkUser')
+        console.log('[PERFIL] 🔍 Iniciando checkUser - ' + new Date().toISOString())
         console.log('[PERFIL] 📊 Estado atual - loading:', loading, 'user:', !!user)
         
-        // Timeout de segurança para evitar loading infinito
+        // Timeout de segurança REDUZIDO para 5 segundos
         const timeoutId = setTimeout(() => {
-            console.warn('[PERFIL] ⏰ TIMEOUT de 10s atingido!')
+            console.warn('[PERFIL] ⏰ TIMEOUT de 5s atingido!')
             setLoading(false)
             isLoadingRef.current = false
-        }, 10000) // 10 segundos
+        }, 5000) // 5 segundos
 
         try {
             console.log('[PERFIL] 📡 Buscando sessão...')
+            const sessionStart = Date.now()
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+            console.log('[PERFIL] ⏱️ Sessão buscada em', Date.now() - sessionStart, 'ms')
             
             console.log('[PERFIL] 📥 Resposta da sessão:', {
                 hasSession: !!session,
@@ -183,24 +184,9 @@ export default function PerfilPage() {
                 return
             }
 
-            // Verificar se o usuário está bloqueado
-            console.log('[PERFIL] 🔒 Verificando bloqueio...')
-            try {
-                const blockStatus = await checkUserBlockStatus(session.user.id)
-                console.log('[PERFIL] 📊 Status de bloqueio:', blockStatus)
-                
-                if (blockStatus.isBlocked) {
-                    console.warn('[PERFIL] 🚫 Usuário bloqueado!')
-                    clearTimeout(timeoutId)
-                    isLoadingRef.current = false
-                    await supabase.auth.signOut()
-                    router.push('/conta-bloqueada')
-                    return
-                }
-            } catch (blockError) {
-                // Se falhar ao verificar bloqueio, continuar normalmente
-                console.error('[PERFIL] ⚠️ Erro ao verificar bloqueio (continuando):', blockError)
-            }
+            // REMOVIDA verificação de bloqueio que está causando timeout
+            // A verificação será feita em um middleware server-side se necessário
+            console.log('[PERFIL] ⏩ Pulando verificação de bloqueio (otimização)')
 
             console.log('[PERFIL] ✅ Sessão válida, atualizando user state')
             setUser(session.user)
@@ -213,25 +199,37 @@ export default function PerfilPage() {
             
             // Load user profile data
             console.log('[PERFIL] 📡 Carregando perfil do banco...')
-            const startTime = Date.now()
+            const profileStart = Date.now()
             const { data: profile, error: profileError } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', session.user.id)
                 .single()
             
-            const loadTime = Date.now() - startTime
+            const loadTime = Date.now() - profileStart
             console.log('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms:', {
                 profile: profile ? {
                     full_name: profile.full_name,
                     company: profile.company,
                     role: profile.role,
-                    language: profile.language
+                    language: profile.language,
+                    is_blocked: profile.is_blocked // Verificação direta
                 } : null,
                 error: profileError
             })
 
             if (profile) {
+                // Verificação direta de bloqueio (muito mais rápida que RPC)
+                // @ts-ignore
+                if (profile.is_blocked === true) {
+                    console.warn('[PERFIL] 🚫 Usuário bloqueado (verificação direta)!')
+                    clearTimeout(timeoutId)
+                    isLoadingRef.current = false
+                    await supabase.auth.signOut()
+                    router.push('/conta-bloqueada')
+                    return
+                }
+
                 console.log('[PERFIL] ✅ Atualizando estados do perfil')
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                 setCompany(profile.company || '')
@@ -257,14 +255,15 @@ export default function PerfilPage() {
                 setFullName(session.user.user_metadata?.full_name || '')
             }
             
-            console.log('[PERFIL] ✅ CheckUser concluído com sucesso')
+            const totalTime = Date.now() - sessionStart
+            console.log('[PERFIL] ✅ CheckUser concluído em', totalTime, 'ms')
             clearTimeout(timeoutId)
         } catch (err) {
             console.error('[PERFIL] ❌ Erro ao carregar perfil:', err)
             console.error('[PERFIL] 📄 Stack:', (err as Error).stack)
             clearTimeout(timeoutId)
         } finally {
-            console.log('[PERFIL] 🏁 Finalizando checkUser, desativando loading')
+            console.log('[PERFIL] 🏁 Finalizando checkUser, desativando loading - ' + new Date().toISOString())
             setLoading(false)
             isLoadingRef.current = false
         }
