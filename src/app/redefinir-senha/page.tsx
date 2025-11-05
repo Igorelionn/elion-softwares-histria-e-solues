@@ -103,36 +103,68 @@ function RedefinirSenhaContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
+        console.log('🚀 SUBMIT INICIADO')
+        console.log('Senha nova:', newPassword ? `${newPassword.length} caracteres` : 'vazia')
+        console.log('Confirmar senha:', confirmPassword ? `${confirmPassword.length} caracteres` : 'vazia')
+        
         if (newPassword !== confirmPassword) {
+            console.error('❌ Senhas não coincidem')
             setError('As senhas não coincidem')
             return
         }
 
         if (newPassword.length < 6) {
+            console.error('❌ Senha muito curta')
             setError('A senha deve ter pelo menos 6 caracteres')
             return
         }
 
+        console.log('✅ Validações passaram, iniciando atualização...')
         setLoading(true)
         setError('')
 
         try {
-            const { error } = await supabase.auth.updateUser({
+            console.log('📡 Verificando sessão antes de atualizar...')
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+            
+            if (sessionError) {
+                console.error('❌ Erro ao obter sessão:', sessionError)
+                throw new Error('Erro ao validar sessão. Tente novamente.')
+            }
+
+            if (!session) {
+                console.error('❌ Nenhuma sessão encontrada')
+                throw new Error('Sessão expirada. Solicite um novo link de redefinição.')
+            }
+
+            console.log('✅ Sessão válida encontrada')
+            console.log('📡 Chamando supabase.auth.updateUser...')
+            
+            const { data, error } = await supabase.auth.updateUser({
                 password: newPassword
             })
 
-            if (error) throw error
+            console.log('📥 Resposta do updateUser:', { data, error })
 
+            if (error) {
+                console.error('❌ Erro do Supabase:', error)
+                throw error
+            }
+
+            console.log('✅ Senha atualizada com sucesso!')
             setSuccess(true)
             
             // Redirect to login after 3 seconds
+            console.log('⏱️ Redirecionando em 3 segundos...')
             setTimeout(() => {
+                console.log('🔄 Redirecionando para home...')
                 router.push('/')
             }, 3000)
         } catch (err: any) {
-            console.error('Error updating password:', err)
+            console.error('❌ ERRO NO CATCH:', err)
+            console.error('Mensagem:', err.message)
+            console.error('Stack:', err.stack)
             setError(err.message || 'Erro ao redefinir senha')
-        } finally {
             setLoading(false)
         }
     }
