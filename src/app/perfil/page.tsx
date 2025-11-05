@@ -169,8 +169,34 @@ export default function PerfilPage() {
         try {
             if (FORCE_LOGS) console.error('[PERFIL] 📡 1/5 Buscando sessão...')
             const sessionStart = Date.now()
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-            if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Sessão obtida em', Date.now() - sessionStart, 'ms')
+            
+            // Criar timeout de 3 segundos para getSession
+            const sessionPromise = supabase.auth.getSession()
+            const timeoutPromise = new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error('Session timeout')), 3000)
+            )
+            
+            let session, sessionError
+            try {
+                const result = await Promise.race([sessionPromise, timeoutPromise])
+                session = result.data.session
+                sessionError = result.error
+                if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Sessão obtida em', Date.now() - sessionStart, 'ms')
+            } catch (timeoutErr) {
+                console.error('[PERFIL] ❌ TIMEOUT ao buscar sessão após 3s!')
+                // Tentar pegar sessão do cache local do Supabase
+                const cachedSession = await supabase.auth.getUser()
+                if (cachedSession.data.user) {
+                    console.error('[PERFIL] ✅ Usando sessão em cache')
+                    session = { user: cachedSession.data.user } as any
+                } else {
+                    console.error('[PERFIL] ❌ Sem sessão em cache, redirecionando')
+                    clearTimeout(timeoutId)
+                    isLoadingRef.current = false
+                    router.push('/')
+                    return
+                }
+            }
             
             if (FORCE_LOGS) console.error('[PERFIL] 📥 Sessão:', {
                 hasSession: !!session,
