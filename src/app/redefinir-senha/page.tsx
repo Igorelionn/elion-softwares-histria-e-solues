@@ -24,11 +24,8 @@ function RedefinirSenhaContent() {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                console.log('🔍 [REDEFINIR] Iniciando verificação de sessão/token...')
-                
                 // Obter hash da URL
                 const hash = window.location.hash
-                console.log('🔗 [REDEFINIR] Hash completo:', hash)
                 
                 // Parse hash parameters (Supabase coloca erros no hash)
                 const hashParams = new URLSearchParams(hash.substring(1))
@@ -37,16 +34,8 @@ function RedefinirSenhaContent() {
                 const hashErrorDescription = hashParams.get('error_description')
                 const hashAccessToken = hashParams.get('access_token')
                 
-                console.log('📊 [REDEFINIR] Hash params:', {
-                    error: hashError,
-                    error_code: hashErrorCode,
-                    error_description: hashErrorDescription,
-                    access_token: hashAccessToken ? 'present' : 'missing'
-                })
-                
                 // Verificar se há erro no hash
                 if (hashError || hashErrorCode) {
-                    console.error('❌ [REDEFINIR] Erro encontrado no hash:', hashErrorCode || hashError)
                     
                     let errorMessage = 'Link inválido ou expirado'
                     
@@ -63,7 +52,6 @@ function RedefinirSenhaContent() {
                 
                 // Verificar se há access_token no hash (token válido)
                 if (hashAccessToken) {
-                    console.log('✅ [REDEFINIR] Access token encontrado no hash')
                     setValidatingToken(false)
                     return
                 }
@@ -74,15 +62,8 @@ function RedefinirSenhaContent() {
                 const error_code = searchParams.get('error_code')
                 const error_description = searchParams.get('error_description')
                 
-                console.log('📊 [REDEFINIR] Query params:', {
-                    type,
-                    error_code,
-                    access_token: access_token ? 'present' : 'missing'
-                })
-                
                 // Verificar erro nos query params
                 if (error_code) {
-                    console.error('❌ [REDEFINIR] Erro nos query params:', error_code)
                     setError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
                     setValidatingToken(false)
                     return
@@ -90,39 +71,28 @@ function RedefinirSenhaContent() {
 
                 // Verificar token nos query params
                 if (type === 'recovery' && access_token) {
-                    console.log('✅ [REDEFINIR] Token de recuperação encontrado nos query params')
                     setValidatingToken(false)
                     return
                 }
 
                 // Verificar sessão existente
-                console.log('📡 [REDEFINIR] Verificando sessão do Supabase...')
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession()
                 
-                console.log('📥 [REDEFINIR] Resultado da sessão:', {
-                    hasSession: !!session,
-                    error: sessionError
-                })
-                
                 if (sessionError) {
-                    console.error('❌ [REDEFINIR] Erro ao obter sessão:', sessionError)
                     setError('Erro ao validar sessão. Tente novamente.')
                     setValidatingToken(false)
                     return
                 }
 
                 if (session) {
-                    console.log('✅ [REDEFINIR] Sessão válida encontrada')
                     setValidatingToken(false)
                     return
                 }
 
                 // Se chegou aqui, não há token nem sessão válida
-                console.warn('⚠️ [REDEFINIR] Nenhum token ou sessão válida encontrado')
                 setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
                 setValidatingToken(false)
             } catch (err) {
-                console.error('❌ [REDEFINIR] Erro ao verificar sessão:', err)
                 setError('Erro ao validar link. Tente novamente.')
                 setValidatingToken(false)
             }
@@ -139,70 +109,72 @@ function RedefinirSenhaContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
-        console.log('🚀 SUBMIT INICIADO')
-        console.log('Senha nova:', newPassword ? `${newPassword.length} caracteres` : 'vazia')
-        console.log('Confirmar senha:', confirmPassword ? `${confirmPassword.length} caracteres` : 'vazia')
+        console.log('🚀 [SUBMIT] Iniciando redefinição de senha')
         
         if (newPassword !== confirmPassword) {
-            console.error('❌ Senhas não coincidem')
+            console.error('❌ [SUBMIT] Senhas não coincidem')
             setError('As senhas não coincidem')
             return
         }
 
         if (newPassword.length < 6) {
-            console.error('❌ Senha muito curta')
+            console.error('❌ [SUBMIT] Senha muito curta')
             setError('A senha deve ter pelo menos 6 caracteres')
             return
         }
 
-        console.log('✅ Validações passaram, iniciando atualização...')
+        console.log('✅ [SUBMIT] Validações passaram')
         setLoading(true)
         setError('')
 
         try {
-            console.log('📡 Verificando sessão antes de atualizar...')
+            console.log('📡 [SUBMIT] Obtendo sessão...')
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
             
+            console.log('📥 [SUBMIT] Resultado da sessão:', {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                error: sessionError
+            })
+            
             if (sessionError) {
-                console.error('❌ Erro ao obter sessão:', sessionError)
+                console.error('❌ [SUBMIT] Erro ao obter sessão:', sessionError)
                 throw new Error('Erro ao validar sessão. Tente novamente.')
             }
 
             if (!session) {
-                console.error('❌ Nenhuma sessão encontrada')
+                console.error('❌ [SUBMIT] Nenhuma sessão encontrada')
                 throw new Error('Sessão expirada. Solicite um novo link de redefinição.')
             }
 
-            console.log('✅ Sessão válida encontrada')
-            console.log('📡 Chamando supabase.auth.updateUser...')
-            
+            console.log('📡 [SUBMIT] Chamando updateUser...')
             const { data, error } = await supabase.auth.updateUser({
                 password: newPassword
             })
 
-            console.log('📥 Resposta do updateUser:', { data, error })
+            console.log('📥 [SUBMIT] Resposta do updateUser:', { data, error })
 
             if (error) {
-                console.error('❌ Erro do Supabase:', error)
+                console.error('❌ [SUBMIT] Erro do Supabase:', error)
                 throw error
             }
 
-            console.log('✅ Senha atualizada com sucesso!')
+            console.log('✅ [SUBMIT] Senha atualizada com sucesso!')
             setSuccess(true)
             
             // Redirect to login after 3 seconds
-            console.log('⏱️ Redirecionando em 3 segundos...')
+            console.log('⏱️ [SUBMIT] Redirecionando em 3 segundos...')
             setTimeout(() => {
-                console.log('🔄 Redirecionando para home...')
+                console.log('🔄 [SUBMIT] Redirecionando...')
                 router.push('/')
             }, 3000)
         } catch (err: any) {
-            console.error('❌ ERRO NO CATCH:', err)
-            console.error('Mensagem:', err.message)
-            console.error('Stack:', err.stack)
+            console.error('❌ [SUBMIT] Erro no catch:', err)
+            console.error('📄 [SUBMIT] Mensagem:', err.message)
             setError(err.message || 'Erro ao redefinir senha')
+            setLoading(false)
         } finally {
-            console.log('🏁 FINALLY: Resetando loading state')
+            console.log('🏁 [SUBMIT] Finally executado, success:', success)
             // Só reseta o loading se não foi sucesso
             if (!success) {
                 setLoading(false)
