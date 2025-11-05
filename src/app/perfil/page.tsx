@@ -1064,7 +1064,7 @@ export default function PerfilPage() {
                         {/* Success Message dentro do dialog */}
                         {success && (
                             <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-800 text-sm">
-                                <p className="font-medium">✅ {success}</p>
+                                <p className="font-medium">{success}</p>
                                 <p className="text-xs mt-1">{t.profile.checkYourEmail}</p>
                             </div>
                         )}
@@ -1101,7 +1101,7 @@ export default function PerfilPage() {
                                         Enviando...
                                     </>
                                 ) : success ? (
-                                    'Link Enviado ✓'
+                                    'Link Enviado'
                                 ) : (
                                     'Enviar Link'
                                 )}
