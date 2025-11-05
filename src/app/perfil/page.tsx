@@ -38,6 +38,7 @@ export default function PerfilPage() {
     const [uploading, setUploading] = useState(false)
     
     const [fullName, setFullName] = useState('')
+    const [company, setCompany] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [localLanguage, setLocalLanguage] = useState(language)
     
@@ -68,10 +69,10 @@ export default function PerfilPage() {
         isCurrentlyLoading = false
         loadingInProgressRef.current = false
         
-        // 🛡️ TIMEOUT DE SEGURANÇA: Forçar liberação dos flags após 5s e tentar novamente
+        // 🛡️ TIMEOUT DE SEGURANÇA: Forçar liberação dos flags após 12s e tentar novamente
         const safetyTimeoutId = setTimeout(() => {
             if (isCurrentlyLoading || loadingInProgressRef.current) {
-                console.warn('[PERFIL] ⚠️ TIMEOUT DE SEGURANÇA: Forçando liberação dos flags após 5s')
+                console.warn('[PERFIL] ⚠️ TIMEOUT DE SEGURANÇA: Forçando liberação dos flags após 12s')
                 isCurrentlyLoading = false
                 loadingInProgressRef.current = false
                 isLoadingRef.current = false
@@ -102,7 +103,7 @@ export default function PerfilPage() {
                     })
                 }
             }
-        }, 5000)
+        }, 12000)
 
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
@@ -168,12 +169,12 @@ export default function PerfilPage() {
                 
                 const queryPromise = supabase
                     .from('users')
-                    .select('id, full_name, avatar_url, created_at, updated_at')
+                    .select('id, full_name, company, avatar_url, created_at, updated_at')
                     .eq('id', session.user.id)
                     .maybeSingle()
                 
                 const timeoutPromise = new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('Query timeout')), 5000)
+                    setTimeout(() => reject(new Error('Query timeout')), 10000)
                 )
                 
                 let profile, profileError
@@ -248,6 +249,7 @@ export default function PerfilPage() {
                 // ✅ SUCESSO: Dados retornados
                 if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados recebidos:', {
                     full_name: profile.full_name,
+                    company: profile.company,
                     avatar_url: profile.avatar_url ? 'SIM' : 'NÃO',
                     // @ts-ignore
                     language: profile.language,
@@ -256,8 +258,9 @@ export default function PerfilPage() {
                 })
 
                 if (isSubscribed) {
-                    setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                    setAvatarUrl(profile.avatar_url || '')
+                setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
+                setCompany(profile.company || '')
+                setAvatarUrl(profile.avatar_url || '')
                 
                     // Check if user has password
                     const identities = session.user.identities || []
@@ -690,9 +693,10 @@ export default function PerfilPage() {
         setSaving(true)
         setError('')
         setSuccess('')
-        
+
         console.log('[PERFIL] 📤 Dados a salvar:', {
             full_name: fullName,
+            company: company,
             language: localLanguage,
             userId: user.id
         })
@@ -706,6 +710,7 @@ export default function PerfilPage() {
                 .from('users')
                 .update({
                     full_name: fullName,
+                    company: company,
                     language: localLanguage,
                     updated_at: new Date().toISOString()
                 })
@@ -1003,8 +1008,24 @@ export default function PerfilPage() {
                                         </p>
                                     </div>
                                 </div>
-                                {/* Row 2: Language */}
-                                <div>
+                                {/* Row 2: Company and Language */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                    {/* Company */}
+                                    <div>
+                                        <Label htmlFor="company" className="text-gray-900 font-medium text-sm">
+                                            {t.profile.company}
+                                        </Label>
+                                        <Input
+                                            id="company"
+                                            type="text"
+                                            value={company}
+                                            onChange={(e) => setCompany(e.target.value)}
+                                            placeholder="Digite o nome da sua empresa"
+                                            className="mt-2 h-12 focus:outline-none focus:ring-0 focus:border-black"
+                                            style={{ boxShadow: 'none' }}
+                                        />
+                                    </div>
+
                                     {/* Language Selector */}
                                     <div>
                                         <Label htmlFor="language" className="text-gray-900 font-medium text-sm">
