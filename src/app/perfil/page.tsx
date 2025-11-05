@@ -50,18 +50,36 @@ export default function PerfilPage() {
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
-        checkUser()
+        console.log('🚀 [PERFIL] useEffect montado')
+        let isSubscribed = true
+        
+        const initProfile = async () => {
+            console.log('🎬 [PERFIL] Iniciando initProfile, isSubscribed:', isSubscribed)
+            if (isSubscribed) {
+                await checkUser()
+            }
+        }
+        
+        initProfile()
 
         // Listener para mudanças de autenticação
+        console.log('👂 [PERFIL] Registrando listener onAuthStateChange')
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔔 [PERFIL] Auth event recebido:', event, 'isSubscribed:', isSubscribed)
+            
+            if (!isSubscribed) return
+            
             // Don't interfere during save operation
             if (isSavingRef.current && event === 'USER_UPDATED') {
+                console.log('⏸️ [PERFIL] Ignorando USER_UPDATED durante save')
                 return
             }
 
             if (event === 'SIGNED_OUT' || !session) {
+                console.log('👋 [PERFIL] Usuário deslogado, redirecionando...')
                 router.push('/')
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                console.log('✅ [PERFIL] SIGNED_IN/TOKEN_REFRESHED, recarregando perfil...')
                 setUser(session.user)
                 // Recarregar dados do perfil
                 const { data: profile } = await supabase
@@ -70,7 +88,8 @@ export default function PerfilPage() {
                     .eq('id', session.user.id)
                     .single()
 
-                if (profile) {
+                if (profile && isSubscribed) {
+                    console.log('📥 [PERFIL] Perfil recarregado do evento:', profile)
                     setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                     setCompany(profile.company || '')
                     setAvatarUrl(profile.avatar_url || '')
@@ -81,9 +100,16 @@ export default function PerfilPage() {
                         setLocalLanguage(profile.language)
                     }
                 }
+                
+                // Garantir que loading seja desativado
+                if (isSubscribed) {
+                    console.log('✅ [PERFIL] Desativando loading após evento')
+                    setLoading(false)
+                }
             } else if (event === 'USER_UPDATED') {
+                console.log('🔄 [PERFIL] USER_UPDATED recebido')
                 // Update user state but don't reload profile data to avoid conflicts
-                if (session) {
+                if (session && isSubscribed) {
                     setUser(session.user)
                 }
             }
@@ -91,7 +117,7 @@ export default function PerfilPage() {
 
         // Listener para quando o usuário volta à aba
         const handleVisibilityChange = async () => {
-            if (!document.hidden) {
+            if (!document.hidden && isSubscribed) {
                 // Usuário voltou à aba, revalidar sessão
                 const { data: { session }, error } = await supabase.auth.getSession()
                 
@@ -110,7 +136,7 @@ export default function PerfilPage() {
                     .eq('id', session.user.id)
                     .single()
                 
-                if (profile?.avatar_url !== avatarUrl) {
+                if (profile?.avatar_url !== avatarUrl && isSubscribed) {
                     setAvatarUrl(profile?.avatar_url || '')
                 }
             }
@@ -119,10 +145,11 @@ export default function PerfilPage() {
         document.addEventListener('visibilitychange', handleVisibilityChange)
 
         return () => {
+            isSubscribed = false
             subscription.unsubscribe()
             document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
-    }, [router, avatarUrl])
+    }, [router])
 
     // Auto-clear success message
     useEffect(() => {
@@ -141,37 +168,61 @@ export default function PerfilPage() {
     }, [error])
 
     const checkUser = async () => {
+        console.log('🔍 [PERFIL] Iniciando checkUser...')
+        
+        // Timeout de segurança para evitar loading infinito
+        const timeoutId = setTimeout(() => {
+            console.warn('⚠️ [PERFIL] Timeout ao carregar perfil - desativando loading')
+            setLoading(false)
+        }, 10000) // 10 segundos
+
         try {
+            console.log('📡 [PERFIL] Buscando sessão...')
             const { data: { session } } = await supabase.auth.getSession()
             
             if (!session) {
+                console.error('❌ [PERFIL] Nenhuma sessão encontrada')
+                clearTimeout(timeoutId)
                 router.push('/')
                 return
             }
 
+            console.log('✅ [PERFIL] Sessão encontrada:', session.user.email)
+
             // Verificar se o usuário está bloqueado
+            console.log('🔒 [PERFIL] Verificando status de bloqueio...')
             const blockStatus = await checkUserBlockStatus(session.user.id)
+            console.log('📊 [PERFIL] Status de bloqueio:', blockStatus)
+            
             if (blockStatus.isBlocked) {
+                console.warn('⚠️ [PERFIL] Usuário bloqueado, redirecionando...')
+                clearTimeout(timeoutId)
                 await supabase.auth.signOut()
                 router.push('/conta-bloqueada')
                 return
             }
 
+            console.log('✅ [PERFIL] Usuário não está bloqueado')
             setUser(session.user)
             
             // Check if user has password (email provider) or only OAuth (Google)
             const identities = session.user.identities || []
             const hasEmailIdentity = identities.some(identity => identity.provider === 'email')
+            console.log('🔑 [PERFIL] Tem senha por email:', hasEmailIdentity)
             setHasPassword(hasEmailIdentity)
             
             // Load user profile data
+            console.log('📡 [PERFIL] Carregando dados do perfil...')
             const { data: profile, error: profileError } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', session.user.id)
                 .single()
 
+            console.log('📥 [PERFIL] Resposta do perfil:', { profile, profileError })
+
             if (profile) {
+                console.log('✅ [PERFIL] Perfil encontrado, atualizando estados...')
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                 setCompany(profile.company || '')
                 setAvatarUrl(profile.avatar_url || '')
@@ -179,6 +230,7 @@ export default function PerfilPage() {
                 // Check if user is admin
                 // @ts-ignore
                 setIsAdmin(profile.role === 'admin')
+                console.log('👤 [PERFIL] É admin:', profile.role === 'admin')
                 
                 // Load language preference and set both local and global
                 // @ts-ignore - language column exists but not in current types
@@ -187,13 +239,20 @@ export default function PerfilPage() {
                     setLocalLanguage(profile.language)
                     // @ts-ignore
                     setLanguage(profile.language)
+                    console.log('🌐 [PERFIL] Idioma carregado:', profile.language)
                 }
             } else {
+                console.warn('⚠️ [PERFIL] Nenhum perfil encontrado, usando dados do user_metadata')
                 setFullName(session.user.user_metadata?.full_name || '')
             }
+            
+            console.log('✅ [PERFIL] checkUser concluído com sucesso')
+            clearTimeout(timeoutId)
         } catch (err) {
-            console.error('Error loading profile:', err)
+            console.error('❌ [PERFIL] Erro ao carregar perfil:', err)
+            clearTimeout(timeoutId)
         } finally {
+            console.log('🏁 [PERFIL] Desativando loading state')
             setLoading(false)
         }
     }
@@ -208,26 +267,39 @@ export default function PerfilPage() {
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            setError('Por favor, selecione uma imagem válida')
+            setError('❌ Por favor, selecione uma imagem válida (JPG, PNG, GIF ou WEBP)')
             return
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            setError('A imagem deve ter no máximo 5MB')
+            setError('❌ A imagem deve ter no máximo 5MB')
             return
         }
 
         setUploading(true)
         setError('')
+        setSuccess('')
 
         try {
-            if (!user) return
+            if (!user) {
+                throw new Error('Usuário não autenticado')
+            }
 
             // Create unique file name
             const fileExt = file.name.split('.').pop()
             const fileName = `${user.id}-${Date.now()}.${fileExt}`
             const filePath = `avatars/${fileName}`
+
+            console.log('📤 Fazendo upload da imagem para Supabase Storage...')
+
+            // Verificar se o bucket existe e é público
+            const { data: buckets } = await supabase.storage.listBuckets()
+            const bucket = buckets?.find(b => b.name === 'profile-images')
+            
+            if (!bucket) {
+                throw new Error('❌ Bucket "profile-images" não encontrado. Por favor, crie um bucket público chamado "profile-images" no Supabase Storage.')
+            }
 
             // Upload to Supabase Storage
             const { data: uploadData, error: uploadError } = await supabase.storage
@@ -237,12 +309,26 @@ export default function PerfilPage() {
                     upsert: true
                 })
 
-            if (uploadError) throw uploadError
+            if (uploadError) {
+                console.error('❌ Erro no upload:', uploadError)
+                
+                if (uploadError.message.includes('Bucket not found')) {
+                    throw new Error('❌ Bucket "profile-images" não encontrado. Crie um bucket público no Supabase Storage.')
+                } else if (uploadError.message.includes('new row violates row-level security')) {
+                    throw new Error('❌ Erro de permissão. Configure as políticas de RLS do bucket "profile-images".')
+                } else {
+                    throw uploadError
+                }
+            }
+
+            console.log('✅ Upload concluído:', uploadData)
 
             // Get public URL
             const { data: { publicUrl } } = supabase.storage
                 .from('profile-images')
                 .getPublicUrl(filePath)
+
+            console.log('🔗 URL pública gerada:', publicUrl)
 
             // Update profile with new avatar URL
             const { error: updateError } = await supabase
@@ -250,13 +336,51 @@ export default function PerfilPage() {
                 .update({ avatar_url: publicUrl })
                 .eq('id', user.id)
 
-            if (updateError) throw updateError
+            if (updateError) {
+                console.error('❌ Erro ao atualizar perfil:', updateError)
+                throw updateError
+            }
 
             setAvatarUrl(publicUrl)
-            setSuccess('Foto de perfil atualizada com sucesso!')
+            setSuccess('✅ Foto de perfil atualizada com sucesso!')
+            
+            // Limpar input para permitir re-upload do mesmo arquivo
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
         } catch (err: any) {
-            console.error('Error uploading avatar:', err)
-            setError(err.message || 'Erro ao fazer upload da imagem')
+            console.error('❌ Error uploading avatar:', err)
+            
+            let errorMessage = 'Erro ao fazer upload da imagem'
+            
+            if (err.message.includes('Bucket not found') || err.message.includes('profile-images')) {
+                errorMessage = '❌ Bucket de imagens não configurado. Veja instruções no console.'
+                console.error(`
+🔧 CONFIGURAÇÃO NECESSÁRIA:
+                
+1. Acesse seu projeto no Supabase Dashboard
+2. Vá em Storage > Buckets
+3. Clique em "New bucket"
+4. Nome: profile-images
+5. ✅ Marque "Public bucket"
+6. Clique em "Create bucket"
+
+7. Vá em "Policies" do bucket
+8. Adicione política de INSERT:
+   - Nome: "Permitir usuários autenticados upload"
+   - Target roles: authenticated
+   - Policy: (auth.uid() = user_id)
+   
+9. Adicione política de SELECT:
+   - Nome: "Permitir leitura pública"
+   - Target roles: public
+   - Policy: true
+`)
+            } else {
+                errorMessage = err.message || errorMessage
+            }
+            
+            setError(errorMessage)
         } finally {
             setUploading(false)
         }
