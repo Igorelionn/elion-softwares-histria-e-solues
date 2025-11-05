@@ -466,7 +466,14 @@ export default function PerfilPage() {
         } catch (err: any) {
             console.error('❌ [RESET] Erro ao enviar link:', err)
             console.error('📄 [RESET] Mensagem de erro:', err.message)
-            setError(err.message || 'Erro ao enviar link de redefinição')
+            console.error('📊 [RESET] Status do erro:', err.status)
+            
+            // Tratar erro de rate limit de forma mais amigável
+            if (err.status === 429 || err.message?.includes('rate limit')) {
+                setError('⏰ Você solicitou muitos emails em pouco tempo. Por favor, aguarde alguns minutos e tente novamente.')
+            } else {
+                setError(err.message || 'Erro ao enviar link de redefinição')
+            }
         } finally {
             console.log('🏁 [RESET] Finalizando handleResetPassword')
             setSendingReset(false)
