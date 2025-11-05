@@ -19,6 +19,7 @@ function RedefinirSenhaContent() {
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState('')
+    const [tokenError, setTokenError] = useState('')
     const [validatingToken, setValidatingToken] = useState(true)
 
     useEffect(() => {
@@ -44,7 +45,7 @@ function RedefinirSenhaContent() {
                         errorMessage = decodeURIComponent(hashErrorDescription)
                     }
                     
-                    setError(errorMessage)
+                    setTokenError(errorMessage)
                     setValidatingToken(false)
                     return
                 }
@@ -63,7 +64,7 @@ function RedefinirSenhaContent() {
                 
                 // Verificar erro nos query params
                 if (error_code) {
-                    setError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
+                    setTokenError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
                     setValidatingToken(false)
                     return
                 }
@@ -78,7 +79,7 @@ function RedefinirSenhaContent() {
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession()
                 
                 if (sessionError) {
-                    setError('Erro ao validar sessão. Tente novamente.')
+                    setTokenError('Erro ao validar sessão. Tente novamente.')
                     setValidatingToken(false)
                     return
                 }
@@ -89,10 +90,10 @@ function RedefinirSenhaContent() {
                 }
 
                 // Se chegou aqui, não há token nem sessão válida
-                setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
+                setTokenError('Link inválido ou expirado. Solicite um novo link de redefinição.')
                 setValidatingToken(false)
             } catch (err) {
-                setError('Erro ao validar link. Tente novamente.')
+                setTokenError('Erro ao validar link. Tente novamente.')
                 setValidatingToken(false)
             }
         }
@@ -204,7 +205,7 @@ function RedefinirSenhaContent() {
         )
     }
 
-    if (error && !validatingToken) {
+    if (tokenError && !validatingToken) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-8">
                 <div className="max-w-xl w-full text-center">
@@ -213,7 +214,7 @@ function RedefinirSenhaContent() {
                         Link Inválido ou Expirado
                     </h1>
                     <p className="text-gray-600 text-lg mb-8">
-                        {error}
+                        {tokenError}
                     </p>
                     <Button
                         onClick={() => router.push('/')}
