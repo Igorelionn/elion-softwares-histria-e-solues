@@ -38,7 +38,6 @@ export default function PerfilPage() {
     const [uploading, setUploading] = useState(false)
     
     const [fullName, setFullName] = useState('')
-    const [company, setCompany] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [localLanguage, setLocalLanguage] = useState(language)
     
@@ -104,7 +103,7 @@ export default function PerfilPage() {
                 }
             }
         }, 5000)
-        
+
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
             const now = Date.now()
@@ -112,9 +111,9 @@ export default function PerfilPage() {
             // 🛡️ PROTEÇÃO 1: Debounce - Evitar chamadas muito próximas
             if (now - lastLoadTimestamp < DEBOUNCE_TIME) {
                 if (FORCE_LOGS) console.error('[PERFIL] 🚫 Debounce: Chamada ignorada (muito próxima da anterior)')
-                return
-            }
-            
+                    return
+                }
+
             // 🛡️ PROTEÇÃO 2: Já está carregando? Ignorar
             if (isCurrentlyLoading || loadingInProgressRef.current) {
                 if (FORCE_LOGS) console.error('[PERFIL] 🚫 Carga já em andamento, ignorando duplicata')
@@ -169,7 +168,7 @@ export default function PerfilPage() {
                 
                 const queryPromise = supabase
                     .from('users')
-                    .select('id, full_name, company, avatar_url, created_at, updated_at')
+                    .select('id, full_name, avatar_url, created_at, updated_at')
                     .eq('id', session.user.id)
                     .maybeSingle()
                 
@@ -221,8 +220,8 @@ export default function PerfilPage() {
                     
                     // Mostrar erro mas permitir uso básico
                     setError('Erro ao carregar dados completos do perfil. Alguns dados podem estar desatualizados.')
-                    return
-                }
+                return
+            }
 
                 // ✅ TRATAMENTO DE VAZIO: Se não retornou dados
                 if (!profile) {
@@ -234,10 +233,10 @@ export default function PerfilPage() {
                     setFullName(session.user.user_metadata?.full_name || session.user.email || '')
                     
                     // Check if user has password mesmo sem perfil
-                    const identities = session.user.identities || []
+            const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                    setHasPassword(hasEmailIdentity)
-                    
+            setHasPassword(hasEmailIdentity)
+            
                     setLoading(false)
                     isLoadingRef.current = false
                     isCurrentlyLoading = false
@@ -249,7 +248,6 @@ export default function PerfilPage() {
                 // ✅ SUCESSO: Dados retornados
                 if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados recebidos:', {
                     full_name: profile.full_name,
-                    company: profile.company,
                     avatar_url: profile.avatar_url ? 'SIM' : 'NÃO',
                     // @ts-ignore
                     language: profile.language,
@@ -259,27 +257,26 @@ export default function PerfilPage() {
 
                 if (isSubscribed) {
                     setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                    setCompany(profile.company || '')
                     setAvatarUrl(profile.avatar_url || '')
-                    
+                
                     // Check if user has password
                     const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
                     setHasPassword(hasEmailIdentity)
                     
                     // @ts-ignore
-                    if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
-                        // @ts-ignore
-                        setLocalLanguage(profile.language)
-                        // @ts-ignore
-                        setLanguage(profile.language)
-                    }
+                if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
+                    // @ts-ignore
+                    setLocalLanguage(profile.language)
+                    // @ts-ignore
+                    setLanguage(profile.language)
+                }
                     
                     // @ts-ignore
                     setIsAdmin(profile.role === 'admin')
                     
                     if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO COMPLETO em', Date.now() - startTime, 'ms')
-                } else {
+            } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado durante carregamento')
                 }
             } catch (err: any) {
@@ -291,11 +288,11 @@ export default function PerfilPage() {
                     console.error('[PERFIL] 🕒 TIMEOUT na query ao banco')
                     setError('Tempo esgotado ao carregar perfil. Tente novamente.')
                 }
-            } finally {
+        } finally {
                 // ✅ SEMPRE desativar loading e flags (GARANTIDO)
                 if (isSubscribed) {
                     if (FORCE_LOGS) console.error('[PERFIL] 🏁 Loading OFF (finally)')
-                    setLoading(false)
+            setLoading(false)
                     isLoadingRef.current = false
                 } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, não alterando loading')
@@ -611,7 +608,7 @@ export default function PerfilPage() {
             
             // Aguardar 2 segundos antes de fechar para o usuário ver a mensagem
             setTimeout(() => {
-                setShowResetDialog(false)
+            setShowResetDialog(false)
             }, 2000)
             
         } catch (err: any) {
@@ -619,7 +616,7 @@ export default function PerfilPage() {
             if (err.status === 429 || err.message?.includes('rate limit')) {
                 setError('Você solicitou muitos emails em pouco tempo. Por favor, aguarde alguns minutos e tente novamente.')
             } else {
-                setError(err.message || 'Erro ao enviar link de redefinição')
+            setError(err.message || 'Erro ao enviar link de redefinição')
             }
         } finally {
             setSendingReset(false)
@@ -696,7 +693,6 @@ export default function PerfilPage() {
         
         console.log('[PERFIL] 📤 Dados a salvar:', {
             full_name: fullName,
-            company: company,
             language: localLanguage,
             userId: user.id
         })
@@ -710,12 +706,11 @@ export default function PerfilPage() {
                 .from('users')
                 .update({
                     full_name: fullName,
-                    company: company,
                     language: localLanguage,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', user.id)
-            
+
             const timeoutPromise = new Promise<never>((_, reject) => 
                 setTimeout(() => reject(new Error('Update timeout')), 5000)
             )
@@ -761,7 +756,7 @@ export default function PerfilPage() {
             if (err?.message?.includes('timeout') || err?.message?.includes('Timeout')) {
                 setError('Tempo esgotado ao salvar. Tente novamente.')
             } else {
-                setError(err.message || 'Erro ao atualizar perfil')
+            setError(err.message || 'Erro ao atualizar perfil')
             }
         } finally {
             console.log('[PERFIL] 🏁 Finalizando handleSubmit, resetando estado saving')
@@ -1008,24 +1003,8 @@ export default function PerfilPage() {
                                         </p>
                                     </div>
                                 </div>
-                                {/* Row 2: Company and Language */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                    {/* Company */}
-                                    <div>
-                                        <Label htmlFor="company" className="text-gray-900 font-medium text-sm">
-                                            {t.profile.company}
-                                        </Label>
-                                        <Input
-                                            id="company"
-                                            type="text"
-                                            value={company}
-                                            onChange={(e) => setCompany(e.target.value)}
-                                            placeholder="Digite o nome da sua empresa"
-                                            className="mt-2 h-12 focus:outline-none focus:ring-0 focus:border-black"
-                                            style={{ boxShadow: 'none' }}
-                                        />
-                                    </div>
-
+                                {/* Row 2: Language */}
+                                <div>
                                     {/* Language Selector */}
                                     <div>
                                         <Label htmlFor="language" className="text-gray-900 font-medium text-sm">
