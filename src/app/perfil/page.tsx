@@ -50,11 +50,9 @@ export default function PerfilPage() {
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
-        console.log('🚀 [PERFIL] useEffect montado')
         let isSubscribed = true
         
         const initProfile = async () => {
-            console.log('🎬 [PERFIL] Iniciando initProfile, isSubscribed:', isSubscribed)
             if (isSubscribed) {
                 await checkUser()
             }
@@ -63,23 +61,17 @@ export default function PerfilPage() {
         initProfile()
 
         // Listener para mudanças de autenticação
-        console.log('👂 [PERFIL] Registrando listener onAuthStateChange')
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('🔔 [PERFIL] Auth event recebido:', event, 'isSubscribed:', isSubscribed)
-            
             if (!isSubscribed) return
             
             // Don't interfere during save operation
             if (isSavingRef.current && event === 'USER_UPDATED') {
-                console.log('⏸️ [PERFIL] Ignorando USER_UPDATED durante save')
                 return
             }
 
             if (event === 'SIGNED_OUT' || !session) {
-                console.log('👋 [PERFIL] Usuário deslogado, redirecionando...')
                 router.push('/')
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                console.log('✅ [PERFIL] SIGNED_IN/TOKEN_REFRESHED, recarregando perfil...')
                 setUser(session.user)
                 // Recarregar dados do perfil
                 const { data: profile } = await supabase
@@ -89,7 +81,6 @@ export default function PerfilPage() {
                     .single()
 
                 if (profile && isSubscribed) {
-                    console.log('📥 [PERFIL] Perfil recarregado do evento:', profile)
                     setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                     setCompany(profile.company || '')
                     setAvatarUrl(profile.avatar_url || '')
@@ -103,11 +94,9 @@ export default function PerfilPage() {
                 
                 // Garantir que loading seja desativado
                 if (isSubscribed) {
-                    console.log('✅ [PERFIL] Desativando loading após evento')
                     setLoading(false)
                 }
             } else if (event === 'USER_UPDATED') {
-                console.log('🔄 [PERFIL] USER_UPDATED recebido')
                 // Update user state but don't reload profile data to avoid conflicts
                 if (session && isSubscribed) {
                     setUser(session.user)
@@ -168,61 +157,50 @@ export default function PerfilPage() {
     }, [error])
 
     const checkUser = async () => {
-        console.log('🔍 [PERFIL] Iniciando checkUser...')
-        
         // Timeout de segurança para evitar loading infinito
         const timeoutId = setTimeout(() => {
-            console.warn('⚠️ [PERFIL] Timeout ao carregar perfil - desativando loading')
             setLoading(false)
         }, 10000) // 10 segundos
 
         try {
-            console.log('📡 [PERFIL] Buscando sessão...')
             const { data: { session } } = await supabase.auth.getSession()
             
             if (!session) {
-                console.error('❌ [PERFIL] Nenhuma sessão encontrada')
                 clearTimeout(timeoutId)
                 router.push('/')
                 return
             }
 
-            console.log('✅ [PERFIL] Sessão encontrada:', session.user.email)
-
             // Verificar se o usuário está bloqueado
-            console.log('🔒 [PERFIL] Verificando status de bloqueio...')
-            const blockStatus = await checkUserBlockStatus(session.user.id)
-            console.log('📊 [PERFIL] Status de bloqueio:', blockStatus)
-            
-            if (blockStatus.isBlocked) {
-                console.warn('⚠️ [PERFIL] Usuário bloqueado, redirecionando...')
-                clearTimeout(timeoutId)
-                await supabase.auth.signOut()
-                router.push('/conta-bloqueada')
-                return
+            try {
+                const blockStatus = await checkUserBlockStatus(session.user.id)
+                
+                if (blockStatus.isBlocked) {
+                    clearTimeout(timeoutId)
+                    await supabase.auth.signOut()
+                    router.push('/conta-bloqueada')
+                    return
+                }
+            } catch (blockError) {
+                // Se falhar ao verificar bloqueio, continuar normalmente
+                console.error('Erro ao verificar bloqueio:', blockError)
             }
 
-            console.log('✅ [PERFIL] Usuário não está bloqueado')
             setUser(session.user)
             
             // Check if user has password (email provider) or only OAuth (Google)
             const identities = session.user.identities || []
             const hasEmailIdentity = identities.some(identity => identity.provider === 'email')
-            console.log('🔑 [PERFIL] Tem senha por email:', hasEmailIdentity)
             setHasPassword(hasEmailIdentity)
             
             // Load user profile data
-            console.log('📡 [PERFIL] Carregando dados do perfil...')
             const { data: profile, error: profileError } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', session.user.id)
                 .single()
 
-            console.log('📥 [PERFIL] Resposta do perfil:', { profile, profileError })
-
             if (profile) {
-                console.log('✅ [PERFIL] Perfil encontrado, atualizando estados...')
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                 setCompany(profile.company || '')
                 setAvatarUrl(profile.avatar_url || '')
@@ -230,7 +208,6 @@ export default function PerfilPage() {
                 // Check if user is admin
                 // @ts-ignore
                 setIsAdmin(profile.role === 'admin')
-                console.log('👤 [PERFIL] É admin:', profile.role === 'admin')
                 
                 // Load language preference and set both local and global
                 // @ts-ignore - language column exists but not in current types
@@ -239,20 +216,16 @@ export default function PerfilPage() {
                     setLocalLanguage(profile.language)
                     // @ts-ignore
                     setLanguage(profile.language)
-                    console.log('🌐 [PERFIL] Idioma carregado:', profile.language)
                 }
             } else {
-                console.warn('⚠️ [PERFIL] Nenhum perfil encontrado, usando dados do user_metadata')
                 setFullName(session.user.user_metadata?.full_name || '')
             }
             
-            console.log('✅ [PERFIL] checkUser concluído com sucesso')
             clearTimeout(timeoutId)
         } catch (err) {
-            console.error('❌ [PERFIL] Erro ao carregar perfil:', err)
+            console.error('Erro ao carregar perfil:', err)
             clearTimeout(timeoutId)
         } finally {
-            console.log('🏁 [PERFIL] Desativando loading state')
             setLoading(false)
         }
     }
@@ -418,11 +391,7 @@ export default function PerfilPage() {
     }
 
     const handleResetPassword = async () => {
-        console.log('🔑 [RESET] Iniciando handleResetPassword')
-        console.log('📧 [RESET] Email do usuário:', user?.email)
-        
         if (!user?.email) {
-            console.error('❌ [RESET] Nenhum email encontrado')
             return
         }
 
@@ -430,9 +399,6 @@ export default function PerfilPage() {
         setError('')
 
         try {
-            console.log('📡 [RESET] Chamando resetPasswordForEmail...')
-            console.log('🌐 [RESET] redirectTo:', `${window.location.origin}/redefinir-senha`)
-            
             // Send password reset email (or set password email for Google users)
             // Note: Supabase has built-in rate limiting to prevent abuse
             const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(
@@ -442,32 +408,21 @@ export default function PerfilPage() {
                 }
             )
 
-            console.log('📥 [RESET] Resposta do Supabase:', { data, resetError })
-
             if (resetError) {
-                console.error('❌ [RESET] Erro do Supabase:', resetError)
                 throw resetError
             }
 
-            console.log('✅ [RESET] Email enviado com sucesso!')
-            
             // Mostrar mensagem de sucesso e fechar dialog após 2 segundos
             const successMessage = hasPassword ? t.profile.resetEmailSent : t.profile.defineEmailSent
-            console.log('💬 [RESET] Mensagem de sucesso:', successMessage)
             
             setSuccess(successMessage)
             
             // Aguardar 2 segundos antes de fechar para o usuário ver a mensagem
             setTimeout(() => {
-                console.log('🔒 [RESET] Fechando dialog')
                 setShowResetDialog(false)
             }, 2000)
             
         } catch (err: any) {
-            console.error('❌ [RESET] Erro ao enviar link:', err)
-            console.error('📄 [RESET] Mensagem de erro:', err.message)
-            console.error('📊 [RESET] Status do erro:', err.status)
-            
             // Tratar erro de rate limit de forma mais amigável
             if (err.status === 429 || err.message?.includes('rate limit')) {
                 setError('Você solicitou muitos emails em pouco tempo. Por favor, aguarde alguns minutos e tente novamente.')
@@ -475,7 +430,6 @@ export default function PerfilPage() {
                 setError(err.message || 'Erro ao enviar link de redefinição')
             }
         } finally {
-            console.log('🏁 [RESET] Finalizando handleResetPassword')
             setSendingReset(false)
         }
     }
