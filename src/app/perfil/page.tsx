@@ -20,7 +20,9 @@ const FORCE_LOGS = true
 // 🛡️ CONTROLE GLOBAL: Evitar múltiplas cargas simultâneas
 let lastLoadTimestamp = 0
 let isCurrentlyLoading = false
+let loadAttempts = 0
 const DEBOUNCE_TIME = 100 // ms (reduzido para ser mais responsivo)
+const MAX_LOAD_ATTEMPTS = 2
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -77,7 +79,17 @@ export default function PerfilPage() {
                 
                 // Tentar carregar novamente se ainda estiver com loading true
                 if (loading && isSubscribed) {
-                    console.warn('[PERFIL] 🔄 Tentando carregar novamente após timeout...')
+                    loadAttempts++
+                    
+                    // Se atingiu máximo de tentativas, desistir
+                    if (loadAttempts >= MAX_LOAD_ATTEMPTS) {
+                        console.error('[PERFIL] ❌ Máximo de tentativas atingido, desativando loading')
+                        setLoading(false)
+                        setError('Erro ao carregar perfil. Por favor, recarregue a página.')
+                        return
+                    }
+                    
+                    console.warn(`[PERFIL] 🔄 Tentando carregar novamente (${loadAttempts}/${MAX_LOAD_ATTEMPTS})...`)
                     supabase.auth.getSession().then(({ data }) => {
                         if (data.session && isSubscribed) {
                             carregarPerfil(data.session)
@@ -151,12 +163,27 @@ export default function PerfilPage() {
                 // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
                 
-                // ✅ Usar maybeSingle() em vez de single() para evitar erro se não existir
-                const { data: profile, error: profileError } = await supabase
+                // ✅ Query com timeout de 3s para evitar travamento
+                const queryPromise = supabase
                     .from('users')
                     .select('*')
                     .eq('id', session.user.id)
                     .maybeSingle()
+                
+                const timeoutPromise = new Promise<never>((_, reject) => 
+                    setTimeout(() => reject(new Error('Query timeout')), 3000)
+                )
+                
+                let profile, profileError
+                try {
+                    const result = await Promise.race([queryPromise, timeoutPromise])
+                    profile = result.data
+                    profileError = result.error
+                } catch (err: any) {
+                    console.error('[PERFIL] ❌ Query timeout ou erro:', err)
+                    profile = null
+                    profileError = { message: err?.message || 'Timeout na query' }
+                }
                 
                 const loadTime = Date.now() - startTime
                 if (FORCE_LOGS) console.error('[PERFIL] 📥 Query completada em', loadTime, 'ms')
@@ -236,9 +263,15 @@ export default function PerfilPage() {
                 } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado durante carregamento')
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[PERFIL] ❌ Exceção ao carregar perfil:', err)
                 console.error('[PERFIL] 📋 Stack trace:', err instanceof Error ? err.stack : 'N/A')
+                
+                // Se for timeout, mostrar mensagem específica
+                if (err?.message?.includes('timeout') || err?.message?.includes('Timeout')) {
+                    console.error('[PERFIL] 🕒 TIMEOUT na query ao banco')
+                    setError('Tempo esgotado ao carregar perfil. Tente novamente.')
+                }
             } finally {
                 // ✅ SEMPRE desativar loading e flags (GARANTIDO)
                 if (isSubscribed) {
@@ -252,6 +285,10 @@ export default function PerfilPage() {
                 // 🛡️ SEMPRE limpar flags globais
                 isCurrentlyLoading = false
                 loadingInProgressRef.current = false
+                
+                // 🔄 Resetar contador de tentativas ao completar
+                loadAttempts = 0
+                
                 if (FORCE_LOGS) console.error('[PERFIL] 🔓 Flags de controle liberados')
             }
         }
