@@ -24,51 +24,80 @@ function RedefinirSenhaContent() {
     useEffect(() => {
         const checkSession = async () => {
             try {
+                console.log('🔍 Checking session...')
+                console.log('URL params:', {
+                    type: searchParams.get('type'),
+                    error_code: searchParams.get('error_code'),
+                    access_token: searchParams.get('access_token') ? 'present' : 'missing'
+                })
+
                 // Verificar se há um erro nos parâmetros da URL
                 const error_code = searchParams.get('error_code')
                 const error_description = searchParams.get('error_description')
                 
                 if (error_code) {
+                    console.error('❌ Error in URL:', error_code)
                     setError(decodeURIComponent(error_description || 'Link inválido ou expirado'))
                     setValidatingToken(false)
                     return
                 }
 
-                // Verificar se há um token de recuperação na URL (type=recovery)
+                // Verificar se há um token de recuperação na URL
                 const type = searchParams.get('type')
                 const access_token = searchParams.get('access_token')
+                const hash = window.location.hash
                 
-                if (type === 'recovery' && access_token) {
-                    // Token válido do email, permitir redefinição
+                console.log('Hash:', hash)
+
+                // Verificar se há token no hash (formato antigo do Supabase)
+                if (hash.includes('access_token')) {
+                    console.log('✅ Token found in hash')
                     setValidatingToken(false)
                     return
                 }
 
-                // Se não há token de recovery, verificar sessão normal
+                // Verificar se há token nos query params
+                if (type === 'recovery' && access_token) {
+                    console.log('✅ Recovery token found in params')
+                    setValidatingToken(false)
+                    return
+                }
+
+                // Verificar sessão
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession()
                 
+                console.log('Session:', session ? 'present' : 'missing')
+                
                 if (sessionError) {
-                    console.error('Session error:', sessionError)
+                    console.error('❌ Session error:', sessionError)
                     setError('Erro ao validar sessão. Tente novamente.')
                     setValidatingToken(false)
                     return
                 }
 
-                if (!session && !access_token) {
-                    setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
+                if (session) {
+                    console.log('✅ Valid session found')
                     setValidatingToken(false)
                     return
                 }
 
+                // Se chegou aqui, não há token nem sessão válida
+                console.warn('⚠️ No valid token or session found')
+                setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
                 setValidatingToken(false)
             } catch (err) {
-                console.error('Error checking session:', err)
+                console.error('❌ Error checking session:', err)
                 setError('Erro ao validar link. Tente novamente.')
                 setValidatingToken(false)
             }
         }
 
-        checkSession()
+        // Delay de 500ms para garantir que a URL está completamente carregada
+        const timer = setTimeout(() => {
+            checkSession()
+        }, 500)
+
+        return () => clearTimeout(timer)
     }, [searchParams])
 
     const handleSubmit = async (e: React.FormEvent) => {
