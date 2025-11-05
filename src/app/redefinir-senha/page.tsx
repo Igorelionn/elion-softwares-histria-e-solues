@@ -108,74 +108,63 @@ function RedefinirSenhaContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
-        console.log('🚀 SUBMIT INICIADO')
-        console.log('Senha nova:', newPassword ? `${newPassword.length} caracteres` : 'vazia')
-        console.log('Confirmar senha:', confirmPassword ? `${confirmPassword.length} caracteres` : 'vazia')
-        
         if (newPassword !== confirmPassword) {
-            console.error('❌ Senhas não coincidem')
             setError('As senhas não coincidem')
             return
         }
 
         if (newPassword.length < 6) {
-            console.error('❌ Senha muito curta')
             setError('A senha deve ter pelo menos 6 caracteres')
             return
         }
 
-        console.log('✅ Validações passaram, iniciando atualização...')
         setLoading(true)
         setError('')
 
         try {
-            console.log('📡 Verificando sessão antes de atualizar...')
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
             
             if (sessionError) {
-                console.error('❌ Erro ao obter sessão:', sessionError)
                 throw new Error('Erro ao validar sessão. Tente novamente.')
             }
 
             if (!session) {
-                console.error('❌ Nenhuma sessão encontrada')
                 throw new Error('Sessão expirada. Solicite um novo link de redefinição.')
             }
 
-            console.log('✅ Sessão válida encontrada')
-            console.log('📡 Chamando supabase.auth.updateUser...')
-            
             const { data, error } = await supabase.auth.updateUser({
                 password: newPassword
             })
 
-            console.log('📥 Resposta do updateUser:', { data, error })
-
             if (error) {
-                console.error('❌ Erro do Supabase:', error)
+                // Detectar se o erro é de senha duplicada
+                if (error.message?.toLowerCase().includes('same') || 
+                    error.message?.toLowerCase().includes('password') ||
+                    error.status === 422) {
+                    throw new Error('A nova senha não pode ser igual à senha anterior. Por favor, escolha uma senha diferente.')
+                }
                 throw error
             }
 
-            console.log('✅ Senha atualizada com sucesso!')
+            // Sucesso - desativar loading antes de mostrar tela de sucesso
+            setLoading(false)
             setSuccess(true)
             
             // Redirect to login after 3 seconds
-            console.log('⏱️ Redirecionando em 3 segundos...')
             setTimeout(() => {
-                console.log('🔄 Redirecionando para home...')
                 router.push('/')
             }, 3000)
         } catch (err: any) {
-            console.error('❌ ERRO NO CATCH:', err)
-            console.error('Mensagem:', err.message)
-            console.error('Stack:', err.stack)
-            setError(err.message || 'Erro ao redefinir senha')
-        } finally {
-            console.log('🏁 FINALLY: Resetando loading state')
-            // Só reseta o loading se não foi sucesso
-            if (!success) {
-                setLoading(false)
+            // Tratamento específico para mensagens de erro do Supabase
+            let errorMessage = err.message || 'Erro ao redefinir senha'
+            
+            // Se a mensagem contém "same password", tratar especificamente
+            if (errorMessage.toLowerCase().includes('same') || errorMessage.toLowerCase().includes('identical')) {
+                errorMessage = 'A nova senha não pode ser igual à senha anterior. Por favor, escolha uma senha diferente.'
             }
+            
+            setError(errorMessage)
+            setLoading(false)
         }
     }
 
@@ -196,16 +185,19 @@ function RedefinirSenhaContent() {
                 <div className="max-w-xl w-full text-center">
                     <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-6" />
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                        Senha Redefinida com Sucesso!
+                        Senha Alterada com Sucesso!
                     </h1>
-                    <p className="text-gray-600 text-lg mb-8">
+                    <p className="text-gray-600 text-lg mb-4">
+                        Sua senha foi redefinida com sucesso.
+                    </p>
+                    <p className="text-gray-500 text-base mb-8">
                         Você será redirecionado para a página inicial em alguns segundos...
                     </p>
                     <Button
                         onClick={() => router.push('/')}
                         className="h-14 px-8 text-base bg-green-600 text-white hover:bg-green-700"
                     >
-                        Ir para Página Inicial
+                        Ir para Página Inicial Agora
                     </Button>
                 </div>
             </div>
