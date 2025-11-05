@@ -418,29 +418,57 @@ export default function PerfilPage() {
     }
 
     const handleResetPassword = async () => {
-        if (!user?.email) return
+        console.log('🔑 [RESET] Iniciando handleResetPassword')
+        console.log('📧 [RESET] Email do usuário:', user?.email)
+        
+        if (!user?.email) {
+            console.error('❌ [RESET] Nenhum email encontrado')
+            return
+        }
 
         setSendingReset(true)
         setError('')
 
         try {
+            console.log('📡 [RESET] Chamando resetPasswordForEmail...')
+            console.log('🌐 [RESET] redirectTo:', `${window.location.origin}/redefinir-senha`)
+            
             // Send password reset email (or set password email for Google users)
             // Note: Supabase has built-in rate limiting to prevent abuse
-            const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+            const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(
                 user.email,
                 {
                     redirectTo: `${window.location.origin}/redefinir-senha`,
                 }
             )
 
-            if (resetError) throw resetError
+            console.log('📥 [RESET] Resposta do Supabase:', { data, resetError })
 
-            setSuccess(hasPassword ? t.profile.resetEmailSent : t.profile.defineEmailSent)
-            setShowResetDialog(false)
+            if (resetError) {
+                console.error('❌ [RESET] Erro do Supabase:', resetError)
+                throw resetError
+            }
+
+            console.log('✅ [RESET] Email enviado com sucesso!')
+            
+            // Mostrar mensagem de sucesso e fechar dialog após 2 segundos
+            const successMessage = hasPassword ? t.profile.resetEmailSent : t.profile.defineEmailSent
+            console.log('💬 [RESET] Mensagem de sucesso:', successMessage)
+            
+            setSuccess(successMessage)
+            
+            // Aguardar 2 segundos antes de fechar para o usuário ver a mensagem
+            setTimeout(() => {
+                console.log('🔒 [RESET] Fechando dialog')
+                setShowResetDialog(false)
+            }, 2000)
+            
         } catch (err: any) {
-            console.error('Error sending reset:', err)
+            console.error('❌ [RESET] Erro ao enviar link:', err)
+            console.error('📄 [RESET] Mensagem de erro:', err.message)
             setError(err.message || 'Erro ao enviar link de redefinição')
         } finally {
+            console.log('🏁 [RESET] Finalizando handleResetPassword')
             setSendingReset(false)
         }
     }
@@ -1008,7 +1036,13 @@ export default function PerfilPage() {
             </Dialog>
 
             {/* Reset Password Dialog */}
-            <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+            <Dialog open={showResetDialog} onOpenChange={(open) => {
+                setShowResetDialog(open)
+                if (!open) {
+                    setSuccess('')
+                    setError('')
+                }
+            }}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>{hasPassword ? 'Redefinir Senha' : 'Definir Senha'}</DialogTitle>
@@ -1020,12 +1054,29 @@ export default function PerfilPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
+                        {/* Success Message dentro do dialog */}
+                        {success && (
+                            <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-800 text-sm">
+                                <p className="font-medium">✅ {success}</p>
+                                <p className="text-xs mt-1">{t.profile.checkYourEmail}</p>
+                            </div>
+                        )}
+                        
+                        {/* Error Message dentro do dialog */}
+                        {error && (
+                            <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-sm">
+                                {error}
+                            </div>
+                        )}
+                        
                         <div className="flex justify-end gap-3">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => {
                                     setShowResetDialog(false)
+                                    setSuccess('')
+                                    setError('')
                                 }}
                                 disabled={sendingReset}
                             >
@@ -1034,7 +1085,7 @@ export default function PerfilPage() {
                             <Button
                                 type="button"
                                 onClick={handleResetPassword}
-                                disabled={sendingReset}
+                                disabled={sendingReset || !!success}
                                 className="bg-black text-white hover:bg-gray-800"
                             >
                                 {sendingReset ? (
@@ -1042,6 +1093,8 @@ export default function PerfilPage() {
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                         Enviando...
                                     </>
+                                ) : success ? (
+                                    'Link Enviado ✓'
                                 ) : (
                                     'Enviar Link'
                                 )}
