@@ -17,15 +17,11 @@ import { useTranslation } from '@/contexts/LanguageContext'
 // Flag para forçar logs em produção
 const FORCE_LOGS = true
 
-// Ref global para controlar se o listener está ativo
-let listenerActiveGlobal = false
-
 export default function PerfilPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const isSavingRef = useRef(false)
     const isLoadingRef = useRef(false)
-    const listenerActiveRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
     
     const [user, setUser] = useState<SupabaseUser | null>(null)
@@ -59,37 +55,6 @@ export default function PerfilPage() {
     useEffect(() => {
         if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO')
         let isSubscribed = true
-        let authSubscription: { unsubscribe: () => void } | null = null
-        
-        // AbortController para cancelar requisições ao desmontar
-        const abortController = new AbortController()
-        
-        // Verificar se já existe um listener ativo (de montagem anterior)
-        if (listenerActiveGlobal) {
-            console.warn('[PERFIL] ⚠️ Listener anterior ainda ativo! Aguardando limpeza...')
-            // Aguardar um pouco para o listener anterior ser limpo
-            setTimeout(() => {
-                if (!listenerActiveGlobal && isSubscribed) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener anterior limpo, continuando')
-                    initProfile()
-                    setupListener()
-                }
-            }, 100)
-            return
-        }
-        
-        const initProfile = async () => {
-            // Evitar checkUser duplicado se listener já está ativo
-            if (listenerActiveRef.current) {
-                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Listener já ativo, pulando checkUser()')
-                return
-            }
-            
-            if (FORCE_LOGS) console.error('[PERFIL] 🎬 Init profile...')
-            if (isSubscribed) {
-                await checkUser(abortController.signal)
-            }
-        }
         
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
@@ -220,126 +185,92 @@ export default function PerfilPage() {
             }
         }
         
-        const setupListener = () => {
-            // Configurar listener de autenticação (apenas uma vez)
-            if (FORCE_LOGS) console.error('[PERFIL] 👂 Configurando listener...')
-            
-            // Marcar listener como ativo
-            listenerActiveRef.current = true
-            listenerActiveGlobal = true
-            
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-                if (FORCE_LOGS) console.error('[PERFIL] 🔔 Event:', event, 'subscribed:', isSubscribed, 'saving:', isSavingRef.current, 'isLoading:', isLoadingRef.current)
-                
-                // Ignorar eventos se componente foi desmontado
-                if (!isSubscribed) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
-                    return
-                }
-                
-                // Ignorar USER_UPDATED durante save para evitar conflitos
-                if (isSavingRef.current && event === 'USER_UPDATED') {
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
-                    return
-                }
-
-                // Tratar eventos de autenticação
-                if (event === 'SIGNED_OUT' || !session) {
-                    if (FORCE_LOGS) console.error('[PERFIL] 👋 Deslogado, redirecionando')
-                    router.push('/')
-                    return
-                }
-                
-                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED - carregando via listener')
-                    
-                    // Cancelar checkUser() se ainda estiver rodando
-                    if (isLoadingRef.current) {
-                        if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Cancelando checkUser(), usando listener')
-                        isLoadingRef.current = false
-                    }
-                    
-                    await carregarPerfil(session)
-                } else if (event === 'USER_UPDATED') {
-                    if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
-                    // Apenas atualizar user, não recarregar perfil
-                    if (session && isSubscribed) {
-                        setUser(session.user)
-                    }
-                } else if (event === 'INITIAL_SESSION') {
-                    if (FORCE_LOGS) console.error('[PERFIL] 📌 INITIAL_SESSION (ignorado)')
-                    // Não fazer nada, busca imediata abaixo já cobre
-                }
-            })
-            
-            authSubscription = subscription
-            if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener registrado')
-            
-            // 🔧 BUSCA IMEDIATA: Forçar getSession() logo após listener ser registrado
-            // Isso garante que mesmo se o evento já tiver disparado, ainda obtemos a sessão
-            supabase.auth.getSession().then(({ data, error }) => {
-                if (!isSubscribed) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado antes da busca imediata')
-                    return
-                }
-                
-                if (error) {
-                    console.error('[PERFIL] ❌ Erro ao buscar sessão imediata:', error)
-                    setLoading(false)
-                    isLoadingRef.current = false
-                    return
-                }
-                
-                if (data.session) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ⚡ Sessão encontrada imediatamente!')
-                    // Cancelar checkUser() se ainda estiver rodando
-                    if (isLoadingRef.current) {
-                        if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Cancelando checkUser(), usando busca imediata')
-                        isLoadingRef.current = false
-                    }
-                    carregarPerfil(data.session)
-                } else {
-                    if (FORCE_LOGS) console.error('[PERFIL] 💤 Nenhuma sessão ativa ainda, aguardando listener...')
-                    // O listener vai pegar o SIGNED_IN quando vier
-                }
-            }).catch(err => {
-                console.error('[PERFIL] ❌ Erro na busca imediata:', err)
-                if (isSubscribed) {
-                    setLoading(false)
-                    isLoadingRef.current = false
-                }
-            })
-        }
+        // 👂 Configurar listener de autenticação (APENAS UMA VEZ)
+        if (FORCE_LOGS) console.error('[PERFIL] 👂 Configurando listener...')
         
-        // Apenas configurar listener (não chamar mais initProfile/checkUser)
-        setupListener()
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (FORCE_LOGS) console.error('[PERFIL] 🔔 Event:', event, 'subscribed:', isSubscribed, 'saving:', isSavingRef.current)
+            
+            // Ignorar eventos se componente foi desmontado
+            if (!isSubscribed) {
+                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
+                return
+            }
+            
+            // Ignorar USER_UPDATED durante save para evitar conflitos
+            if (isSavingRef.current && event === 'USER_UPDATED') {
+                if (FORCE_LOGS) console.error('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
+                return
+            }
+
+            // Tratar eventos de autenticação
+            if (event === 'SIGNED_OUT' || !session) {
+                if (FORCE_LOGS) console.error('[PERFIL] 👋 Deslogado, redirecionando')
+                router.push('/')
+                return
+            }
+            
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED - carregando via listener')
+                await carregarPerfil(session)
+            } else if (event === 'USER_UPDATED') {
+                if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
+                // Apenas atualizar user, não recarregar perfil
+                if (session && isSubscribed) {
+                    setUser(session.user)
+                }
+            }
+        })
+        
+        if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener registrado')
+        
+        // 🔧 BUSCA IMEDIATA: Forçar getSession() logo após listener ser registrado
+        supabase.auth.getSession().then(({ data, error }) => {
+            if (!isSubscribed) {
+                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado antes da busca imediata')
+                return
+            }
+            
+            if (error) {
+                console.error('[PERFIL] ❌ Erro ao buscar sessão imediata:', error)
+                setLoading(false)
+                isLoadingRef.current = false
+                return
+            }
+            
+            if (data.session) {
+                if (FORCE_LOGS) console.error('[PERFIL] ⚡ Sessão encontrada imediatamente!')
+                carregarPerfil(data.session)
+            } else {
+                if (FORCE_LOGS) console.error('[PERFIL] 💤 Nenhuma sessão ativa ainda, aguardando listener...')
+                setLoading(false)
+                isLoadingRef.current = false
+            }
+        }).catch(err => {
+            console.error('[PERFIL] ❌ Erro na busca imediata:', err)
+            if (isSubscribed) {
+                setLoading(false)
+                isLoadingRef.current = false
+            }
+        })
 
         // Cleanup ao desmontar
         return () => {
             if (FORCE_LOGS) console.error('[PERFIL] 🛑 DESMONTANDO componente')
             isSubscribed = false
             isLoadingRef.current = false
-            listenerActiveRef.current = false
-            listenerActiveGlobal = false
-            
-            // Cancelar requisições pendentes
-            if (FORCE_LOGS) console.error('[PERFIL] 🚫 Cancelando requisições pendentes')
-            abortController.abort()
             
             // Cancelar listener de autenticação (PRIORITÁRIO)
-            if (authSubscription) {
-                if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener IMEDIATAMENTE')
-                try {
-                    authSubscription.unsubscribe()
-                } catch (err) {
-                    console.error('[PERFIL] ⚠️ Erro ao remover listener:', err)
-                }
-                authSubscription = null
+            if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener...')
+            try {
+                subscription.unsubscribe()
+            } catch (err) {
+                console.error('[PERFIL] ⚠️ Erro ao remover listener:', err)
             }
             
             if (FORCE_LOGS) console.error('[PERFIL] ✅ Cleanup completo')
         }
-    }, [])
+    }, []) // ⚠️ Executa apenas UMA vez
 
     // Auto-clear success message
     useEffect(() => {
@@ -356,174 +287,6 @@ export default function PerfilPage() {
             return () => clearTimeout(timer)
         }
     }, [error])
-
-    const checkUser = async (abortSignal?: AbortSignal) => {
-        // Prevenir múltiplas chamadas simultâneas
-        if (isLoadingRef.current) {
-            if (FORCE_LOGS) console.error('[PERFIL] ⏸️ CheckUser já em execução, ignorando chamada')
-            return
-        }
-
-        // Verificar se já foi cancelado antes de começar
-        if (abortSignal?.aborted) {
-            if (FORCE_LOGS) console.error('[PERFIL] 🚫 CheckUser cancelado antes de iniciar')
-            return
-        }
-
-        isLoadingRef.current = true
-        if (FORCE_LOGS) console.error('[PERFIL] 🔍 INICIO checkUser - ' + new Date().toISOString())
-        if (FORCE_LOGS) console.error('[PERFIL] 📊 Estado - loading:', loading, 'user:', !!user)
-        
-        // Timeout de segurança global de 10 segundos
-        const globalTimeoutId = setTimeout(() => {
-            if (isLoadingRef.current) {
-                console.warn('[PERFIL] ⏰ TIMEOUT GLOBAL de 10s atingido!')
-                setLoading(false)
-                isLoadingRef.current = false
-            }
-        }, 10000) // 10 segundos
-
-        try {
-            if (FORCE_LOGS) console.error('[PERFIL] 📡 1/5 Buscando sessão...')
-            const sessionStart = Date.now()
-            
-            // Verificar cancelamento
-            if (abortSignal?.aborted) {
-                if (FORCE_LOGS) console.error('[PERFIL] 🚫 CheckUser cancelado durante busca')
-                clearTimeout(globalTimeoutId)
-                isLoadingRef.current = false
-                setLoading(false)
-                return
-            }
-            
-            // Criar timeout de 8 segundos para getSession (aumentado)
-            const sessionPromise = supabase.auth.getSession()
-            const timeoutPromise = new Promise<never>((_, reject) => 
-                setTimeout(() => reject(new Error('Session timeout')), 8000)
-            )
-            
-            let session, sessionError
-            try {
-                const result = await Promise.race([sessionPromise, timeoutPromise])
-                session = result.data.session
-                sessionError = result.error
-                if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Sessão obtida em', Date.now() - sessionStart, 'ms')
-            } catch (timeoutErr) {
-                console.error('[PERFIL] ❌ TIMEOUT ao buscar sessão após 8s!')
-                console.error('[PERFIL] ⏳ Aguardando evento SIGNED_IN do listener...')
-                
-                // Desativar loading e deixar o listener SIGNED_IN assumir
-                clearTimeout(globalTimeoutId)
-                isLoadingRef.current = false
-                setLoading(false)
-                return
-            }
-            
-            if (FORCE_LOGS) console.error('[PERFIL] 📥 Sessão:', {
-                hasSession: !!session,
-                userId: session?.user?.id?.substring(0, 8) + '...',
-                email: session?.user?.email,
-                error: sessionError
-            })
-            
-            if (!session) {
-                console.warn('[PERFIL] ❌ Sem sessão, redirecionando')
-                clearTimeout(globalTimeoutId)
-                isLoadingRef.current = false
-                router.push('/')
-                return
-            }
-
-            if (FORCE_LOGS) console.error('[PERFIL] ⏩ 2/5 Pulando verificação de bloqueio (otimização)')
-
-            if (FORCE_LOGS) console.error('[PERFIL] ✅ 3/5 Atualizando user state')
-            setUser(session.user)
-            
-            // Check if user has password (email provider) or only OAuth (Google)
-            const identities = session.user.identities || []
-            const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-            if (FORCE_LOGS) console.error('[PERFIL] 🔑 Senha:', hasEmailIdentity, 'Providers:', identities.map((i: any) => i.provider).join(','))
-            setHasPassword(hasEmailIdentity)
-            
-            // Verificar cancelamento antes de carregar perfil
-            if (abortSignal?.aborted) {
-                if (FORCE_LOGS) console.error('[PERFIL] 🚫 CheckUser cancelado antes de carregar perfil')
-                clearTimeout(globalTimeoutId)
-                isLoadingRef.current = false
-                setLoading(false)
-                return
-            }
-            
-            // Load user profile data
-            if (FORCE_LOGS) console.error('[PERFIL] 📡 4/5 Carregando perfil do banco...')
-            const profileStart = Date.now()
-            const { data: profile, error: profileError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single()
-            
-            const loadTime = Date.now() - profileStart
-            if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms')
-            if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados:', profile ? {
-                name: profile.full_name,
-                company: profile.company,
-                // @ts-ignore
-                blocked: profile.is_blocked
-            } : 'NULL')
-            if (profileError) console.error('[PERFIL] ⚠️ Erro perfil:', profileError)
-
-            if (profile) {
-                // Verificação direta de bloqueio (muito mais rápida que RPC)
-                // @ts-ignore
-                if (profile.is_blocked === true) {
-                    console.warn('[PERFIL] 🚫 Usuário bloqueado!')
-                    clearTimeout(globalTimeoutId)
-                    isLoadingRef.current = false
-                    await supabase.auth.signOut()
-                    router.push('/conta-bloqueada')
-                    return
-                }
-
-                if (FORCE_LOGS) console.error('[PERFIL] ✅ 5/5 Atualizando estados...')
-                setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                setCompany(profile.company || '')
-                setAvatarUrl(profile.avatar_url || '')
-                
-                // Check if user is admin
-                // @ts-ignore
-                const isAdminUser = profile.role === 'admin'
-                if (FORCE_LOGS) console.error('[PERFIL] 👤 Admin:', isAdminUser)
-                setIsAdmin(isAdminUser)
-                
-                // Load language preference and set both local and global
-                // @ts-ignore - language column exists but not in current types
-                if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
-                    // @ts-ignore - language existe no banco mas não no tipo
-                    if (FORCE_LOGS) console.error('[PERFIL] 🌐 Idioma:', profile.language)
-                    // @ts-ignore
-                    setLocalLanguage(profile.language)
-                    // @ts-ignore
-                    setLanguage(profile.language)
-                }
-            } else {
-                console.warn('[PERFIL] ⚠️ Sem perfil no banco')
-                setFullName(session.user.user_metadata?.full_name || '')
-            }
-            
-            const totalTime = Date.now() - sessionStart
-            if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO em', totalTime, 'ms')
-            clearTimeout(globalTimeoutId)
-        } catch (err) {
-            console.error('[PERFIL] ❌ ERRO:', err)
-            console.error('[PERFIL] 📄 Stack:', (err as Error).stack)
-            clearTimeout(globalTimeoutId)
-        } finally {
-            if (FORCE_LOGS) console.error('[PERFIL] 🏁 FIM - ' + new Date().toISOString())
-            setLoading(false)
-            isLoadingRef.current = false
-        }
-    }
 
     const handleAvatarClick = () => {
         fileInputRef.current?.click()
