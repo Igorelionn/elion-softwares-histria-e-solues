@@ -86,31 +86,54 @@ export default function PerfilPage() {
                 router.push('/')
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED')
-                setUser(session.user)
-                // Recarregar dados do perfil
-                const { data: profile } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single()
-
-                if (profile && isSubscribed) {
-                    if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil recarregado')
-                    setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                    setCompany(profile.company || '')
-                    setAvatarUrl(profile.avatar_url || '')
-                    
-                    // @ts-ignore
-                    if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
-                        // @ts-ignore
-                        setLocalLanguage(profile.language)
-                    }
+                
+                if (!session || !isSubscribed) {
+                    if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Sem sessão ou desmontado')
+                    return
                 }
                 
-                // Garantir que loading seja desativado
-                if (isSubscribed) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Loading OFF')
-                    setLoading(false)
+                setUser(session.user)
+                
+                // Recarregar dados do perfil
+                try {
+                    if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil (via listener)...')
+                    const { data: profile } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single()
+
+                    if (profile && isSubscribed) {
+                        if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil recarregado (via listener)')
+                        setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
+                        setCompany(profile.company || '')
+                        setAvatarUrl(profile.avatar_url || '')
+                        
+                        // Check if user has password
+                        const identities = session.user.identities || []
+                        const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                        setHasPassword(hasEmailIdentity)
+                        
+                        // @ts-ignore
+                        if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
+                            // @ts-ignore
+                            setLocalLanguage(profile.language)
+                            // @ts-ignore
+                            setLanguage(profile.language)
+                        }
+                        
+                        // @ts-ignore
+                        setIsAdmin(profile.role === 'admin')
+                    }
+                } catch (err) {
+                    console.error('[PERFIL] ❌ Erro ao carregar perfil via listener:', err)
+                } finally {
+                    // SEMPRE desativar loading
+                    if (isSubscribed) {
+                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Loading OFF (via listener)')
+                        setLoading(false)
+                        isLoadingRef.current = false
+                    }
                 }
             } else if (event === 'USER_UPDATED') {
                 if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
@@ -184,18 +207,13 @@ export default function PerfilPage() {
                 if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Sessão obtida em', Date.now() - sessionStart, 'ms')
             } catch (timeoutErr) {
                 console.error('[PERFIL] ❌ TIMEOUT ao buscar sessão após 3s!')
-                // Tentar pegar sessão do cache local do Supabase
-                const cachedSession = await supabase.auth.getUser()
-                if (cachedSession.data.user) {
-                    console.error('[PERFIL] ✅ Usando sessão em cache')
-                    session = { user: cachedSession.data.user } as any
-                } else {
-                    console.error('[PERFIL] ❌ Sem sessão em cache, redirecionando')
-                    clearTimeout(timeoutId)
-                    isLoadingRef.current = false
-                    router.push('/')
-                    return
-                }
+                console.error('[PERFIL] ⏳ Aguardando evento SIGNED_IN do listener...')
+                
+                // Desativar loading e esperar o evento SIGNED_IN carregar os dados
+                clearTimeout(timeoutId)
+                isLoadingRef.current = false
+                setLoading(false)
+                return
             }
             
             if (FORCE_LOGS) console.error('[PERFIL] 📥 Sessão:', {
@@ -220,8 +238,8 @@ export default function PerfilPage() {
             
             // Check if user has password (email provider) or only OAuth (Google)
             const identities = session.user.identities || []
-            const hasEmailIdentity = identities.some(identity => identity.provider === 'email')
-            if (FORCE_LOGS) console.error('[PERFIL] 🔑 Senha:', hasEmailIdentity, 'Providers:', identities.map(i => i.provider).join(','))
+            const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+            if (FORCE_LOGS) console.error('[PERFIL] 🔑 Senha:', hasEmailIdentity, 'Providers:', identities.map((i: any) => i.provider).join(','))
             setHasPassword(hasEmailIdentity)
             
             // Load user profile data
