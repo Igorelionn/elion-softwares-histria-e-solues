@@ -163,15 +163,18 @@ export default function PerfilPage() {
                 // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
                 
-                // ✅ Query com timeout de 3s para evitar travamento
+                // ✅ Query com timeout de 5s, especificando apenas colunas necessárias
+                if (FORCE_LOGS) console.error('[PERFIL] 🔍 Query iniciada:', new Date().toISOString())
+                const queryStartTime = performance.now()
+                
                 const queryPromise = supabase
                     .from('users')
-                    .select('*')
+                    .select('id, full_name, company, avatar_url, created_at, updated_at')
                     .eq('id', session.user.id)
                     .maybeSingle()
                 
                 const timeoutPromise = new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('Query timeout')), 3000)
+                    setTimeout(() => reject(new Error('Query timeout')), 5000)
                 )
                 
                 let profile, profileError
@@ -179,14 +182,19 @@ export default function PerfilPage() {
                     const result = await Promise.race([queryPromise, timeoutPromise])
                     profile = result.data
                     profileError = result.error
+                    
+                    const queryEndTime = performance.now()
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Query levou:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
                 } catch (err: any) {
+                    const queryEndTime = performance.now()
                     console.error('[PERFIL] ❌ Query timeout ou erro:', err)
+                    console.error('[PERFIL] ⏱️ Timeout atingido após:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
                     profile = null
                     profileError = { message: err?.message || 'Timeout na query' }
                 }
                 
                 const loadTime = Date.now() - startTime
-                if (FORCE_LOGS) console.error('[PERFIL] 📥 Query completada em', loadTime, 'ms')
+                if (FORCE_LOGS) console.error('[PERFIL] 📥 Carregamento total em', loadTime, 'ms')
 
                 // ✅ TRATAMENTO DE ERRO: Se houve erro na query
                 if (profileError) {
@@ -241,7 +249,6 @@ export default function PerfilPage() {
                 // ✅ SUCESSO: Dados retornados
                 if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados recebidos:', {
                     full_name: profile.full_name,
-                    email: profile.email,
                     company: profile.company,
                     avatar_url: profile.avatar_url ? 'SIM' : 'NÃO',
                     // @ts-ignore
