@@ -197,10 +197,22 @@ export default function PerfilPage() {
                         details: profileError.details,
                         hint: profileError.hint
                     })
+                    
+                    // ✅ Mesmo com erro, setar dados básicos do user_metadata
+                    setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                    
+                    // Check if user has password
+                    const identities = session.user.identities || []
+                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    setHasPassword(hasEmailIdentity)
+                    
                     setLoading(false)
                     isLoadingRef.current = false
                     isCurrentlyLoading = false
                     loadingInProgressRef.current = false
+                    
+                    // Mostrar erro mas permitir uso básico
+                    setError('Erro ao carregar dados completos do perfil. Alguns dados podem estar desatualizados.')
                     return
                 }
 
@@ -686,8 +698,8 @@ export default function PerfilPage() {
             console.log('[PERFIL] 📡 Enviando atualização para Supabase...')
             const startTime = Date.now()
             
-            // Update users table
-            const { data, error: updateError } = await supabase
+            // Update users table com timeout de 5s
+            const updatePromise = supabase
                 .from('users')
                 .update({
                     full_name: fullName,
@@ -696,6 +708,21 @@ export default function PerfilPage() {
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', user.id)
+            
+            const timeoutPromise = new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error('Update timeout')), 5000)
+            )
+            
+            let data, updateError
+            try {
+                const result = await Promise.race([updatePromise, timeoutPromise])
+                data = result.data
+                updateError = result.error
+            } catch (err: any) {
+                console.error('[PERFIL] ❌ Update timeout ou erro:', err)
+                data = null
+                updateError = { message: err?.message || 'Timeout ao salvar' }
+            }
             
             const saveTime = Date.now() - startTime
             console.log('[PERFIL] 📥 Resposta do Supabase em', saveTime, 'ms:', { data, error: updateError })
@@ -722,7 +749,13 @@ export default function PerfilPage() {
                 details: err.details,
                 hint: err.hint
             })
-            setError(err.message || 'Erro ao atualizar perfil')
+            
+            // Mensagem específica para timeout
+            if (err?.message?.includes('timeout') || err?.message?.includes('Timeout')) {
+                setError('Tempo esgotado ao salvar. Tente novamente.')
+            } else {
+                setError(err.message || 'Erro ao atualizar perfil')
+            }
         } finally {
             console.log('[PERFIL] 🏁 Finalizando handleSubmit, resetando estado saving')
             // Always reset saving state
