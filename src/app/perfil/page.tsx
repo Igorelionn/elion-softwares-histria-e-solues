@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { useTranslation } from '@/contexts/LanguageContext'
 
+// Flag para forçar logs em produção
+const FORCE_LOGS = true
+
 export default function PerfilPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -50,11 +53,11 @@ export default function PerfilPage() {
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
-        console.log('[PERFIL] 🚀 Componente montado')
+        if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO')
         let isSubscribed = true
         
         const initProfile = async () => {
-            console.log('[PERFIL] 🎬 Iniciando initProfile')
+            if (FORCE_LOGS) console.error('[PERFIL] 🎬 Init profile...')
             if (isSubscribed) {
                 await checkUser()
             }
@@ -63,26 +66,26 @@ export default function PerfilPage() {
         initProfile()
 
         // Listener para mudanças de autenticação
-        console.log('[PERFIL] 👂 Configurando listener de autenticação')
+        if (FORCE_LOGS) console.error('[PERFIL] 👂 Listener configurado')
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('[PERFIL] 🔔 Auth event:', event, 'isSubscribed:', isSubscribed, 'isSaving:', isSavingRef.current)
+            if (FORCE_LOGS) console.error('[PERFIL] 🔔 Event:', event, 'subscribed:', isSubscribed, 'saving:', isSavingRef.current)
             
             if (!isSubscribed) {
-                console.log('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
+                if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Desmontado, ignorando')
                 return
             }
             
             // Don't interfere during save operation
             if (isSavingRef.current && event === 'USER_UPDATED') {
-                console.log('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
+                if (FORCE_LOGS) console.error('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
                 return
             }
 
             if (event === 'SIGNED_OUT' || !session) {
-                console.log('[PERFIL] 👋 Usuário deslogado')
+                if (FORCE_LOGS) console.error('[PERFIL] 👋 Deslogado')
                 router.push('/')
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                console.log('[PERFIL] ✅ SIGNED_IN/TOKEN_REFRESHED')
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED')
                 setUser(session.user)
                 // Recarregar dados do perfil
                 const { data: profile } = await supabase
@@ -92,7 +95,7 @@ export default function PerfilPage() {
                     .single()
 
                 if (profile && isSubscribed) {
-                    console.log('[PERFIL] 📥 Perfil recarregado:', profile.full_name)
+                    if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil recarregado')
                     setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                     setCompany(profile.company || '')
                     setAvatarUrl(profile.avatar_url || '')
@@ -106,11 +109,11 @@ export default function PerfilPage() {
                 
                 // Garantir que loading seja desativado
                 if (isSubscribed) {
-                    console.log('[PERFIL] ✅ Desativando loading após evento')
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Loading OFF')
                     setLoading(false)
                 }
             } else if (event === 'USER_UPDATED') {
-                console.log('[PERFIL] 🔄 USER_UPDATED')
+                if (FORCE_LOGS) console.error('[PERFIL] 🔄 USER_UPDATED')
                 // Update user state but don't reload profile data to avoid conflicts
                 if (session && isSubscribed) {
                     setUser(session.user)
@@ -122,7 +125,7 @@ export default function PerfilPage() {
         // A sessão do Supabase já é mantida automaticamente
         
         return () => {
-            console.log('[PERFIL] 🛑 Desmontando componente')
+            if (FORCE_LOGS) console.error('[PERFIL] 🛑 DESMONTANDO')
             isSubscribed = false
             isLoadingRef.current = false
             subscription.unsubscribe()
@@ -148,13 +151,13 @@ export default function PerfilPage() {
     const checkUser = async () => {
         // Prevenir múltiplas chamadas simultâneas
         if (isLoadingRef.current) {
-            console.log('[PERFIL] ⏸️ CheckUser já em execução, ignorando chamada')
+            if (FORCE_LOGS) console.error('[PERFIL] ⏸️ CheckUser já em execução, ignorando chamada')
             return
         }
 
         isLoadingRef.current = true
-        console.log('[PERFIL] 🔍 Iniciando checkUser - ' + new Date().toISOString())
-        console.log('[PERFIL] 📊 Estado atual - loading:', loading, 'user:', !!user)
+        if (FORCE_LOGS) console.error('[PERFIL] 🔍 INICIO checkUser - ' + new Date().toISOString())
+        if (FORCE_LOGS) console.error('[PERFIL] 📊 Estado - loading:', loading, 'user:', !!user)
         
         // Timeout de segurança REDUZIDO para 5 segundos
         const timeoutId = setTimeout(() => {
@@ -164,14 +167,14 @@ export default function PerfilPage() {
         }, 5000) // 5 segundos
 
         try {
-            console.log('[PERFIL] 📡 Buscando sessão...')
+            if (FORCE_LOGS) console.error('[PERFIL] 📡 1/5 Buscando sessão...')
             const sessionStart = Date.now()
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-            console.log('[PERFIL] ⏱️ Sessão buscada em', Date.now() - sessionStart, 'ms')
+            if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Sessão obtida em', Date.now() - sessionStart, 'ms')
             
-            console.log('[PERFIL] 📥 Resposta da sessão:', {
+            if (FORCE_LOGS) console.error('[PERFIL] 📥 Sessão:', {
                 hasSession: !!session,
-                userId: session?.user?.id,
+                userId: session?.user?.id?.substring(0, 8) + '...',
                 email: session?.user?.email,
                 error: sessionError
             })
@@ -184,21 +187,19 @@ export default function PerfilPage() {
                 return
             }
 
-            // REMOVIDA verificação de bloqueio que está causando timeout
-            // A verificação será feita em um middleware server-side se necessário
-            console.log('[PERFIL] ⏩ Pulando verificação de bloqueio (otimização)')
+            if (FORCE_LOGS) console.error('[PERFIL] ⏩ 2/5 Pulando verificação de bloqueio (otimização)')
 
-            console.log('[PERFIL] ✅ Sessão válida, atualizando user state')
+            if (FORCE_LOGS) console.error('[PERFIL] ✅ 3/5 Atualizando user state')
             setUser(session.user)
             
             // Check if user has password (email provider) or only OAuth (Google)
             const identities = session.user.identities || []
             const hasEmailIdentity = identities.some(identity => identity.provider === 'email')
-            console.log('[PERFIL] 🔑 Tem senha:', hasEmailIdentity, 'Identities:', identities.map(i => i.provider))
+            if (FORCE_LOGS) console.error('[PERFIL] 🔑 Senha:', hasEmailIdentity, 'Providers:', identities.map(i => i.provider).join(','))
             setHasPassword(hasEmailIdentity)
             
             // Load user profile data
-            console.log('[PERFIL] 📡 Carregando perfil do banco...')
+            if (FORCE_LOGS) console.error('[PERFIL] 📡 4/5 Carregando perfil do banco...')
             const profileStart = Date.now()
             const { data: profile, error: profileError } = await supabase
                 .from('users')
@@ -207,25 +208,20 @@ export default function PerfilPage() {
                 .single()
             
             const loadTime = Date.now() - profileStart
-            console.log('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms:', {
-                profile: profile ? {
-                    full_name: profile.full_name,
-                    company: profile.company,
-                    // @ts-ignore - role existe no banco mas não no tipo
-                    role: profile.role,
-                    // @ts-ignore - language existe no banco mas não no tipo
-                    language: profile.language,
-                    // @ts-ignore - is_blocked existe no banco mas não no tipo
-                    is_blocked: profile.is_blocked
-                } : null,
-                error: profileError
-            })
+            if (FORCE_LOGS) console.error('[PERFIL] 📥 Perfil carregado em', loadTime, 'ms')
+            if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados:', profile ? {
+                name: profile.full_name,
+                company: profile.company,
+                // @ts-ignore
+                blocked: profile.is_blocked
+            } : 'NULL')
+            if (profileError) console.error('[PERFIL] ⚠️ Erro perfil:', profileError)
 
             if (profile) {
                 // Verificação direta de bloqueio (muito mais rápida que RPC)
                 // @ts-ignore
                 if (profile.is_blocked === true) {
-                    console.warn('[PERFIL] 🚫 Usuário bloqueado (verificação direta)!')
+                    console.warn('[PERFIL] 🚫 Usuário bloqueado!')
                     clearTimeout(timeoutId)
                     isLoadingRef.current = false
                     await supabase.auth.signOut()
@@ -233,7 +229,7 @@ export default function PerfilPage() {
                     return
                 }
 
-                console.log('[PERFIL] ✅ Atualizando estados do perfil')
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ 5/5 Atualizando estados...')
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                 setCompany(profile.company || '')
                 setAvatarUrl(profile.avatar_url || '')
@@ -241,33 +237,33 @@ export default function PerfilPage() {
                 // Check if user is admin
                 // @ts-ignore
                 const isAdminUser = profile.role === 'admin'
-                console.log('[PERFIL] 👤 É admin:', isAdminUser)
+                if (FORCE_LOGS) console.error('[PERFIL] 👤 Admin:', isAdminUser)
                 setIsAdmin(isAdminUser)
                 
                 // Load language preference and set both local and global
                 // @ts-ignore - language column exists but not in current types
                 if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
                     // @ts-ignore - language existe no banco mas não no tipo
-                    console.log('[PERFIL] 🌐 Configurando idioma:', profile.language)
+                    if (FORCE_LOGS) console.error('[PERFIL] 🌐 Idioma:', profile.language)
                     // @ts-ignore
                     setLocalLanguage(profile.language)
                     // @ts-ignore
                     setLanguage(profile.language)
                 }
             } else {
-                console.warn('[PERFIL] ⚠️ Sem perfil no banco, usando user_metadata')
+                console.warn('[PERFIL] ⚠️ Sem perfil no banco')
                 setFullName(session.user.user_metadata?.full_name || '')
             }
             
             const totalTime = Date.now() - sessionStart
-            console.log('[PERFIL] ✅ CheckUser concluído em', totalTime, 'ms')
+            if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO em', totalTime, 'ms')
             clearTimeout(timeoutId)
         } catch (err) {
-            console.error('[PERFIL] ❌ Erro ao carregar perfil:', err)
+            console.error('[PERFIL] ❌ ERRO:', err)
             console.error('[PERFIL] 📄 Stack:', (err as Error).stack)
             clearTimeout(timeoutId)
         } finally {
-            console.log('[PERFIL] 🏁 Finalizando checkUser, desativando loading - ' + new Date().toISOString())
+            if (FORCE_LOGS) console.error('[PERFIL] 🏁 FIM - ' + new Date().toISOString())
             setLoading(false)
             isLoadingRef.current = false
         }
