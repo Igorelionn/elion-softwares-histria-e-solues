@@ -256,7 +256,7 @@ export default function PerfilPage() {
             
             if (!session) {
                 console.warn('[PERFIL] ❌ Sem sessão, redirecionando')
-                clearTimeout(timeoutId)
+                clearTimeout(globalTimeoutId)
                 isLoadingRef.current = false
                 router.push('/')
                 return
@@ -297,7 +297,7 @@ export default function PerfilPage() {
                 // @ts-ignore
                 if (profile.is_blocked === true) {
                     console.warn('[PERFIL] 🚫 Usuário bloqueado!')
-                    clearTimeout(timeoutId)
+                    clearTimeout(globalTimeoutId)
                     isLoadingRef.current = false
                     await supabase.auth.signOut()
                     router.push('/conta-bloqueada')
