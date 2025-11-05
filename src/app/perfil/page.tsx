@@ -20,7 +20,7 @@ const FORCE_LOGS = true
 // 🛡️ CONTROLE GLOBAL: Evitar múltiplas cargas simultâneas
 let lastLoadTimestamp = 0
 let isCurrentlyLoading = false
-const DEBOUNCE_TIME = 300 // ms
+const DEBOUNCE_TIME = 100 // ms (reduzido para ser mais responsivo)
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -61,6 +61,37 @@ export default function PerfilPage() {
     useEffect(() => {
         if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO')
         let isSubscribed = true
+        
+        // 🛡️ RESET FORÇADO: Ao montar, limpar TODOS os flags (caso tenha ficado travado)
+        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Resetando flags globais...')
+        isCurrentlyLoading = false
+        loadingInProgressRef.current = false
+        
+        // 🛡️ TIMEOUT DE SEGURANÇA: Forçar liberação dos flags após 5s e tentar novamente
+        const safetyTimeoutId = setTimeout(() => {
+            if (isCurrentlyLoading || loadingInProgressRef.current) {
+                console.warn('[PERFIL] ⚠️ TIMEOUT DE SEGURANÇA: Forçando liberação dos flags após 5s')
+                isCurrentlyLoading = false
+                loadingInProgressRef.current = false
+                isLoadingRef.current = false
+                
+                // Tentar carregar novamente se ainda estiver com loading true
+                if (loading && isSubscribed) {
+                    console.warn('[PERFIL] 🔄 Tentando carregar novamente após timeout...')
+                    supabase.auth.getSession().then(({ data }) => {
+                        if (data.session && isSubscribed) {
+                            carregarPerfil(data.session)
+                        } else {
+                            console.warn('[PERFIL] ❌ Sem sessão no fallback, desativando loading')
+                            setLoading(false)
+                        }
+                    }).catch(err => {
+                        console.error('[PERFIL] ❌ Erro no fallback:', err)
+                        setLoading(false)
+                    })
+                }
+            }
+        }, 5000)
         
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
@@ -303,6 +334,9 @@ export default function PerfilPage() {
             
             // 🛡️ Limpar flags globais
             isCurrentlyLoading = false
+            
+            // 🛡️ Cancelar timeout de segurança
+            clearTimeout(safetyTimeoutId)
             
             // Cancelar listener de autenticação (PRIORITÁRIO)
             if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener...')
