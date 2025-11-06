@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { useAuthState } from '@/stores/authStore'
+import { createModuleLogger } from '@/lib/logger'
+
+const log = createModuleLogger('USE_AUTH')
 
 interface BlockDetails {
   is_blocked: boolean
@@ -13,24 +16,44 @@ interface BlockDetails {
   blocked_by_name: string | null
 }
 
+/**
+ * Hook de autenticação refatorado
+ * Agora consome o authStore centralizado
+ * Mantém apenas a lógica de verificação de bloqueio
+ */
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // Consumir estado do authStore
+  const { user, isLoading: loading, error: authError } = useAuthState()
+  
+  // Estado local apenas para bloqueio (específico deste hook)
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockDetails, setBlockDetails] = useState<BlockDetails | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  
   const router = useRouter()
+  
+  // Sincronizar erro do authStore
+  useEffect(() => {
+    if (authError) {
+      setError(authError)
+    }
+  }, [authError])
 
-  // Função para verificar se o usuário está bloqueado ou deletado
-  const checkUserBlock = async (userId: string) => {
+  /**
+   * Função para verificar se o usuário está bloqueado ou deletado
+   * Esta é a única lógica que permanece neste hook
+   */
+  const checkUserBlock = async (userId: string): Promise<boolean> => {
     try {
+      log.debug('Verificando bloqueio', { userId })
+      
       // 1. PRIMEIRO: Verificar se está na blacklist (deletado permanentemente)
       const { data: blacklistData, error: blacklistError } = await (supabase
         // @ts-ignore - is_user_in_blacklist RPC function exists in database
         .rpc('is_user_in_blacklist', { check_user_id: userId }) as unknown as Promise<{ data: { blacklisted: boolean } | null; error: any }>)
       
       if (!blacklistError && blacklistData && blacklistData.blacklisted === true) {
-        ')
+        log.warn('Usuário na blacklist, deslogando')
         setIsBlocked(true)
         
         // Deslogar IMEDIATAMENTE
@@ -47,7 +70,7 @@ export function useAuth() {
         .rpc('check_user_exists', { user_id_param: userId }) as unknown as Promise<{ data: { deleted: boolean } | null; error: any }>)
       
       if (!existsError && existsData && existsData.deleted === true) {
-        ')
+        log.warn('Usuário deletado, deslogando')
         setIsBlocked(true)
         
         // Deslogar usuário deletado IMEDIATAMENTE
@@ -71,13 +94,14 @@ export function useAuth() {
         }>)
       
       if (error) {
-        console.error('Erro ao verificar bloqueio:', error)
+        log.error('Erro ao verificar bloqueio', error)
         return false
       }
 
       // Se o usuário está bloqueado
       if (data && data.is_blocked === true) {
-                setIsBlocked(true)
+        log.warn('Usuário bloqueado, redirecionando')
+        setIsBlocked(true)
         setBlockDetails({
           is_blocked: true,
           blocked_reason: data.blocked_reason || null,
@@ -97,108 +121,18 @@ export function useAuth() {
       setIsBlocked(false)
       return false
     } catch (err) {
-      console.error('Erro ao verificar bloqueio:', err)
+      log.error('Erro ao verificar bloqueio', err)
       return false
     }
   }
 
+  // Verificar bloqueio quando o usuário mudar
   useEffect(() => {
-    // Verificar sessão inicial
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError) {
-          console.error('Error getting session:', sessionError)
-          setError(sessionError.message)
-        }
-        
-        if (session?.user) {
-          // Verificar se o usuário está bloqueado
-          const blocked = await checkUserBlock(session.user.id)
-          if (!blocked) {
-            setUser(session.user)
-          }
-        } else {
-          setUser(null)
-        }
-      } catch (err) {
-        console.error('Error initializing auth:', err)
-        setError('Failed to initialize authentication')
-      } finally {
-        setLoading(false)
-      }
+    if (user?.id) {
+      log.debug('Usuário mudou, verificando bloqueio')
+      checkUserBlock(user.id)
     }
-
-    initializeAuth()
-
-    // Listener para mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-                
-        if (session?.user) {
-          // Verificar bloqueio ao trocar de estado
-          const blocked = await checkUserBlock(session.user.id)
-          if (!blocked) {
-            setUser(session.user)
-          }
-        } else {
-          setUser(null)
-        }
-        
-        setLoading(false)
-      }
-    )
-
-    // Listener para quando a aba volta ao foco
-    const handleVisibilityChange = async () => {
-      if (!document.hidden) {
-        // Não verificar bloqueio se estiver na página admin
-        if (window.location.pathname === '/admin') {
-          return
-        }
-        
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (session?.user) {
-          const blocked = await checkUserBlock(session.user.id)
-          if (!blocked) {
-            setUser(session.user)
-          }
-        } else {
-          setUser(null)
-        }
-      }
-    }
-
-    // Listener para quando a janela ganha foco
-    const handleFocus = async () => {
-      // Não verificar bloqueio se estiver na página admin
-      if (window.location.pathname === '/admin') {
-        return
-      }
-      
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        const blocked = await checkUserBlock(session.user.id)
-        if (!blocked) {
-          setUser(session.user)
-        }
-      } else {
-        setUser(null)
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      subscription.unsubscribe()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
+  }, [user?.id])
 
   return { user, loading, error, isBlocked, blockDetails }
 }

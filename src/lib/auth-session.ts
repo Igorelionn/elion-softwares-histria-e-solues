@@ -1,7 +1,20 @@
 'use client'
 
+/**
+ * @deprecated
+ * Este arquivo está DEPRECATED e será removido em versões futuras.
+ * 
+ * Use o novo sistema de gerenciamento de estado:
+ * - `import { useAuthState } from '@/stores/authStore'` para consumir estado de auth
+ * - O AuthProvider em layout.tsx gerencia o listener único
+ * 
+ * Este arquivo é mantido apenas para compatibilidade temporária.
+ */
+
 import { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+
+console.warn('[DEPRECATED] auth-session.ts está deprecated. Use authStore em vez disso.')
 
 // Global variable to persist across Fast Refresh
 declare global {

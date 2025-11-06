@@ -188,17 +188,33 @@ const HeroHeader = () => {
             
             // Load avatar and check admin status if user exists
             if (user) {
-                const { data: profile, error: profileError } = await supabase
+                // @ts-ignore - role and is_blocked columns may not be in generated types
+                const { data: profile, error: profileError } = await (supabase as any)
                     .from('users')
                     .select('avatar_url, role, is_blocked')
                     .eq('id', user.id)
-                    .single() as { data: { avatar_url?: string; role?: string; is_blocked?: boolean } | null; error: any }
+                    .single()
                 
                 // Se usuário foi deletado ou não existe no banco
                 if (profileError && profileError.code === 'PGRST116') {
                     await supabase.auth.signOut()
                     setUser(null)
                     setAvatarUrl('')
+                    setIsAdmin(false)
+                    return
+                }
+                
+                // Se a coluna não existir (erro 406), ignorar e usar valores padrão
+                if (profileError && profileError.code === '406') {
+                    console.log('[HeroSection] Columns role/is_blocked not found in users table, using defaults')
+                    // Apenas carregar avatar_url que sabemos que existe
+                    const { data: basicProfile } = await supabase
+                        .from('users')
+                        .select('avatar_url')
+                        .eq('id', user.id)
+                        .single()
+                    
+                    setAvatarUrl(basicProfile?.avatar_url || '')
                     setIsAdmin(false)
                     return
                 }

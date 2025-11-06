@@ -4,6 +4,8 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Toaster } from "@/components/ui/sonner";
 import { BlockGuard } from "@/components/BlockGuard";
 import { SecurityURLCleaner } from "@/components/SecurityURLCleaner";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Elion Softwares",
@@ -29,13 +31,17 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body className="antialiased relative">
-        <SecurityURLCleaner />
-        <LanguageProvider>
-          <BlockGuard>
-            {children}
-          </BlockGuard>
-        </LanguageProvider>
-        <Toaster />
+        <ErrorBoundary>
+          <AuthProvider>
+            <SecurityURLCleaner />
+            <LanguageProvider>
+              <BlockGuard>
+                {children}
+              </BlockGuard>
+            </LanguageProvider>
+            <Toaster />
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
