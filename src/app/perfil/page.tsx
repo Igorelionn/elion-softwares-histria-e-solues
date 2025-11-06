@@ -21,7 +21,7 @@ const FORCE_LOGS = true
 let lastLoadTimestamp = 0
 let isCurrentlyLoading = false
 let loadAttempts = 0
-const DEBOUNCE_TIME = 100 // ms (reduzido para ser mais responsivo)
+const DEBOUNCE_TIME = 50 // ms (reduzido para 50ms - ULTRA RÁPIDO)
 const MAX_LOAD_ATTEMPTS = 2
 
 // 🚀 CACHE HÍBRIDO: Global + LocalStorage para máxima resiliência
@@ -76,49 +76,61 @@ const updateFromDatabaseInBackground = async (session: any) => {
     }
 }
 
-// 🔧 FUNÇÕES DE CACHE LOCALSTORAGE
+// 🔧 FUNÇÕES DE CACHE LOCALSTORAGE (OTIMIZADAS)
 const getLocalCache = (): CachedProfile | null => {
     try {
+        // Otimização: Ler uma vez e fazer parsing se necessário
         const cached = localStorage.getItem(PROFILE_CACHE_KEY)
+        if (!cached) return null
+
         const timestamp = localStorage.getItem(PROFILE_CACHE_TIMESTAMP_KEY)
+        if (!timestamp) return null
 
-        if (cached && timestamp) {
-            const profile = JSON.parse(cached)
-            const cacheTime = parseInt(timestamp)
-            const now = Date.now()
+        const cacheTime = parseInt(timestamp, 10)
+        const now = Date.now()
 
-            // Cache válido por 5 minutos (mais longo que o cache global)
-            if (now - cacheTime < 5 * 60 * 1000) {
-                return profile
-            } else {
-                // Cache expirado, limpar
-                localStorage.removeItem(PROFILE_CACHE_KEY)
-                localStorage.removeItem(PROFILE_CACHE_TIMESTAMP_KEY)
-            }
+        // Cache válido por 10 minutos (aumentado para reduzir queries)
+        if (now - cacheTime < 10 * 60 * 1000) {
+            return JSON.parse(cached)
         }
+
+        // Cache expirado, limpar de forma assíncrona (não bloqueia)
+        setTimeout(() => {
+            localStorage.removeItem(PROFILE_CACHE_KEY)
+            localStorage.removeItem(PROFILE_CACHE_TIMESTAMP_KEY)
+        }, 0)
     } catch (err) {
-        console.warn('[PERFIL] ⚠️ Erro ao ler cache localStorage:', err)
+        // Silencioso em produção
+        if (FORCE_LOGS) console.warn('[PERFIL] ⚠️ Erro ao ler cache:', err)
     }
     return null
 }
 
 const setLocalCache = (profile: any) => {
-    try {
-        const cacheData: CachedProfile = {
-            id: profile.id,
-            full_name: profile.full_name || '',
-            company: profile.company || '',
-            avatar_url: profile.avatar_url || '',
-            role: profile.role || 'user',
-            updated_at: profile.updated_at || new Date().toISOString(),
-            timestamp: Date.now()
-        }
+    // Otimização: Salvar de forma assíncrona (não bloqueia)
+    setTimeout(() => {
+        try {
+            const now = Date.now()
+            const cacheData: CachedProfile = {
+                id: profile.id,
+                full_name: profile.full_name || '',
+                company: profile.company || '',
+                avatar_url: profile.avatar_url || '',
+                role: profile.role || 'user',
+                updated_at: profile.updated_at || new Date().toISOString(),
+                timestamp: now
+            }
 
-        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cacheData))
-        localStorage.setItem(PROFILE_CACHE_TIMESTAMP_KEY, Date.now().toString())
-    } catch (err) {
-        console.warn('[PERFIL] ⚠️ Erro ao salvar cache localStorage:', err)
-    }
+            const cacheStr = JSON.stringify(cacheData)
+            const timestampStr = now.toString()
+
+            localStorage.setItem(PROFILE_CACHE_KEY, cacheStr)
+            localStorage.setItem(PROFILE_CACHE_TIMESTAMP_KEY, timestampStr)
+        } catch (err) {
+            // Silencioso em produção
+            if (FORCE_LOGS) console.warn('[PERFIL] ⚠️ Erro ao salvar cache:', err)
+        }
+    }, 0)
 }
 
 const clearLocalCache = () => {
@@ -264,80 +276,65 @@ export default function PerfilPage() {
             }
 
             try {
-                if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil para user:', session.user.id.substring(0, 8) + '...')
                 const startTime = Date.now()
+                if (FORCE_LOGS) console.error('[PERFIL] ⚡ ULTRA-FAST LOAD START')
 
-                // Sempre setar o user (mesmo se o perfil falhar)
+                // Setar user imediatamente
                 setUser(session.user)
 
-                // 🚀 MOSTRAR DADOS BÁSICOS IMEDIATAMENTE (0ms - INSTANT!)
-                if (FORCE_LOGS) console.error('[PERFIL] ⚡ Mostrando dados básicos INSTANTANEAMENTE...')
-                const identities = session.user.identities || []
-                const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                
-                // Setar dados básicos SEMPRE primeiro (instantâneo) - não espera nada!
-                setFullName(session.user.user_metadata?.full_name || session.user.email || '')
-                setCompany(session.user.user_metadata?.company || '')
-                setAvatarUrl(session.user.user_metadata?.avatar_url || '')
-                setHasPassword(hasEmailIdentity)
-                setLocalLanguage(language)
-                
-                // Desativar loading IMEDIATAMENTE para mostrar interface
-                setLoading(false)
-                isLoadingRef.current = false
-                
-                if (FORCE_LOGS) console.error('[PERFIL] ✅ Interface liberada INSTANTANEAMENTE em', Date.now() - startTime, 'ms!')
-
-                // 🚀 OFFLINE-FIRST: Verificar cache localStorage (em background)
-                if (FORCE_LOGS) console.error('[PERFIL] 💾 Verificando cache localStorage...')
+                // 🔥 VERIFICAR CACHE PRIMEIRO (antes de calcular qualquer coisa)
                 const localCache = getLocalCache()
 
                 if (localCache && localCache.id === session.user.id) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ CACHE ENCONTRADO! Atualizando dados...')
+                    // 🎯 CACHE HIT - SUPER RÁPIDO!
+                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 CACHE HIT!')
 
-                    // Atualizar com dados do cache (mais completos que user_metadata)
-                    setFullName(localCache.full_name || session.user.user_metadata?.full_name || session.user.email || '')
-                    setCompany(localCache.company || session.user.user_metadata?.company || '')
-                    setAvatarUrl(localCache.avatar_url || session.user.user_metadata?.avatar_url || '')
+                    // Batch update (uma única operação de state)
+                    const identities = session.user.identities || []
+                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+
+                    setFullName(localCache.full_name || '')
+                    setCompany(localCache.company || '')
+                    setAvatarUrl(localCache.avatar_url || '')
+                    setHasPassword(hasEmailIdentity)
                     setIsAdmin(localCache.role === 'admin')
-
+                    setLocalLanguage(language)
+                    setLoading(false)
+                    isLoadingRef.current = false
                     isCurrentlyLoading = false
                     loadingInProgressRef.current = false
                     loadAttempts = 0
 
-                    if (FORCE_LOGS) console.error('[PERFIL] 🎉 Cache aplicado em', Date.now() - startTime, 'ms!')
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ LOADED FROM CACHE:', Date.now() - startTime, 'ms')
 
-                    // Atualização opcional em background (não crítica)
-                    updateFromDatabaseInBackground(session).catch(() => {
-                        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Background update falhou, mas tudo OK')
-                    })
+                    // Atualizar em background (não bloqueia)
+                    updateFromDatabaseInBackground(session).catch(() => {})
                     return
                 }
 
-                // ⚠️ SEM CACHE: Mostrar dados básicos e tentar carregar do banco
-                if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Nenhum cache encontrado, usando dados básicos temporariamente')
+                // 🚀 CACHE MISS - Mostrar dados básicos instantaneamente
+                if (FORCE_LOGS) console.error('[PERFIL] ⚡ CACHE MISS - Usando user_metadata')
 
+                const identities = session.user.identities || []
+                const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+
+                // Batch update - dados básicos
                 setFullName(session.user.user_metadata?.full_name || session.user.email || '')
                 setCompany(session.user.user_metadata?.company || '')
                 setAvatarUrl(session.user.user_metadata?.avatar_url || '')
-                setLocalLanguage(language)
-
-                // Check if user has password
-                const identities = session.user.identities || []
-                const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
                 setHasPassword(hasEmailIdentity)
-                setIsAdmin(false) // Fallback seguro
+                setLocalLanguage(language)
+                setLoading(false)
+                isLoadingRef.current = false
 
-                setLoading(false) // Permitir uso da interface
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ BASIC DATA LOADED:', Date.now() - startTime, 'ms')
 
-                // ✅ Query otimizada - tentar múltiplas abordagens
-                if (FORCE_LOGS) console.error('[PERFIL] 🔍 Query HTTP iniciada:', new Date().toISOString())
+                // 🔄 Query em BACKGROUND (não bloqueia, apenas atualiza dados)
                 const queryStartTime = performance.now()
 
                 let profile, profileError
                 try {
-                    // Estratégia 1: Query direta otimizada
-                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 Tentativa 1: Query direta otimizada')
+                    // Query simplificada e rápida
                     const result = await supabase
                         .from('users')
                         .select('id, full_name, company, avatar_url, role, updated_at')
