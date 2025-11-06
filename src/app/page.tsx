@@ -24,7 +24,7 @@ const Footer = dynamic(() => import('@/components/ui/footer-section').then(mod =
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen" style={{ position: 'relative' }}>
+    <div className="relative min-h-screen">
       <HeroSection />
       <AboutSection />
       <DevelopmentsSection />

@@ -27,7 +27,7 @@ export default function ContaBloqueadaPage() {
     const checkBlockStatus = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        
+
         // Salvar email do usuário antes de qualquer ação
         if (session?.user?.email) {
           setUserEmail(session.user.email)
@@ -41,9 +41,10 @@ export default function ContaBloqueadaPage() {
         }
 
         // Buscar detalhes do bloqueio
-        const { data, error } = await supabase
+        // @ts-ignore - RPC function not in generated types
+        const { data, error } = await (supabase as any)
           .rpc('get_user_block_details', { user_id_param: session.user.id })
-        
+
         if (error) {
           console.error('⚠️ Erro ao buscar detalhes do bloqueio:', error)
           setBlockDetails({
@@ -54,14 +55,14 @@ export default function ContaBloqueadaPage() {
             blocked_by_name: null
           })
         } else if (data && data.length > 0) {
-          const blockInfo = data[0]
-          
+          const blockInfo = data[0] as BlockDetails
+
           if (!blockInfo.is_blocked) {
             console.log('✅ Usuário não está bloqueado, redirecionando...')
             setTimeout(() => router.push('/'), 1000)
             return
           }
-          
+
           setBlockDetails(blockInfo)
         } else {
           setBlockDetails({
@@ -107,7 +108,7 @@ export default function ContaBloqueadaPage() {
 
   if (loading) {
     setTimeout(() => setLoading(false), 2000)
-    
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -124,9 +125,9 @@ export default function ContaBloqueadaPage() {
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Image 
-              src="/logo.png" 
-              alt="Elion Softwares" 
+            <Image
+              src="/logo.png"
+              alt="Elion Softwares"
               width={180}
               height={45}
               className="h-4 w-auto"
@@ -149,7 +150,7 @@ export default function ContaBloqueadaPage() {
       {/* Conteúdo Principal */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8 md:p-12">
         <div className="max-w-lg w-full space-y-8">
-          
+
           {/* Ícone Vermelho (sem círculo) */}
           <div className="flex justify-center">
             <ShieldX className="h-20 w-20 text-red-600" strokeWidth={1.5} />
@@ -160,7 +161,7 @@ export default function ContaBloqueadaPage() {
             <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 tracking-tight">
               {t.blocked.title}
             </h1>
-            
+
             {userEmail && (
               <p className="text-base text-gray-600">
                 {t.blocked.yourAccount}{' '}
@@ -199,7 +200,7 @@ export default function ContaBloqueadaPage() {
                   </span>
                 </div>
               )}
-              
+
               {blockDetails?.blocked_by_name && (
                 <div className="flex justify-between items-center py-3">
                   <span className="text-gray-600 font-medium">{t.blocked.blockedBy}</span>
@@ -217,7 +218,7 @@ export default function ContaBloqueadaPage() {
             <p className="text-sm text-gray-600 mb-4 leading-relaxed">
               {t.blocked.helpMessage}
             </p>
-            <button 
+            <button
               onClick={handleContactSupport}
               className="text-sm text-gray-900 font-semibold hover:text-gray-700 hover:underline transition-colors cursor-pointer"
             >

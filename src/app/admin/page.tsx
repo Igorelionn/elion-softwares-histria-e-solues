@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAdmin } from '@/hooks/useAdmin'
 import { supabase } from '@/lib/supabase'
@@ -12,12 +13,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Spinner } from '@/components/ui/spinner'
-import { 
-  Users, 
-  Calendar, 
-  Activity, 
-  TrendingUp, 
-  UserX, 
+import {
+  Users,
+  Calendar,
+  Activity,
+  TrendingUp,
+  UserX,
   CheckCircle,
   XCircle,
   Clock,
@@ -38,6 +39,70 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+
+// 🚀 SISTEMA DE CACHE OFFLINE-FIRST
+const ADMIN_CACHE_KEY = 'elion_admin_cache'
+const ADMIN_CACHE_TIMESTAMP_KEY = 'elion_admin_timestamp'
+const CACHE_DURATION = 60000 // 1 minuto para dados de admin (mais curto devido à natureza dos dados)
+const FORCE_LOGS = true
+
+let cachedAdminData: any = null
+let cachedAdminTimestamp = 0
+
+interface CachedAdminData {
+  stats: Stats | null
+  users: User[]
+  meetings: Meeting[]
+  timestamp: number
+}
+
+// 🔧 FUNÇÕES DE CACHE LOCALSTORAGE
+const getLocalCache = (): CachedAdminData | null => {
+  try {
+    const cached = localStorage.getItem(ADMIN_CACHE_KEY)
+    const timestamp = localStorage.getItem(ADMIN_CACHE_TIMESTAMP_KEY)
+
+    if (cached && timestamp) {
+      const cacheData = JSON.parse(cached)
+      const cacheTime = parseInt(timestamp)
+      const now = Date.now()
+
+      // Cache válido por 5 minutos
+      if (now - cacheTime < 5 * 60 * 1000) {
+        if (FORCE_LOGS) console.log('[ADMIN] ✅ Cache localStorage válido')
+        return cacheData
+      } else {
+        // Cache expirado, limpar
+        localStorage.removeItem(ADMIN_CACHE_KEY)
+        localStorage.removeItem(ADMIN_CACHE_TIMESTAMP_KEY)
+        if (FORCE_LOGS) console.log('[ADMIN] ⏰ Cache localStorage expirado')
+      }
+    }
+  } catch (err) {
+    console.warn('[ADMIN] ⚠️ Erro ao ler cache localStorage:', err)
+  }
+  return null
+}
+
+const setLocalCache = (data: CachedAdminData) => {
+  try {
+    localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(data))
+    localStorage.setItem(ADMIN_CACHE_TIMESTAMP_KEY, Date.now().toString())
+    if (FORCE_LOGS) console.log('[ADMIN] 💾 Cache localStorage salvo')
+  } catch (err) {
+    console.warn('[ADMIN] ⚠️ Erro ao salvar cache localStorage:', err)
+  }
+}
+
+const clearLocalCache = () => {
+  try {
+    localStorage.removeItem(ADMIN_CACHE_KEY)
+    localStorage.removeItem(ADMIN_CACHE_TIMESTAMP_KEY)
+    if (FORCE_LOGS) console.log('[ADMIN] 🗑️ Cache localStorage limpo')
+  } catch (err) {
+    console.warn('[ADMIN] ⚠️ Erro ao limpar cache localStorage:', err)
+  }
+}
 
 interface Stats {
   total_users: number
@@ -84,7 +149,7 @@ interface Meeting {
 export default function AdminPage() {
   const router = useRouter()
   const { isAdmin, loading: adminLoading } = useAdmin()
-  
+
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -102,22 +167,36 @@ export default function AdminPage() {
   const [isBlocking, setIsBlocking] = useState(false)
   const [isUnblocking, setIsUnblocking] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [cacheMessage, setCacheMessage] = useState<string>('')
+
+  // Refs para controlar loading
+  const isLoadingRef = useRef(false)
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const loadStats = useCallback(async () => {
     try {
+      if (FORCE_LOGS) console.log('[ADMIN] 📊 Carregando estatísticas...')
+      // @ts-ignore - RPC function not in generated types
       const { data, error } = await supabase.rpc('get_admin_stats')
       if (!error && data) {
         setStats(data)
+        if (FORCE_LOGS) console.log('[ADMIN] ✅ Estatísticas carregadas:', data)
+        return data
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error)
+      console.error('[ADMIN] ❌ Erro ao carregar estatísticas:', error)
     }
+    return null
   }, [])
 
   const loadUsers = useCallback(async () => {
     try {
+      if (FORCE_LOGS) console.log('[ADMIN] 👥 Carregando usuários...')
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Usuário não autenticado')
+        return null
+      }
 
       const { data: profile } = await supabase
         .from('users')
@@ -126,34 +205,47 @@ export default function AdminPage() {
         .single() as { data: { role: string } | null; error: any }
 
       if (profile?.role !== 'admin') {
+        console.warn('[ADMIN] ⚠️ Usuário não é admin, redirecionando...')
         router.push('/')
-        return
+        return null
       }
 
+      // @ts-ignore - RPC function not in generated types
       const { data, error } = await supabase.rpc('get_all_users')
-      
+
       if (!error && data) {
-        setUsers(data)
+        const usersData = data as any[]
+        setUsers(usersData)
+        if (FORCE_LOGS) console.log(`[ADMIN] ✅ ${usersData.length} usuários carregados`)
+        return usersData
       } else if (error) {
+        if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Erro no RPC, tentando fallback...')
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('users')
           .select('*')
           .order('created_at', { ascending: false })
-        
+
         if (!fallbackError && fallbackData) {
+          // @ts-ignore - Type mismatch due to missing columns in generated types
           setUsers(fallbackData)
+          if (FORCE_LOGS) console.log(`[ADMIN] ✅ ${fallbackData.length} usuários carregados (fallback)`)
+          return fallbackData
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
+      console.error('[ADMIN] ❌ Erro ao carregar usuários:', error)
     }
+    return null
   }, [router])
 
   const loadMeetings = useCallback(async () => {
     try {
+      if (FORCE_LOGS) console.log('[ADMIN] 📅 Carregando reuniões...')
+      // @ts-ignore - RPC function not in generated types
       const { data, error } = await supabase.rpc('get_all_meetings')
-      
+
       if (!error && data) {
+        // @ts-ignore - Data type from RPC
         const transformedData = data.map((meeting: any) => ({
           ...meeting,
           users: {
@@ -162,53 +254,223 @@ export default function AdminPage() {
           }
         }))
         setMeetings(transformedData as any)
+        if (FORCE_LOGS) console.log(`[ADMIN] ✅ ${transformedData.length} reuniões carregadas`)
+        return transformedData
       } else if (error) {
-        const { data: fallbackData, error: fallbackError } = await supabase
+        if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Erro no RPC, tentando fallback...')
+        // @ts-ignore - Table not in generated types
+        const { data: fallbackData, error: fallbackError } = await (supabase as any)
           .from('meetings')
           .select(`
             *,
             users (full_name, email)
           `)
           .order('created_at', { ascending: false })
-        
+
         if (!fallbackError && fallbackData) {
           setMeetings(fallbackData as any)
+          if (FORCE_LOGS) console.log(`[ADMIN] ✅ ${fallbackData.length} reuniões carregadas (fallback)`)
+          return fallbackData
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar reuniões:', error)
+      console.error('[ADMIN] ❌ Erro ao carregar reuniões:', error)
     }
+    return null
   }, [])
 
   const loadData = useCallback(async () => {
-    setLoading(true)
-    
-    const timeout = setTimeout(() => {
-      setLoading(false)
-    }, 5000)
-    
-    try {
-      await Promise.all([loadStats(), loadUsers(), loadMeetings()])
-      clearTimeout(timeout)
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error)
-      clearTimeout(timeout)
-    } finally {
-      setLoading(false)
-    }
-  }, [loadStats, loadUsers, loadMeetings])
-
-  useEffect(() => {
-    // Redirecionar se não for admin
-    if (!adminLoading && !isAdmin) {
-            router.push('/')
+    // Prevenir múltiplas chamadas simultâneas
+    if (isLoadingRef.current) {
+      if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Carregamento já em andamento, ignorando')
       return
     }
-    
+
+    isLoadingRef.current = true
+    setLoading(true)
+
+    if (FORCE_LOGS) console.log('[ADMIN] 🚀 Iniciando carregamento de dados...', new Date().toISOString())
+
+    // 🚀 OFFLINE-FIRST: Tentar carregar do cache primeiro
+    const localCache = getLocalCache()
+    const now = Date.now()
+
+    if (FORCE_LOGS) console.log('[ADMIN] 🔍 Verificando cache:', {
+      cacheExists: !!localCache,
+      cacheAge: localCache ? `${Math.round((now - localCache.timestamp) / 1000)}s` : 'N/A',
+      isValid: localCache ? (now - localCache.timestamp < CACHE_DURATION) : false,
+      maxAge: `${CACHE_DURATION / 1000}s`
+    })
+
+    if (localCache && (now - localCache.timestamp < CACHE_DURATION)) {
+      if (FORCE_LOGS) console.log('[ADMIN] ✅ Cache válido encontrado! Carregando do cache...', {
+        hasStats: !!localCache.stats,
+        usersCount: localCache.users?.length || 0,
+        meetingsCount: localCache.meetings?.length || 0
+      })
+
+      setStats(localCache.stats)
+      setUsers(localCache.users)
+      setMeetings(localCache.meetings)
+      setLoading(false)
+      isLoadingRef.current = false
+
+      setCacheMessage('Dados carregados do cache (podem estar ligeiramente desatualizados)')
+
+      // Atualizar em background (não crítico)
+      setTimeout(() => {
+        if (FORCE_LOGS) console.log('[ADMIN] 🔄 Agendando atualização em background...')
+        updateDataInBackground()
+      }, 500)
+
+      return
+    } else if (localCache) {
+      if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Cache expirado, será recarregado')
+    } else {
+      if (FORCE_LOGS) console.log('[ADMIN] ℹ️ Nenhum cache encontrado')
+    }
+
+    // ⚠️ SEM CACHE: Tentar carregar do banco com timeout
+    if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Nenhum cache válido, carregando do banco...')
+
+    // Timeout de segurança
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (isLoadingRef.current) {
+        console.warn('[ADMIN] ⏰ Timeout de segurança atingido (10s)')
+        toast.error('Carregamento está demorando. Verifique sua conexão.')
+      }
+    }, 10000)
+
+    try {
+      const startTime = Date.now()
+
+      // Tentar carregar dados com timeout
+      const dataPromise = Promise.all([loadStats(), loadUsers(), loadMeetings()])
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 8000)
+      )
+
+      const results = await Promise.race([dataPromise, timeoutPromise]) as any[]
+      const [statsData, usersData, meetingsData] = results
+
+      const loadTime = Date.now() - startTime
+      if (FORCE_LOGS) console.log(`[ADMIN] ✅ Dados carregados em ${loadTime}ms`)
+
+      // Salvar no cache com os dados recém carregados (usar state atual como fallback)
+      const cacheData: CachedAdminData = {
+        stats: statsData || stats,
+        users: usersData || users,
+        meetings: meetingsData || meetings,
+        timestamp: Date.now()
+      }
+
+      cachedAdminData = cacheData
+      cachedAdminTimestamp = Date.now()
+      setLocalCache(cacheData)
+
+      if (FORCE_LOGS) console.log('[ADMIN] 💾 Dados salvos no cache:', {
+        stats: cacheData.stats ? '✓' : '✗',
+        users: cacheData.users ? `${cacheData.users.length} usuários` : '✗',
+        meetings: cacheData.meetings ? `${cacheData.meetings.length} reuniões` : '✗'
+      })
+
+      setCacheMessage('')
+
+    } catch (error: any) {
+      console.error('[ADMIN] ❌ Erro ao carregar dados:', error)
+
+      if (error.message === 'Timeout') {
+        toast.error('Tempo esgotado ao carregar dados. Tente novamente.')
+        setCacheMessage('Erro: Tempo esgotado. Verifique sua conexão.')
+      } else {
+        toast.error('Erro ao carregar dados do servidor.')
+        setCacheMessage('Erro ao carregar dados. Tente novamente.')
+      }
+
+      // Tentar usar cache expirado como fallback
+      const expiredCache = getLocalCache()
+      if (expiredCache) {
+        if (FORCE_LOGS) console.log('[ADMIN] 💡 Usando cache expirado como fallback')
+        setStats(expiredCache.stats)
+        setUsers(expiredCache.users)
+        setMeetings(expiredCache.meetings)
+        setCacheMessage('⚠️ Mostrando dados em cache (podem estar desatualizados)')
+      }
+    } finally {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+        loadingTimeoutRef.current = null
+      }
+      setLoading(false)
+      isLoadingRef.current = false
+      if (FORCE_LOGS) console.log('[ADMIN] 🏁 Carregamento finalizado')
+    }
+  }, [loadStats, loadUsers, loadMeetings]) // Removidas dependências problemáticas stats, users, meetings
+
+  // 🔄 Função para atualizar dados em background (não bloqueia UI)
+  const updateDataInBackground = async () => {
+    try {
+      if (FORCE_LOGS) console.log('[ADMIN] 🔄 Atualização em background iniciada')
+
+      await Promise.all([loadStats(), loadUsers(), loadMeetings()])
+
+      // Atualizar cache
+      const cacheData: CachedAdminData = {
+        stats,
+        users,
+        meetings,
+        timestamp: Date.now()
+      }
+
+      cachedAdminData = cacheData
+      cachedAdminTimestamp = Date.now()
+      setLocalCache(cacheData)
+
+      if (FORCE_LOGS) console.log('[ADMIN] ✅ Cache atualizado em background')
+      setCacheMessage('')
+
+    } catch (err) {
+      if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Falha na atualização em background (ignorando):', err)
+    }
+  }
+
+  useEffect(() => {
+    if (FORCE_LOGS) console.log('[ADMIN] 🚀 useEffect executado:', {
+      adminLoading,
+      isAdmin,
+      dataLoaded,
+      isLoadingRef: isLoadingRef.current
+    })
+
+    let isSubscribed = true
+
+    // Redirecionar se não for admin
+    if (!adminLoading && !isAdmin) {
+      if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Não é admin, redirecionando para home...')
+      router.push('/')
+      return
+    }
+
     // Carregar dados se for admin E ainda não carregou
-    if (!adminLoading && isAdmin && !dataLoaded) {
-            setDataLoaded(true)
+    if (!adminLoading && isAdmin && !dataLoaded && isSubscribed) {
+      if (FORCE_LOGS) console.log('[ADMIN] ✅ É admin e precisa carregar dados, iniciando...')
+      setDataLoaded(true)
       loadData()
+    } else {
+      if (FORCE_LOGS) console.log('[ADMIN] ℹ️ Pulando carregamento:', {
+        motivo: adminLoading ? 'ainda carregando admin' : dataLoaded ? 'já carregou' : !isAdmin ? 'não é admin' : 'outro'
+      })
+    }
+
+    // Cleanup
+    return () => {
+      if (FORCE_LOGS) console.log('[ADMIN] 🔚 Componente desmontado, limpando refs...')
+      isSubscribed = false
+      isLoadingRef.current = false
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+        loadingTimeoutRef.current = null
+      }
     }
   }, [isAdmin, adminLoading, dataLoaded, loadData, router])
 
@@ -216,12 +478,13 @@ export default function AdminPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase.from('admin_activity_logs').insert({
-      admin_id: user.id,
+    // @ts-ignore - Table not in generated types
+    await supabase.from('admin_audit_logs').insert({
+      admin_user_id: user.id,
       action,
-      target_type: targetType,
-      target_id: targetId,
-      details
+      entity_type: targetType,
+      entity_id: targetId,
+      new_data: details
     })
   }
 
@@ -251,7 +514,7 @@ export default function AdminPage() {
     try {
       // 1. Verificar autenticação do admin atual
       const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
-      
+
       if (authError) {
         console.error('❌ Erro de autenticação:', authError)
         toast.error('Erro de autenticação')
@@ -271,7 +534,7 @@ export default function AdminPage() {
         .from('users')
         .select('role')
         .eq('id', currentUser.id)
-        .single()
+        .single() as { data: { role: string } | null; error: any }
 
       if (adminCheckError || !adminProfile || adminProfile.role !== 'admin') {
         console.error('❌ Sem permissões de admin:', adminCheckError)
@@ -301,8 +564,9 @@ export default function AdminPage() {
 
       for (let attempt = 1; attempt <= retries; attempt++) {
         console.log(`🔄 Tentativa ${attempt} de ${retries}...`)
-        
-        const result = await supabase.rpc(
+
+        // @ts-ignore - RPC function not in generated types
+        const result = await (supabase as any).rpc(
           'admin_block_user',
           {
             target_user_id: selectedUser.id,
@@ -346,11 +610,11 @@ export default function AdminPage() {
 
       // 6. Feedback
       toast.success(`Usuário ${selectedUser.email} bloqueado com sucesso`)
-      
+
       // 7. Fechar dialog e limpar estado
       setIsBlockDialogOpen(false)
       setSelectedUser(null)
-      
+
       // 8. Recarregar dados com retry
       let reloadSuccess = false
       for (let i = 0; i < 3; i++) {
@@ -364,7 +628,18 @@ export default function AdminPage() {
         }
       }
 
-      if (!reloadSuccess) {
+      if (reloadSuccess) {
+        // Atualizar cache após reload bem-sucedido
+        const cacheData: CachedAdminData = {
+          stats,
+          users,
+          meetings,
+          timestamp: Date.now()
+        }
+        cachedAdminData = cacheData
+        cachedAdminTimestamp = Date.now()
+        setLocalCache(cacheData)
+      } else {
         console.warn('⚠️ Não foi possível recarregar dados, recarregando página...')
         window.location.reload()
       }
@@ -404,7 +679,7 @@ export default function AdminPage() {
     try {
       // 1. Verificar autenticação do admin
       const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
-      
+
       if (authError || !currentUser) {
         console.error('❌ Erro de autenticação:', authError)
         toast.error('Você precisa estar autenticado')
@@ -417,7 +692,7 @@ export default function AdminPage() {
         .from('users')
         .select('role')
         .eq('id', currentUser.id)
-        .single()
+        .single() as { data: { role: string } | null; error: any }
 
       if (adminCheckError || !adminProfile || adminProfile.role !== 'admin') {
         console.error('❌ Sem permissões de admin:', adminCheckError)
@@ -439,8 +714,9 @@ export default function AdminPage() {
 
       for (let attempt = 1; attempt <= retries; attempt++) {
         console.log(`🔄 Tentativa ${attempt} de ${retries}...`)
-        
-        const result = await supabase.rpc(
+
+        // @ts-ignore - RPC function not in generated types
+        const result = await (supabase as any).rpc(
           'admin_unblock_user',
           {
             target_user_id: user.id,
@@ -483,7 +759,7 @@ export default function AdminPage() {
 
       // 5. Feedback
       toast.success(`Usuário ${user.email} desbloqueado com sucesso`)
-      
+
       // 6. Recarregar dados com retry
       let reloadSuccess = false
       for (let i = 0; i < 3; i++) {
@@ -497,7 +773,18 @@ export default function AdminPage() {
         }
       }
 
-      if (!reloadSuccess) {
+      if (reloadSuccess) {
+        // Atualizar cache após reload bem-sucedido
+        const cacheData: CachedAdminData = {
+          stats,
+          users,
+          meetings,
+          timestamp: Date.now()
+        }
+        cachedAdminData = cacheData
+        cachedAdminTimestamp = Date.now()
+        setLocalCache(cacheData)
+      } else {
         console.warn('⚠️ Não foi possível recarregar dados, recarregando página...')
         window.location.reload()
       }
@@ -515,7 +802,7 @@ export default function AdminPage() {
     if (!selectedUser) return
 
     try {
-            
+
       // Registrar atividade ANTES de deletar (para manter histórico)
       await logActivity('delete_user', 'user', selectedUser.id, {
         email: selectedUser.email,
@@ -523,7 +810,8 @@ export default function AdminPage() {
       })
 
       // Usar a função SQL que criamos (funciona no cliente)
-      const { data, error } = await supabase
+      // @ts-ignore - RPC function not in generated types
+      const { data, error } = await (supabase as any)
         .rpc('delete_user_account', { user_id_to_delete: selectedUser.id })
 
             if (error) {
@@ -533,21 +821,38 @@ export default function AdminPage() {
       }
 
       // Verificar o resultado retornado pela função
+      // @ts-ignore - Data type from RPC
       if (data && !data.success) {
+        // @ts-ignore - Data type from RPC
         console.error('❌ Função retornou erro:', data.error)
+        // @ts-ignore - Data type from RPC
         toast.error(`Erro: ${data.error}`)
         return
       }
 
       // Sucesso!
             toast.success(`Usuário ${selectedUser.email} excluído com sucesso`)
-      
+
       setIsDeleteDialogOpen(false)
       setSelectedUser(null)
-      
-      // Recarregar dados
-      loadUsers()
-      loadStats()
+
+      // Recarregar dados e atualizar cache
+      try {
+        await Promise.all([loadUsers(), loadStats()])
+
+        // Atualizar cache
+        const cacheData: CachedAdminData = {
+          stats,
+          users,
+          meetings,
+          timestamp: Date.now()
+        }
+        cachedAdminData = cacheData
+        cachedAdminTimestamp = Date.now()
+        setLocalCache(cacheData)
+      } catch (reloadErr) {
+        console.warn('⚠️ Erro ao recarregar dados após deletar')
+      }
     } catch (error) {
       console.error('❌ Erro inesperado ao excluir usuário:', error)
       toast.error('Erro inesperado ao excluir usuário')
@@ -557,6 +862,7 @@ export default function AdminPage() {
   const updateMeetingStatus = async (meetingId: string, status: string) => {
     try {
       // Usar RPC para atualização segura como admin
+      // @ts-ignore - RPC function not in generated types
       const { data, error } = await supabase.rpc('admin_update_meeting_status', {
         meeting_id_param: meetingId,
         new_status: status
@@ -568,14 +874,33 @@ export default function AdminPage() {
         return
       }
 
+      // @ts-ignore - Data type from RPC
       if (!data?.success) {
+        // @ts-ignore - Data type from RPC
         toast.error(data?.error || 'Erro ao atualizar status da reunião')
         return
       }
 
       await logActivity('update_meeting_status', 'meeting', meetingId, { status })
       toast.success('Status atualizado com sucesso')
-      loadMeetings()
+
+      // Recarregar dados e atualizar cache
+      try {
+        await loadMeetings()
+
+        // Atualizar cache
+        const cacheData: CachedAdminData = {
+          stats,
+          users,
+          meetings,
+          timestamp: Date.now()
+        }
+        cachedAdminData = cacheData
+        cachedAdminTimestamp = Date.now()
+        setLocalCache(cacheData)
+      } catch (reloadErr) {
+        console.warn('⚠️ Erro ao recarregar dados após atualizar meeting')
+      }
     } catch (error) {
       console.error('Erro inesperado ao atualizar status:', error)
       toast.error('Erro inesperado ao atualizar status')
@@ -583,7 +908,7 @@ export default function AdminPage() {
   }
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user => 
+    return users.filter(user =>
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -592,15 +917,15 @@ export default function AdminPage() {
   const filteredMeetings = useMemo(() => {
     return meetings.filter(meeting => {
       // Filtro por texto de busca
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         meeting.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         meeting.users?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         meeting.users?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         meeting.project_type.toLowerCase().includes(searchTerm.toLowerCase())
-      
+
       // Filtro por status
       const matchesStatus = meetingStatusFilter === 'all' || meeting.status === meetingStatusFilter
-      
+
       return matchesSearch && matchesStatus
     })
   }, [meetings, searchTerm, meetingStatusFilter])
@@ -634,9 +959,9 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <Image 
-                src="/logo.png" 
-                alt="Elion Softwares" 
+              <Image
+                src="/logo.png"
+                alt="Elion Softwares"
                 width={240}
                 height={60}
                 className="h-5 w-auto"
@@ -647,18 +972,25 @@ export default function AdminPage() {
               <span className="text-xs font-medium text-gray-600">Painel Administrativo</span>
             </div>
             <div className="flex items-center gap-4">
-              <a 
+              <Link
                 href="/"
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Voltar ao Site
-              </a>
+              </Link>
             </div>
           </div>
         </div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Mensagem de Cache */}
+        {cacheMessage && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+            {cacheMessage}
+          </div>
+        )}
 
         {/* Stats Cards - Design Minimalista */}
         {stats && (
@@ -732,14 +1064,14 @@ export default function AdminPage() {
         {/* Tabs - Design Minimalista */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1">
-            <TabsTrigger 
-              value="users" 
+            <TabsTrigger
+              value="users"
               className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600"
             >
               <Users className="h-4 w-4 mr-2" />
               Usuários
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="meetings"
               className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600"
             >
@@ -768,7 +1100,7 @@ export default function AdminPage() {
                     </CardDescription>
                   </div>
                 </div>
-                
+
                 {/* Filtros de Status */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   <button
@@ -862,7 +1194,7 @@ export default function AdminPage() {
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <p className="font-medium text-gray-900 text-sm truncate">
@@ -887,7 +1219,7 @@ export default function AdminPage() {
                             )}
                           </div>
                         </div>
-                        
+
                         {user.role !== 'admin' && (
                           <div className="flex gap-2 ml-4 flex-shrink-0">
                             {user.is_blocked ? (
@@ -973,7 +1305,7 @@ export default function AdminPage() {
                     </CardDescription>
                   </div>
                 </div>
-                
+
                 {/* Filtros */}
                 <div className="space-y-3">
                   {/* Filtro por Status */}
@@ -1029,7 +1361,7 @@ export default function AdminPage() {
                       Canceladas ({meetings.filter(m => m.status === 'cancelled').length})
                     </button>
                   </div>
-                  
+
                   {/* Busca */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1142,7 +1474,7 @@ export default function AdminPage() {
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Cliente */}
                         <div className="space-y-1">
                           <p className="text-sm font-medium text-gray-900">
@@ -1150,12 +1482,12 @@ export default function AdminPage() {
                           </p>
                           <p className="text-xs text-gray-500">{meeting.email} • {meeting.phone}</p>
                         </div>
-                        
+
                         {/* Descrição */}
                         <div className="text-sm text-gray-600">
                           {meeting.project_description}
                         </div>
-                        
+
                         {/* Detalhes */}
                         <div className="flex items-center gap-4 text-xs text-gray-500 pt-2 border-t border-gray-100">
                           <span>Prazo: {meeting.timeline}</span>
@@ -1191,7 +1523,7 @@ export default function AdminPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setIsBlockDialogOpen(false)
                 setSelectedUser(null)
@@ -1200,7 +1532,7 @@ export default function AdminPage() {
             >
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleBlockUser}
               className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isBlocking}

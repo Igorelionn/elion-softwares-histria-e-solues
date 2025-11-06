@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" style={{ position: 'relative' }}>
+    <html lang="pt-BR" className="relative">
       <head>
         {/* Preconnect para recursos externos críticos */}
         <link rel="preconnect" href="https://images.unsplash.com" />
@@ -27,7 +27,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body className="antialiased relative" style={{ position: 'relative' }}>
+      <body className="antialiased relative">
         <SecurityURLCleaner />
         <LanguageProvider>
           <BlockGuard>

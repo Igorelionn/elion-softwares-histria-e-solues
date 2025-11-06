@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Termos de Serviço | Elion Softwares',
@@ -106,12 +107,12 @@ export default function TermosDeServicoPage() {
         </div>
 
         <div className="mt-12 text-center">
-          <a 
+          <Link 
             href="/" 
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             ← Voltar para a página inicial
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -19,10 +19,10 @@ interface AuthDialogProps {
   onBeforeGoogleLogin?: () => void
 }
 
-export function AuthDialog({ 
-  isOpen, 
-  onClose, 
-  defaultTab = "login", 
+export function AuthDialog({
+  isOpen,
+  onClose,
+  defaultTab = "login",
   preventRedirect = false,
   redirectTo,
   onBeforeGoogleLogin
@@ -101,8 +101,8 @@ export function AuthDialog({
       // @ts-ignore - check_login_allowed RPC function exists in database
       const { data: checkData, error: checkError } = (await supabase
         // @ts-ignore
-        .rpc('check_login_allowed', { user_email: loginEmail })) as { 
-          data: { 
+        .rpc('check_login_allowed', { user_email: loginEmail })) as {
+          data: {
             allowed: boolean
             reason?: 'blocked' | 'deleted'
             message?: string
@@ -153,7 +153,7 @@ export function AuthDialog({
       }
 
       setSuccess("Login realizado com sucesso!")
-      
+
       if (!preventRedirect) {
         setTimeout(() => {
           handleClose()
@@ -214,22 +214,22 @@ export function AuthDialog({
 
       // Nota: O perfil do usuário é criado automaticamente via Database Trigger
       // quando o usuário é inserido em auth.users
-      
+
       // Verificar se confirmação de email é necessária
       const needsEmailConfirmation = authData.user && !authData.user.email_confirmed_at
-      
+
       if (needsEmailConfirmation) {
         setSuccess("Conta criada! Verifique seu email para confirmar o cadastro.")
       } else {
         setSuccess("Conta criada com sucesso!")
       }
-      
+
       // Limpar campos
       setSignupName("")
       setSignupEmail("")
       setSignupPassword("")
       setSignupConfirmPassword("")
-      
+
       if (!preventRedirect) {
         setTimeout(() => {
           setActiveTab("login")
@@ -257,12 +257,12 @@ export function AuthDialog({
 
   const handleGoogleLogin = async () => {
     setIsLoading(true)
-    
+
     // Chamar callback antes do login com Google (para salvar dados do formulário)
     if (onBeforeGoogleLogin) {
       onBeforeGoogleLogin()
     }
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -307,6 +307,8 @@ export function AuthDialog({
               <button
                 onClick={handleClose}
                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors z-10 cursor-pointer"
+                aria-label="Fechar"
+                title="Fechar"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -356,8 +358,8 @@ export function AuthDialog({
 
                   {/* Login Tab */}
                   <TabsContent value="login" className="mt-6 space-y-4">
-                    <motion.form 
-                      onSubmit={handleLogin} 
+                    <motion.form
+                      onSubmit={handleLogin}
                       className="space-y-4"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -376,8 +378,7 @@ export function AuthDialog({
                             placeholder="seu@email.com"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11"
-                            style={{ boxShadow: 'none' }}
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
@@ -396,8 +397,7 @@ export function AuthDialog({
                             placeholder="••••••••"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11"
-                            style={{ boxShadow: 'none' }}
+                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
@@ -405,6 +405,8 @@ export function AuthDialog({
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            title={showPassword ? "Ocultar senha" : "Mostrar senha"}
                           >
                             <AnimatePresence mode="wait">
                               {showPassword ? (
@@ -414,9 +416,9 @@ export function AuthDialog({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="w-6 h-6" 
-                                  viewBox="0 0 24 24" 
-                                  fill="none" 
+                                  className="w-6 h-6"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <path d="M21.2572 10.9622C21.7314 11.5813 21.7314 12.4187 21.2572 13.0378C19.764 14.9868 16.1818 19 12 19C7.81823 19 4.23598 14.9868 2.74284 13.0378C2.26857 12.4187 2.26856 11.5813 2.74283 10.9622C4.23598 9.01321 7.81823 5 12 5C16.1818 5 19.764 9.01321 21.2572 10.9622Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -429,9 +431,9 @@ export function AuthDialog({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="w-6 h-6" 
-                                  viewBox="0 0 24 24" 
-                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="w-6 h-6"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
                                   fill="none"
                                 >
                                   <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10a13.358 13.358 0 0 0 3 2.685M21 10a13.358 13.358 0 0 1-3 2.685m-8 1.624L9.5 16.5m.5-2.19a10.59 10.59 0 0 0 4 0m-4 0a11.275 11.275 0 0 1-4-1.625m8 1.624.5 2.191m-.5-2.19a11.275 11.275 0 0 0 4-1.625m0 0 1.5 1.815M6 12.685 4.5 14.5"/>
@@ -447,8 +449,7 @@ export function AuthDialog({
                           <div className="relative flex items-center justify-center">
                             <input
                               type="checkbox"
-                              className="peer border-gray-300 focus:outline-none focus:ring-0 cursor-pointer appearance-none border-2 hover:border-gray-400 checked:bg-slate-700 checked:border-slate-700 transition-colors"
-                              style={{ width: '18px', height: '18px', borderRadius: '4px' }}
+                              className="peer border-gray-300 focus:outline-none focus:ring-0 cursor-pointer appearance-none border-2 hover:border-gray-400 checked:bg-slate-700 checked:border-slate-700 transition-colors w-[18px] h-[18px] rounded"
                             />
                             <svg
                               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18px] h-[18px] pointer-events-none hidden peer-checked:block"
@@ -542,8 +543,8 @@ export function AuthDialog({
 
                   {/* Signup Tab */}
                   <TabsContent value="signup" className="mt-6 space-y-4">
-                    <motion.form 
-                      onSubmit={handleSignup} 
+                    <motion.form
+                      onSubmit={handleSignup}
                       className="space-y-4"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -562,8 +563,7 @@ export function AuthDialog({
                             placeholder="Seu nome completo"
                             value={signupName}
                             onChange={(e) => setSignupName(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11"
-                            style={{ boxShadow: 'none' }}
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
@@ -582,8 +582,7 @@ export function AuthDialog({
                             placeholder="seu@email.com"
                             value={signupEmail}
                             onChange={(e) => setSignupEmail(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11"
-                            style={{ boxShadow: 'none' }}
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
@@ -602,8 +601,7 @@ export function AuthDialog({
                             placeholder="••••••••"
                             value={signupPassword}
                             onChange={(e) => setSignupPassword(e.target.value)}
-                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11"
-                            style={{ boxShadow: 'none' }}
+                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                             minLength={6}
@@ -612,6 +610,8 @@ export function AuthDialog({
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            title={showPassword ? "Ocultar senha" : "Mostrar senha"}
                           >
                             <AnimatePresence mode="wait">
                               {showPassword ? (
@@ -621,9 +621,9 @@ export function AuthDialog({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="w-6 h-6" 
-                                  viewBox="0 0 24 24" 
-                                  fill="none" 
+                                  className="w-6 h-6"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <path d="M21.2572 10.9622C21.7314 11.5813 21.7314 12.4187 21.2572 13.0378C19.764 14.9868 16.1818 19 12 19C7.81823 19 4.23598 14.9868 2.74284 13.0378C2.26857 12.4187 2.26856 11.5813 2.74283 10.9622C4.23598 9.01321 7.81823 5 12 5C16.1818 5 19.764 9.01321 21.2572 10.9622Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -636,9 +636,9 @@ export function AuthDialog({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="w-6 h-6" 
-                                  viewBox="0 0 24 24" 
-                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="w-6 h-6"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
                                   fill="none"
                                 >
                                   <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10a13.358 13.358 0 0 0 3 2.685M21 10a13.358 13.358 0 0 1-3 2.685m-8 1.624L9.5 16.5m.5-2.19a10.59 10.59 0 0 0 4 0m-4 0a11.275 11.275 0 0 1-4-1.625m8 1.624.5 2.191m-.5-2.19a11.275 11.275 0 0 0 4-1.625m0 0 1.5 1.815M6 12.685 4.5 14.5"/>
@@ -662,8 +662,7 @@ export function AuthDialog({
                             placeholder="••••••••"
                             value={signupConfirmPassword}
                             onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11"
-                            style={{ boxShadow: 'none' }}
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />

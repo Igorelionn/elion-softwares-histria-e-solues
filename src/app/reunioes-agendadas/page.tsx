@@ -48,7 +48,7 @@ export default function ReuniõesAgendadasPage() {
     const hasCheckedUser = useRef(false)
     const isCheckingUser = useRef(false)
     const [isAdmin, setIsAdmin] = useState(false)
-    
+
     // Reagendar e Cancelar
     const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false)
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
@@ -60,7 +60,7 @@ export default function ReuniõesAgendadasPage() {
     useEffect(() => {
         // Previne múltiplas chamadas simultâneas
         if (hasCheckedUser.current || isCheckingUser.current) return
-        
+
         isCheckingUser.current = true
         checkUser()
 
@@ -79,7 +79,7 @@ export default function ReuniõesAgendadasPage() {
             if (!document.hidden) {
                 // Usuário voltou à aba, revalidar sessão
                 const { data: { session }, error } = await supabase.auth.getSession()
-                
+
                 if (error || !session) {
                     router.push('/')
                     return
@@ -87,7 +87,7 @@ export default function ReuniõesAgendadasPage() {
 
                 // Atualizar usuário se mudou
                 setUser(session.user)
-                
+
                 // Recarregar reuniões para pegar atualizações
                 await loadMeetings(session.user.id)
             }
@@ -116,7 +116,7 @@ export default function ReuniõesAgendadasPage() {
     const checkUser = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession()
-            
+
             if (!session) {
                 router.push('/')
                 return
@@ -131,16 +131,16 @@ export default function ReuniõesAgendadasPage() {
             }
 
             setUser(session.user)
-            
+
             // Verificar se é admin
             const { data: profile } = await (supabase as any)
                 .from('users')
                 .select('role')
                 .eq('id', session.user.id)
                 .single() as { data: { role: string } | null; error: any }
-            
+
             setIsAdmin(profile?.role === 'admin')
-            
+
             await loadMeetings(session.user.id)
         } catch (err) {
             console.error('Error loading user:', err)
@@ -230,7 +230,7 @@ export default function ReuniõesAgendadasPage() {
             } else {
                 // Calcular reagendamentos restantes
                 const remainingReschedules = 3 - (rescheduleCount + 1)
-                
+
                 toast.success('Reunião reagendada com sucesso!', {
                     description: `Você ainda pode reagendar ${remainingReschedules} vez(es). Limite: 3 reagendamentos por reunião.`
                 })
@@ -360,7 +360,7 @@ export default function ReuniõesAgendadasPage() {
             } else {
                 // Calcular cancelamentos restantes no mês
                 const remainingCancellations = 2 - (monthlyCancellations + 1)
-                
+
                 toast.success('Reunião cancelada com sucesso!', {
                     description: `Você ainda pode cancelar ${remainingCancellations} reunião(ões) este mês. Limite: 2 cancelamentos por mês.`
                 })
@@ -512,6 +512,7 @@ export default function ReuniõesAgendadasPage() {
                                 <button
                                     onClick={() => setSearchTerm('')}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+                                    aria-label="Limpar campo de busca"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -593,7 +594,7 @@ export default function ReuniõesAgendadasPage() {
                                         <ChevronDown className="w-4 h-4 text-gray-400" />
                                     </motion.div>
                                 </button>
-                                
+
                                 <AnimatePresence>
                                     {sortMenuOpen && (
                                         <motion.div
@@ -779,7 +780,7 @@ export default function ReuniõesAgendadasPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <motion.button 
+                                        <motion.button
                                             className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
                                             animate={{ rotate: expandedMeeting === meeting.id ? 180 : 0 }}
                                             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -923,7 +924,7 @@ export default function ReuniõesAgendadasPage() {
                             )
                         )}
                     </DialogHeader>
-                    
+
                     {selectedMeeting && (
                         <div className="space-y-4 py-4">
                             {/* Informações da Reunião */}
@@ -974,7 +975,7 @@ export default function ReuniõesAgendadasPage() {
                             )}
                         </div>
                     )}
-                    
+
                     <DialogFooter className="gap-2 sm:gap-2">
                         <Button
                             variant="outline"
@@ -1021,7 +1022,7 @@ export default function ReuniõesAgendadasPage() {
                             </p>
                         </div>
                     </DialogHeader>
-                    
+
                     {selectedMeeting && (
                         <div className="py-4">
                             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -1057,7 +1058,7 @@ export default function ReuniõesAgendadasPage() {
                             )}
                         </div>
                     )}
-                    
+
                     <DialogFooter className="gap-2 sm:gap-2">
                         <Button
                             variant="outline"

@@ -40,7 +40,7 @@ export function HeroSection() {
     return (
         <>
             <HeroHeader />
-            <main className="relative overflow-hidden" style={{ position: 'relative' }}>
+            <main className="relative overflow-hidden">
                 <div
                     aria-hidden
                     className="z-[2] absolute inset-0 pointer-events-none isolate opacity-50 contain-strict hidden lg:block">
@@ -91,12 +91,7 @@ export function HeroSection() {
                                     <div className="flex justify-center px-4">
                 <h1 className="text-center">
                         {/* Mobile: 2 linhas | iPad/Desktop: layout original */}
-                        <span className="block md:hidden text-3xl sm:text-4xl font-light leading-tight" style={{ 
-                            fontFamily: "'Lyondisplay App', Georgia, sans-serif",
-                            fontWeight: 300,
-                            fontStyle: 'normal',
-                            color: 'rgb(20, 20, 20)'
-                        }}>
+                        <span className="hero-title block md:hidden text-3xl sm:text-4xl font-light leading-tight">
                             <span className="inline">
                                 {t.hero.title1} <FlipWords words={[...t.hero.flipWords]} duration={4000} className="text-[rgb(20,20,20)]" /> {t.hero.title2}
                             </span>
@@ -106,22 +101,12 @@ export function HeroSection() {
                         
                         {/* iPad/Desktop: layout original */}
                         <span className="hidden md:block">
-                            <span className="block text-5xl md:text-[48px] lg:text-7xl xl:text-8xl 2xl:text-[96px] font-light leading-tight md:leading-[1.2] lg:leading-[1.15] xl:leading-[86px]" style={{ 
-                                fontFamily: "'Lyondisplay App', Georgia, sans-serif",
-                                fontWeight: 300,
-                                fontStyle: 'normal',
-                                color: 'rgb(20, 20, 20)'
-                            }}>
+                            <span className="hero-title block text-5xl md:text-[48px] lg:text-7xl xl:text-8xl 2xl:text-[96px] font-light leading-tight md:leading-[1.2] lg:leading-[1.15] xl:leading-[86px]">
                                 <span className="inline whitespace-nowrap">
                                     {t.hero.title1} <FlipWords words={[...t.hero.flipWords]} duration={4000} className="text-[rgb(20,20,20)]" /> {t.hero.title2}
                                 </span>
                             </span>
-                            <span className="block mt-2 md:mt-3 lg:mt-2 text-5xl md:text-[48px] lg:text-7xl xl:text-8xl 2xl:text-[96px] font-light leading-tight md:leading-[1.2] lg:leading-[1.15] xl:leading-[86px]" style={{ 
-                                fontFamily: "'Lyondisplay App', Georgia, sans-serif",
-                                fontWeight: 300,
-                                fontStyle: 'normal',
-                                color: 'rgb(20, 20, 20)'
-                            }}>{t.hero.title3}</span>
+                            <span className="hero-title block mt-2 md:mt-3 lg:mt-2 text-5xl md:text-[48px] lg:text-7xl xl:text-8xl 2xl:text-[96px] font-light leading-tight md:leading-[1.2] lg:leading-[1.15] xl:leading-[86px]">{t.hero.title3}</span>
                         </span>
                                         </h1>
                                     </div>
@@ -431,7 +416,6 @@ const HeroHeader = () => {
                                                     alt="Avatar"
                                                     fill
                                                     className="object-cover bg-transparent"
-                                                    style={{ backgroundColor: 'transparent' }}
                                                 />
                                             ) : (
                                                 (() => {
@@ -646,7 +630,6 @@ const HeroHeader = () => {
                                                         alt="Avatar"
                                                         fill
                                                         className="object-cover bg-transparent"
-                                                        style={{ backgroundColor: 'transparent' }}
                                                     />
                                                 ) : (
                                                     (() => {
@@ -813,7 +796,6 @@ const Logo = React.memo(({ className, isDark }: { className?: string; isDark?: b
             height={46}
             className={cn('h-5 w-auto transition-none', className)}
             priority
-            style={{ height: '1.25rem', width: 'auto' }}
         />
     )
 })

@@ -17,7 +17,7 @@ const containerVariants = {
       staggerChildren: 0.05,
     },
   },
-};
+} as const;
 
 const letterVariants = {
   initial: {
@@ -28,7 +28,7 @@ const letterVariants = {
     y: "-120%",
     color: "rgb(255 255 255 / 0.5)",
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 20,
     },

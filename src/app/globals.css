@@ -224,3 +224,13 @@ video::-webkit-media-controls-start-playback-button {
   display: none !important;
   opacity: 0 !important;
 }
+
+/* Classe personalizada para títulos Hero com fonte Lyondisplay */
+@layer components {
+  .hero-title {
+    font-family: 'Lyondisplay App', Georgia, sans-serif;
+    font-weight: 300;
+    font-style: normal;
+    color: rgb(20, 20, 20);
+  }
+}
