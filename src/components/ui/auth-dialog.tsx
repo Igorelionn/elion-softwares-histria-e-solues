@@ -300,7 +300,7 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-2xl bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -478,7 +478,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black !text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
                         disabled={isLoading}
                       >
                         {isLoading ? (
