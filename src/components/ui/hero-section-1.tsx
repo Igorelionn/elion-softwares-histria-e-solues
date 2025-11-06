@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { authSession } from '@/lib/auth-session'
 import { useTranslation } from '@/contexts/LanguageContext'
+import { toast } from 'sonner'
 
 const transitionVariants = {
     item: {
@@ -501,14 +502,37 @@ const HeroHeader = () => {
                                                         </button>
                                                         {isAdmin && (
                                                             <button
-                                                                onClick={() => {
-                                                                    setShowUserMenu(false)
-                                                                    window.location.href = '/admin'
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        // Verificação adicional antes de navegar
+                                                                        const { data: { session } } = await supabase.auth.getSession()
+                                                                        if (!session?.user) {
+                                                                            toast.error('Sessão expirada. Faça login novamente.')
+                                                                            return
+                                                                        }
+
+                                                                        const { data: profile } = await supabase
+                                                                            .from('users')
+                                                                            .select('role')
+                                                                            .eq('id', session.user.id)
+                                                                            .single() as { data: { role: string } | null; error: any }
+
+                                                                        if (profile?.role !== 'admin') {
+                                                                            toast.error('Acesso negado. Você não tem permissões de administrador.')
+                                                                            return
+                                                                        }
+
+                                                                        setShowUserMenu(false)
+                                                                        window.location.href = '/admin'
+                                                                    } catch (error) {
+                                                                        console.error('Erro ao verificar permissões:', error)
+                                                                        toast.error('Erro ao acessar painel administrativo.')
+                                                                    }
                                                                 }}
                                                                 className={cn(
                                                                     "w-full px-3 py-2 text-xs flex items-center gap-2 transition-colors border-t",
-                                                                    isOnDarkSection 
-                                                                        ? "text-blue-400 hover:bg-blue-500/20 active:bg-blue-500/25 border-white/10" 
+                                                                    isOnDarkSection
+                                                                        ? "text-blue-400 hover:bg-blue-500/20 active:bg-blue-500/25 border-white/10"
                                                                         : "text-blue-600 hover:bg-blue-50 active:bg-blue-100 border-gray-200"
                                                                 )}
                                                             >

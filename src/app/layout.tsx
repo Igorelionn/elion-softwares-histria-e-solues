@@ -18,6 +18,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Removido log excessivo - só mostrar em caso de problemas
   return (
     <html lang="pt-BR" className="relative">
       <head>

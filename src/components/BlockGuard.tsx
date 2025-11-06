@@ -88,12 +88,13 @@ export function BlockGuard({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    // Log removido para reduzir sobrecarga - só mostrar quando necessário
     let mounted = true
 
     const initCheck = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        
+
         if (session?.user && mounted) {
           await checkBlockStatus(session.user.id)
         }

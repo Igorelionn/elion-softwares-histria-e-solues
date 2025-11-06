@@ -13,6 +13,7 @@ import { Camera, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { useTranslation } from '@/contexts/LanguageContext'
+import { toast } from 'sonner'
 
 // Flag para forçar logs em produção
 const FORCE_LOGS = true
@@ -180,7 +181,7 @@ export default function PerfilPage() {
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
-        if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO - VERSÃO OFFLINE-FIRST v2.0')
+        if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO - VERSÃO OFFLINE-FIRST v2.0 - Timestamp:', new Date().toISOString())
         let isSubscribed = true
 
         // 🛡️ RESET FORÇADO: Ao montar, limpar TODOS os flags (caso tenha ficado travado)
@@ -626,7 +627,7 @@ export default function PerfilPage() {
 
         // Cleanup ao desmontar
         return () => {
-            if (FORCE_LOGS) console.error('[PERFIL] 🛑 DESMONTANDO componente')
+            if (FORCE_LOGS) console.error('[PERFIL] 🛑 DESMONTANDO componente - Timestamp:', new Date().toISOString())
             isSubscribed = false
             isLoadingRef.current = false
             loadingInProgressRef.current = false
@@ -638,14 +639,14 @@ export default function PerfilPage() {
             clearTimeout(safetyTimeoutId)
 
             // Cancelar listener de autenticação (PRIORITÁRIO)
-            if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener...')
+            if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener - Timestamp:', new Date().toISOString())
             try {
                 subscription.unsubscribe()
             } catch (err) {
                 console.error('[PERFIL] ⚠️ Erro ao remover listener:', err)
             }
 
-            if (FORCE_LOGS) console.error('[PERFIL] ✅ Cleanup completo')
+            if (FORCE_LOGS) console.error('[PERFIL] ✅ Cleanup completo - Timestamp:', new Date().toISOString())
         }
     }, []) // ⚠️ Executa apenas UMA vez
 
@@ -1154,7 +1155,32 @@ export default function PerfilPage() {
                                 </div>
                                 <Button
                                     type="button"
-                                    onClick={() => router.push('/admin')}
+                                    onClick={async () => {
+                                        try {
+                                            // Verificação adicional antes de navegar
+                                            const { data: { session } } = await supabase.auth.getSession()
+                                            if (!session?.user) {
+                                                toast.error('Sessão expirada. Faça login novamente.')
+                                                return
+                                            }
+
+                                            const { data: profile } = await supabase
+                                                .from('users')
+                                                .select('role')
+                                                .eq('id', session.user.id)
+                                                .single() as { data: { role: string } | null; error: any }
+
+                                            if (profile?.role !== 'admin') {
+                                                toast.error('Acesso negado. Você não tem permissões de administrador.')
+                                                return
+                                            }
+
+                                            router.push('/admin')
+                                        } catch (error) {
+                                            console.error('Erro ao verificar permissões:', error)
+                                            toast.error('Erro ao acessar painel administrativo.')
+                                        }
+                                    }}
                                     className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 h-auto transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                                 >
                                     Acessar Painel →

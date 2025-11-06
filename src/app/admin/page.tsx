@@ -148,7 +148,7 @@ interface Meeting {
 
 export default function AdminPage() {
   const router = useRouter()
-  const { isAdmin, loading: adminLoading } = useAdmin()
+  const { isAdmin, loading: adminLoading, error: adminError } = useAdmin()
 
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -439,26 +439,37 @@ export default function AdminPage() {
       adminLoading,
       isAdmin,
       dataLoaded,
+      adminError,
       isLoadingRef: isLoadingRef.current
     })
 
     let isSubscribed = true
 
-    // Redirecionar se não for admin
-    if (!adminLoading && !isAdmin) {
-      if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Não é admin, redirecionando para home...')
-      router.push('/')
+    // Redirecionar se não for admin ou se houve erro
+    if (!adminLoading && (!isAdmin || adminError)) {
+      const reason = adminError ? `Erro: ${adminError}` : 'Não é admin'
+      if (FORCE_LOGS) console.log(`[ADMIN] ⚠️ Redirecionando para home - ${reason}`)
+
+      // Pequeno delay para mostrar a mensagem antes do redirecionamento
+      setTimeout(() => {
+        if (!isSubscribed) return
+        router.push('/')
+      }, 100)
+
       return
     }
 
     // Carregar dados se for admin E ainda não carregou
-    if (!adminLoading && isAdmin && !dataLoaded && isSubscribed) {
+    if (!adminLoading && isAdmin && !adminError && !dataLoaded && isSubscribed) {
       if (FORCE_LOGS) console.log('[ADMIN] ✅ É admin e precisa carregar dados, iniciando...')
       setDataLoaded(true)
       loadData()
     } else {
       if (FORCE_LOGS) console.log('[ADMIN] ℹ️ Pulando carregamento:', {
-        motivo: adminLoading ? 'ainda carregando admin' : dataLoaded ? 'já carregou' : !isAdmin ? 'não é admin' : 'outro'
+        motivo: adminLoading ? 'ainda carregando admin' :
+               dataLoaded ? 'já carregou' :
+               adminError ? `erro: ${adminError}` :
+               !isAdmin ? 'não é admin' : 'outro'
       })
     }
 
@@ -472,7 +483,7 @@ export default function AdminPage() {
         loadingTimeoutRef.current = null
       }
     }
-  }, [isAdmin, adminLoading, dataLoaded, loadData, router])
+  }, [isAdmin, adminLoading, adminError, dataLoaded, loadData, router])
 
   const logActivity = async (action: string, targetType: string, targetId: string, details: any = {}) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -948,8 +959,23 @@ export default function AdminPage() {
     )
   }
 
-  if (!isAdmin) {
-        return null
+  if (!isAdmin || adminError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-8">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Acesso Negado
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {adminError || 'Você não tem permissão para acessar esta página.'}
+          </p>
+          <Link href="/" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Voltar ao Início
+          </Link>
+        </div>
+      </div>
+    )
   }
 
     return (
