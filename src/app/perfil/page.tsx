@@ -270,33 +270,42 @@ export default function PerfilPage() {
                 // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
 
-                // 🚀 OFFLINE-FIRST SIMPLIFICADO: Cache localStorage primeiro, sempre
+                // 🚀 MOSTRAR DADOS BÁSICOS IMEDIATAMENTE (0ms - INSTANT!)
+                if (FORCE_LOGS) console.error('[PERFIL] ⚡ Mostrando dados básicos INSTANTANEAMENTE...')
+                const identities = session.user.identities || []
+                const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                
+                // Setar dados básicos SEMPRE primeiro (instantâneo) - não espera nada!
+                setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                setCompany(session.user.user_metadata?.company || '')
+                setAvatarUrl(session.user.user_metadata?.avatar_url || '')
+                setHasPassword(hasEmailIdentity)
+                setLocalLanguage(language)
+                
+                // Desativar loading IMEDIATAMENTE para mostrar interface
+                setLoading(false)
+                isLoadingRef.current = false
+                
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ Interface liberada INSTANTANEAMENTE em', Date.now() - startTime, 'ms!')
+
+                // 🚀 OFFLINE-FIRST: Verificar cache localStorage (em background)
                 if (FORCE_LOGS) console.error('[PERFIL] 💾 Verificando cache localStorage...')
                 const localCache = getLocalCache()
 
                 if (localCache && localCache.id === session.user.id) {
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ CACHE ENCONTRADO! Carregando dados...')
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ CACHE ENCONTRADO! Atualizando dados...')
 
-                    // Usar dados do cache local - SEMPRE funciona
+                    // Atualizar com dados do cache (mais completos que user_metadata)
                     setFullName(localCache.full_name || session.user.user_metadata?.full_name || session.user.email || '')
-                    setCompany(localCache.company || '')
-                    setAvatarUrl(localCache.avatar_url || '')
-                    setLocalLanguage(language)
-
-                    // Check if user has password
-                    const identities = session.user.identities || []
-                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                    setHasPassword(hasEmailIdentity)
-
+                    setCompany(localCache.company || session.user.user_metadata?.company || '')
+                    setAvatarUrl(localCache.avatar_url || session.user.user_metadata?.avatar_url || '')
                     setIsAdmin(localCache.role === 'admin')
 
-                    setLoading(false)
-                    isLoadingRef.current = false
                     isCurrentlyLoading = false
                     loadingInProgressRef.current = false
                     loadAttempts = 0
 
-                    if (FORCE_LOGS) console.error('[PERFIL] 🎉 INTERFACE CARREGADA DO CACHE LOCAL!')
+                    if (FORCE_LOGS) console.error('[PERFIL] 🎉 Cache aplicado em', Date.now() - startTime, 'ms!')
 
                     // Atualização opcional em background (não crítica)
                     updateFromDatabaseInBackground(session).catch(() => {
