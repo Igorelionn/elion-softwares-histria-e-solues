@@ -300,7 +300,7 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-md bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -444,30 +444,7 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <div className="relative flex items-center justify-center">
-                            <input
-                              type="checkbox"
-                              className="peer border-gray-300 focus:outline-none focus:ring-0 cursor-pointer appearance-none border-2 hover:border-gray-400 checked:bg-slate-700 checked:border-slate-700 transition-colors w-[18px] h-[18px] rounded"
-                            />
-                            <svg
-                              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18px] h-[18px] pointer-events-none hidden peer-checked:block"
-                              viewBox="0 0 18 18"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M4 9L7.5 12.5L14 6"
-                                stroke="white"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </div>
-                          <span className="text-sm text-gray-600 leading-[18px]">Permanecer conectado</span>
-                        </label>
+                      <div className="flex items-center justify-end">
                         <button
                           type="button"
                           className="text-sm text-blue-800 hover:text-blue-900 transition-colors cursor-pointer"
