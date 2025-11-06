@@ -27,11 +27,6 @@ interface AuthProviderProps {
  * através do authStore do Zustand
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const syncSession = useAuthStore((state) => state.syncSession)
-  const setUser = useAuthStore((state) => state.setUser)
-  const clearState = useAuthStore((state) => state.clearState)
-  const _shouldProcessEvent = useAuthStore((state) => state._shouldProcessEvent)
-  
   // Ref para rastrear o último evento processado (deduplicação)
   const lastEventRef = useRef<{
     type: AuthChangeEvent | ''
@@ -50,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Sincronizar sessão inicial apenas uma vez
     if (!initializedRef.current) {
       initializedRef.current = true
-      syncSession()
+      useAuthStore.getState().syncSession()
     }
     
     // Registrar listener ÚNICO de mudanças de autenticação
@@ -71,7 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         lastEventRef.current = { type: event, timestamp: now }
         
         // FILA: Verificar se devemos processar este evento (através do store)
-        if (!_shouldProcessEvent(event)) {
+        if (!useAuthStore.getState()._shouldProcessEvent(event)) {
           log.warn(`Evento filtrado pela fila: ${event}`)
           return
         }
@@ -94,12 +89,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           switch (event) {
             case 'SIGNED_IN':
               log.success('Usuário autenticado', { userId: session?.user?.id })
-              setUser(session?.user || null)
+              useAuthStore.getState().setUser(session?.user || null)
               break
               
             case 'SIGNED_OUT':
               log.info('Usuário deslogado')
-              clearState()
+              useAuthStore.getState().clearState()
               break
               
             case 'TOKEN_REFRESHED':
@@ -110,7 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   oldId: currentUser?.id,
                   newId: session?.user?.id,
                 })
-                setUser(session?.user || null)
+                useAuthStore.getState().setUser(session?.user || null)
               } else {
                 log.debug('Token refreshed (sem mudança de usuário)')
               }
@@ -120,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Usuário atualizado - atualizar dados
               log.info('Dados do usuário atualizados')
               if (session?.user) {
-                setUser(session.user)
+                useAuthStore.getState().setUser(session.user)
               }
               break
               
@@ -153,7 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Sincronizar sessão silenciosamente
         try {
-          await syncSession()
+          await useAuthStore.getState().syncSession()
         } catch (error) {
           log.error('Erro ao revalidar sessão no foco', error)
         }
@@ -176,7 +171,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (!processingRef.current) {
         try {
-          await syncSession()
+          await useAuthStore.getState().syncSession()
         } catch (error) {
           log.error('Erro ao sincronizar no foco da janela', error)
         }
@@ -194,7 +189,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleWindowFocus)
     }
-  }, [syncSession, setUser, clearState, _shouldProcessEvent])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Executar apenas uma vez no mount
   
   return <>{children}</>
 }
