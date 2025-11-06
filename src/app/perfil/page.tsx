@@ -292,10 +292,15 @@ export default function PerfilPage() {
                     // Batch update (uma única operação de state)
                     const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
+
+                    // Se tem login Google, sempre usar a imagem do Google
+                    const googleAvatarUrl = hasGoogleIdentity ? session.user.user_metadata?.avatar_url : null
+                    const finalAvatarUrl = googleAvatarUrl || localCache.avatar_url || ''
 
                     setFullName(localCache.full_name || '')
                     setCompany(localCache.company || '')
-                    setAvatarUrl(localCache.avatar_url || '')
+                    setAvatarUrl(finalAvatarUrl)
                     setHasPassword(hasEmailIdentity)
                     setIsAdmin(localCache.role === 'admin')
                     setLocalLanguage(language)
@@ -317,11 +322,15 @@ export default function PerfilPage() {
 
                 const identities = session.user.identities || []
                 const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
+
+                // Se tem login Google, sempre usar a imagem do Google
+                const googleAvatarUrl = hasGoogleIdentity ? session.user.user_metadata?.avatar_url : null
 
                 // Batch update - dados básicos
                 setFullName(session.user.user_metadata?.full_name || session.user.email || '')
                 setCompany(session.user.user_metadata?.company || '')
-                setAvatarUrl(session.user.user_metadata?.avatar_url || '')
+                setAvatarUrl(googleAvatarUrl || session.user.user_metadata?.avatar_url || '')
                 setHasPassword(hasEmailIdentity)
                 setLocalLanguage(language)
                 setLoading(false)
@@ -336,13 +345,13 @@ export default function PerfilPage() {
                 try {
                     // Query simplificada e rápida
                     const result = await supabase
-                        .from('users')
+                    .from('users')
                         .select('id, full_name, company, avatar_url, role, updated_at')
-                        .eq('id', session.user.id)
-                        .maybeSingle()
+                    .eq('id', session.user.id)
+                    .maybeSingle()
 
                     if (result.data) {
-                        profile = result.data
+                    profile = result.data
                         profileError = null
                         if (FORCE_LOGS) console.error('[PERFIL] ✅ Query direta bem-sucedida')
                     } else {
@@ -415,18 +424,18 @@ export default function PerfilPage() {
                         // ✅ Manter dados básicos já configurados acima
                         // Interface já está funcional com dados do user_metadata
 
-                        setLoading(false)
-                        isLoadingRef.current = false
-                        isCurrentlyLoading = false
-                        loadingInProgressRef.current = false
+                    setLoading(false)
+                    isLoadingRef.current = false
+                    isCurrentlyLoading = false
+                    loadingInProgressRef.current = false
 
                         // Mensagem clara sobre o status
                         setError('Perfil carregado com dados básicos. Funcionalidades limitadas até conectar ao servidor.')
 
                         if (FORCE_LOGS) console.error('[PERFIL] ✅ Modo offline ativado - interface funcional')
-                        return
+                return
                     }
-                }
+            }
 
                 // ✅ TRATAMENTO DE VAZIO: Se não retornou dados
                 if (!profile) {
@@ -435,11 +444,16 @@ export default function PerfilPage() {
                     console.warn('[PERFIL] 💡 Possível causa: Usuário não existe na tabela users')
 
                     // Ainda assim, configurar dados básicos do user_metadata
-                    setFullName(session.user.user_metadata?.full_name || session.user.email || '')
-
                     // Check if user has password mesmo sem perfil
             const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
+
+                    // Se tem login Google, sempre usar a imagem do Google
+                    const googleAvatarUrl = hasGoogleIdentity ? session.user.user_metadata?.avatar_url : null
+
+                    setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                    setAvatarUrl(googleAvatarUrl || '')
             setHasPassword(hasEmailIdentity)
 
                     setLoading(false)
@@ -474,16 +488,20 @@ export default function PerfilPage() {
                 setError('')
 
                 if (isSubscribed) {
-                // @ts-ignore - TypeScript não reconhece colunas customizadas
-                setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
-                // @ts-ignore - TypeScript não reconhece colunas customizadas
-                setCompany(profile.company || '')
-                // @ts-ignore - TypeScript não reconhece colunas customizadas
-                setAvatarUrl(profile.avatar_url || '')
-
-                    // Check if user has password
+                    // Check if user has password and Google login
                     const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
+
+                    // Se tem login Google, sempre usar a imagem do Google
+                    const googleAvatarUrl = hasGoogleIdentity ? session.user.user_metadata?.avatar_url : null
+
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
+                    setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
+                    setCompany(profile.company || '')
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
+                    setAvatarUrl(googleAvatarUrl || profile.avatar_url || '')
                     setHasPassword(hasEmailIdentity)
 
                     // @ts-ignore - TypeScript não reconhece colunas customizadas
