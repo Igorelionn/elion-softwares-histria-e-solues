@@ -24,10 +24,112 @@ let loadAttempts = 0
 const DEBOUNCE_TIME = 100 // ms (reduzido para ser mais responsivo)
 const MAX_LOAD_ATTEMPTS = 2
 
-// 🚀 CACHE GLOBAL: Armazenar último perfil carregado com sucesso
+// 🚀 CACHE HÍBRIDO: Global + LocalStorage para máxima resiliência
 let cachedProfile: any = null
 let cachedProfileTimestamp = 0
-const CACHE_DURATION = 10000 // 10 segundos de cache
+const CACHE_DURATION = 30000 // 30 segundos de cache (aumentado)
+
+// Cache localStorage para persistência entre sessões
+const PROFILE_CACHE_KEY = 'elion_profile_cache'
+const PROFILE_CACHE_TIMESTAMP_KEY = 'elion_profile_timestamp'
+
+interface CachedProfile {
+    id: string
+    full_name: string
+    company: string
+    avatar_url: string
+    role: string
+    updated_at: string
+    timestamp: number
+}
+
+// 🔄 ATUALIZAÇÃO EM BACKGROUND: Tenta atualizar dados do banco sem bloquear UI
+const updateFromDatabaseInBackground = async (session: any) => {
+    if (!session?.user?.id) return
+
+    try {
+        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Atualização em background iniciada...')
+
+        // Timeout reduzido para background (não queremos travar)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000) // 3s timeout
+
+        const result = await supabase
+            .from('users')
+            .select('id, full_name, company, avatar_url, role, updated_at')
+            .eq('id', session.user.id)
+            .maybeSingle()
+
+        clearTimeout(timeoutId)
+
+        if (result.data) {
+            // Atualizar caches
+            cachedProfile = result.data
+            cachedProfileTimestamp = Date.now()
+            setLocalCache(result.data)
+
+            if (FORCE_LOGS) console.error('[PERFIL] ✅ Cache atualizado em background')
+        }
+    } catch (err) {
+        // Silenciosamente ignorar erros em background
+        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Atualização em background falhou (ignorando):', err)
+    }
+}
+
+// 🔧 FUNÇÕES DE CACHE LOCALSTORAGE
+const getLocalCache = (): CachedProfile | null => {
+    try {
+        const cached = localStorage.getItem(PROFILE_CACHE_KEY)
+        const timestamp = localStorage.getItem(PROFILE_CACHE_TIMESTAMP_KEY)
+
+        if (cached && timestamp) {
+            const profile = JSON.parse(cached)
+            const cacheTime = parseInt(timestamp)
+            const now = Date.now()
+
+            // Cache válido por 5 minutos (mais longo que o cache global)
+            if (now - cacheTime < 5 * 60 * 1000) {
+                return profile
+            } else {
+                // Cache expirado, limpar
+                localStorage.removeItem(PROFILE_CACHE_KEY)
+                localStorage.removeItem(PROFILE_CACHE_TIMESTAMP_KEY)
+            }
+        }
+    } catch (err) {
+        console.warn('[PERFIL] ⚠️ Erro ao ler cache localStorage:', err)
+    }
+    return null
+}
+
+const setLocalCache = (profile: any) => {
+    try {
+        const cacheData: CachedProfile = {
+            id: profile.id,
+            full_name: profile.full_name || '',
+            company: profile.company || '',
+            avatar_url: profile.avatar_url || '',
+            role: profile.role || 'user',
+            updated_at: profile.updated_at || new Date().toISOString(),
+            timestamp: Date.now()
+        }
+
+        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cacheData))
+        localStorage.setItem(PROFILE_CACHE_TIMESTAMP_KEY, Date.now().toString())
+    } catch (err) {
+        console.warn('[PERFIL] ⚠️ Erro ao salvar cache localStorage:', err)
+    }
+}
+
+const clearLocalCache = () => {
+    try {
+        localStorage.removeItem(PROFILE_CACHE_KEY)
+        localStorage.removeItem(PROFILE_CACHE_TIMESTAMP_KEY)
+        if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Cache localStorage limpo')
+    } catch (err) {
+        console.warn('[PERFIL] ⚠️ Erro ao limpar cache localStorage:', err)
+    }
+}
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -74,10 +176,10 @@ export default function PerfilPage() {
         isCurrentlyLoading = false
         loadingInProgressRef.current = false
 
-        // 🛡️ TIMEOUT DE SEGURANÇA: Forçar liberação dos flags após 12s e tentar novamente
+        // 🛡️ TIMEOUT DE SEGURANÇA: Forçar liberação dos flags após 20s e tentar novamente
         const safetyTimeoutId = setTimeout(() => {
             if (isCurrentlyLoading || loadingInProgressRef.current) {
-                console.warn('[PERFIL] ⚠️ TIMEOUT DE SEGURANÇA: Forçando liberação dos flags após 12s')
+                console.warn('[PERFIL] ⚠️ TIMEOUT DE SEGURANÇA: Forçando liberação dos flags após 20s')
                 isCurrentlyLoading = false
                 loadingInProgressRef.current = false
                 isLoadingRef.current = false
@@ -90,7 +192,7 @@ export default function PerfilPage() {
                     if (loadAttempts >= MAX_LOAD_ATTEMPTS) {
                         console.error('[PERFIL] ❌ Máximo de tentativas atingido, desativando loading')
                         setLoading(false)
-                        setError('Erro ao carregar perfil. Por favor, recarregue a página.')
+                        setError('Erro ao carregar perfil. Verifique sua conexão com a internet e recarregue a página.')
                         return
                     }
 
@@ -108,7 +210,7 @@ export default function PerfilPage() {
                     })
                 }
             }
-        }, 12000)
+        }, 20000)
 
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
@@ -168,12 +270,43 @@ export default function PerfilPage() {
                 // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
 
-                // 🚀 USAR CACHE SE DISPONÍVEL E RECENTE
+                // 🚀 OFFLINE-FIRST: Tentar cache localStorage primeiro (mais rápido)
+                const localCache = getLocalCache()
+                if (localCache && localCache.id === session.user.id) {
+                    if (FORCE_LOGS) console.error('[PERFIL] 💾 Usando cache localStorage')
+
+                    // Usar dados do cache local
+                    setFullName(localCache.full_name || session.user.user_metadata?.full_name || session.user.email || '')
+                    setCompany(localCache.company || '')
+                    setAvatarUrl(localCache.avatar_url || '')
+
+                    // Check if user has password
+                    const identities = session.user.identities || []
+                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    setHasPassword(hasEmailIdentity)
+
+                    setIsAdmin(localCache.role === 'admin')
+
+                    setLoading(false)
+                    isLoadingRef.current = false
+                    isCurrentlyLoading = false
+                    loadingInProgressRef.current = false
+                    loadAttempts = 0
+
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Carregado do CACHE LOCAL em', Date.now() - startTime, 'ms')
+
+                    // Tentar atualizar em background (não bloqueia UI)
+                    updateFromDatabaseInBackground(session)
+                    return
+                }
+
+                // 🚀 CACHE GLOBAL: Segundo nível de cache
                 const cacheAge = now - cachedProfileTimestamp
                 if (cachedProfile && cachedProfile.id === session.user.id && cacheAge < CACHE_DURATION) {
-                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 Usando cache (idade:', cacheAge, 'ms)')
+                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 Usando cache global (idade:', cacheAge, 'ms)')
 
-                    // Usar dados do cache
+                    // Usar dados do cache global e salvar no localStorage
+                    setLocalCache(cachedProfile)
                     setFullName(cachedProfile.full_name || session.user.user_metadata?.full_name || session.user.email || '')
                     setCompany(cachedProfile.company || '')
                     setAvatarUrl(cachedProfile.avatar_url || '')
@@ -193,38 +326,49 @@ export default function PerfilPage() {
                     loadingInProgressRef.current = false
                     loadAttempts = 0
 
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Carregado do CACHE em', Date.now() - startTime, 'ms')
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Carregado do CACHE GLOBAL em', Date.now() - startTime, 'ms')
                     return
                 }
 
-                // ✅ Query com timeout de 10s, especificando apenas colunas necessárias
+                // ✅ Query otimizada - tentar múltiplas abordagens
                 if (FORCE_LOGS) console.error('[PERFIL] 🔍 Query HTTP iniciada:', new Date().toISOString())
                 const queryStartTime = performance.now()
 
-                const queryPromise = supabase
-                    .from('users')
-                    .select('id, full_name, company, avatar_url, created_at, updated_at')
-                    .eq('id', session.user.id)
-                    .maybeSingle()
-
-                const timeoutPromise = new Promise<never>((_, reject) =>
-                    setTimeout(() => reject(new Error('Query timeout')), 10000)
-                )
-
                 let profile, profileError
                 try {
-                    const result = await Promise.race([queryPromise, timeoutPromise])
-                    profile = result.data
-                    profileError = result.error
+                    // Estratégia 1: Query direta otimizada
+                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 Tentativa 1: Query direta otimizada')
+                    const result = await supabase
+                        .from('users')
+                        .select('id, full_name, company, avatar_url, role, updated_at')
+                        .eq('id', session.user.id)
+                        .maybeSingle()
+
+                    if (result.data) {
+                        profile = result.data
+                        profileError = null
+                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Query direta bem-sucedida')
+                    } else {
+                        // Estratégia 2: Query simplificada como fallback
+                        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentativa 2: Query simplificada (fallback)')
+                        const fallbackResult = await supabase
+                            .from('users')
+                            .select('id, full_name, company, avatar_url')
+                            .eq('id', session.user.id)
+                            .maybeSingle()
+
+                        profile = fallbackResult.data
+                        profileError = fallbackResult.error
+                    }
 
                     const queryEndTime = performance.now()
                     if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Query HTTP levou:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
                 } catch (err: any) {
                     const queryEndTime = performance.now()
-                    console.error('[PERFIL] ❌ Query timeout ou erro:', err)
-                    console.error('[PERFIL] ⏱️ Timeout atingido após:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
+                    console.error('[PERFIL] ❌ Query falhou:', err)
+                    console.error('[PERFIL] ⏱️ Falhou após:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
                     profile = null
-                    profileError = { message: err?.message || 'Timeout na query' }
+                    profileError = { message: err?.message || 'Erro na query' }
                 }
 
                 const loadTime = Date.now() - startTime
@@ -240,23 +384,66 @@ export default function PerfilPage() {
                         hint: profileError.hint
                     })
 
-                    // ✅ Mesmo com erro, setar dados básicos do user_metadata
-                    setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                    // 🛡️ TENTATIVA DE RETRY: Se for timeout, tentar novamente uma vez
+                    if (profileError.message?.includes('timeout') || profileError.message?.includes('Timeout')) {
+                        if (FORCE_LOGS) console.error('[PERFIL] ⏰ TIMEOUT detectado, tentando retry...')
 
-                    // Check if user has password
-                    const identities = session.user.identities || []
-                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                    setHasPassword(hasEmailIdentity)
+                        // Aguardar 1 segundo antes do retry
+                        await new Promise(resolve => setTimeout(resolve, 1000))
 
-                    setLoading(false)
-                    isLoadingRef.current = false
-                    isCurrentlyLoading = false
-                    loadingInProgressRef.current = false
+                        try {
+                            if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentando query novamente...')
+                            const retryResult = await supabase
+                                .from('users')
+                                .select('id, full_name, company, avatar_url, role, updated_at')
+                                .eq('id', session.user.id)
+                                .maybeSingle()
 
-                    // Mostrar erro mas permitir uso básico
-                    setError('Erro ao carregar dados completos do perfil. Alguns dados podem estar desatualizados.')
-                return
-            }
+                            if (retryResult.data) {
+                                if (FORCE_LOGS) console.error('[PERFIL] ✅ Retry bem-sucedido!')
+                                profile = retryResult.data
+                                profileError = null
+                            } else if (retryResult.error) {
+                                console.error('[PERFIL] ❌ Retry falhou com erro:', retryResult.error)
+                            }
+                        } catch (retryErr: any) {
+                            console.error('[PERFIL] ❌ Retry também falhou:', retryErr)
+                        }
+                    }
+
+                    // Se ainda há erro após retry
+                    if (profileError) {
+                        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Usando fallback: dados básicos do user_metadata')
+
+                        // ✅ FALLBACK: Usar apenas dados básicos do user_metadata
+                        setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                        setCompany(session.user.user_metadata?.company || '')
+                        setAvatarUrl(session.user.user_metadata?.avatar_url || '')
+
+                        // Check if user has password
+                        const identities = session.user.identities || []
+                        const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                        setHasPassword(hasEmailIdentity)
+
+                        // Tentar role básico (assumir user se não conseguir)
+                        setIsAdmin(false) // Fallback seguro
+
+                        setLoading(false)
+                        isLoadingRef.current = false
+                        isCurrentlyLoading = false
+                        loadingInProgressRef.current = false
+
+                        // Mostrar erro mais específico mas permitir uso
+                        const isUsingCache = localCache !== null
+                        const errorMsg = profileError.message?.includes('timeout')
+                            ? `Perfil carregado ${isUsingCache ? 'do cache' : 'com dados básicos'}. Alguns recursos podem estar limitados devido a problemas de conectividade.`
+                            : `Perfil carregado ${isUsingCache ? 'do cache' : 'com dados básicos'}. Alguns dados podem estar desatualizados.`
+
+                        setError(errorMsg)
+                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Fallback concluído - interface funcional')
+                        return
+                    }
+                }
 
                 // ✅ TRATAMENTO DE VAZIO: Se não retornou dados
                 if (!profile) {
@@ -282,23 +469,30 @@ export default function PerfilPage() {
 
                 // ✅ SUCESSO: Dados retornados
                 if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados recebidos:', {
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     full_name: profile.full_name,
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     company: profile.company,
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     avatar_url: profile.avatar_url ? 'SIM' : 'NÃO',
-                    // @ts-ignore
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     language: profile.language,
-                    // @ts-ignore
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     role: profile.role
                 })
 
-                // 🚀 SALVAR NO CACHE
+                // 🚀 SALVAR NO CACHE (global + localStorage)
                 cachedProfile = profile
                 cachedProfileTimestamp = Date.now()
-                if (FORCE_LOGS) console.error('[PERFIL] 💾 Perfil salvo no cache')
+                setLocalCache(profile) // Também salvar no localStorage
+                if (FORCE_LOGS) console.error('[PERFIL] 💾 Perfil salvo no cache (global + local)')
 
                 if (isSubscribed) {
+                // @ts-ignore - TypeScript não reconhece colunas customizadas
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
+                // @ts-ignore - TypeScript não reconhece colunas customizadas
                 setCompany(profile.company || '')
+                // @ts-ignore - TypeScript não reconhece colunas customizadas
                 setAvatarUrl(profile.avatar_url || '')
 
                     // Check if user has password
@@ -306,15 +500,15 @@ export default function PerfilPage() {
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
                     setHasPassword(hasEmailIdentity)
 
-                    // @ts-ignore
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                 if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
-                    // @ts-ignore
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     setLocalLanguage(profile.language)
-                    // @ts-ignore
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     setLanguage(profile.language)
                 }
 
-                    // @ts-ignore
+                    // @ts-ignore - TypeScript não reconhece colunas customizadas
                     setIsAdmin(profile.role === 'admin')
 
                     if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO COMPLETO em', Date.now() - startTime, 'ms')
@@ -328,7 +522,9 @@ export default function PerfilPage() {
                 // Se for timeout, mostrar mensagem específica
                 if (err?.message?.includes('timeout') || err?.message?.includes('Timeout')) {
                     console.error('[PERFIL] 🕒 TIMEOUT na query ao banco')
-                    setError('Tempo esgotado ao carregar perfil. Tente novamente.')
+                    setError('Tempo esgotado ao carregar perfil. Isso pode ser causado por uma conexão lenta ou problemas temporários do servidor. Tente novamente em alguns instantes.')
+                } else {
+                    setError('Erro inesperado ao carregar perfil. Se o problema persistir, entre em contato com o suporte.')
                 }
         } finally {
                 // ✅ SEMPRE desativar loading e flags (GARANTIDO)
@@ -372,6 +568,10 @@ export default function PerfilPage() {
             // Tratar eventos de autenticação
             if (event === 'SIGNED_OUT' || !session) {
                 if (FORCE_LOGS) console.error('[PERFIL] 👋 Deslogado, redirecionando')
+                // Limpar caches ao fazer logout
+                clearLocalCache()
+                cachedProfile = null
+                cachedProfileTimestamp = 0
                 router.push('/')
                 return
             }
