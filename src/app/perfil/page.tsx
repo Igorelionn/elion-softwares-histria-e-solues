@@ -24,8 +24,12 @@ export default function PerfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t, language, setLanguage } = useTranslation()
   
+  // 🔒 FLAG ANTI-LOOP: Prevenir redirecionamentos duplicados
+  const hasRedirectedRef = useRef(false)
+  
   // Consumir estados dos stores Zustand
-  const { user, isLoading: authLoading } = useAuthState()
+  // ⚠️ IMPORTANTE: Incluir isInitialized para saber quando auth terminou de carregar
+  const { user, isLoading: authLoading, isInitialized } = useAuthState()
   const { 
     profile, 
     isLoading: profileLoading, 
@@ -71,20 +75,43 @@ export default function PerfilPage() {
     }
   }, [profileError])
   
-  // Verificar autenticação e carregar perfil
+  // 🛡️ PROTEÇÃO ANTI-LOOP: Verificar autenticação e carregar perfil
   useEffect(() => {
-    log.info('Componente montado')
+    log.info('useEffect de autenticação executado', {
+      isInitialized,
+      hasUser: !!user,
+      userId: user?.id,
+      hasRedirected: hasRedirectedRef.current
+    })
     
-    if (!user) {
-      log.warn('Sem usuário, redirecionando para home')
-      router.push('/')
+    // ⏳ AGUARDAR: Não fazer nada até que a autenticação termine de inicializar
+    if (!isInitialized) {
+      log.debug('Aguardando inicialização da autenticação...')
       return
     }
     
-    // Carregar perfil do usuário
-    log.info('Carregando perfil', { userId: user.id })
-    loadProfile(user.id)
-  }, [user, loadProfile, router])
+    // 🚫 SEM USUÁRIO: Redirecionar apenas UMA vez e apenas quando CONFIRMED não autenticado
+    if (!user && !hasRedirectedRef.current) {
+      log.warn('Usuário não autenticado confirmado, redirecionando para home')
+      hasRedirectedRef.current = true
+      
+      // 🔄 REPLACE: Usa replace ao invés de push para não criar histórico
+      router.replace('/')
+      return
+    }
+    
+    // ✅ COM USUÁRIO: Carregar perfil
+    if (user?.id) {
+      log.info('Usuário autenticado, carregando perfil', { userId: user.id })
+      loadProfile(user.id)
+    }
+    
+    // 🔧 DEPENDÊNCIAS: Apenas isInitialized e user.id
+    // Não incluir loadProfile ou router para evitar loops
+    // loadProfile é estável (vem do Zustand store)
+    // router.replace é chamado apenas na branch de redirecionamento
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, user?.id])
   
   // Atualizar formulário quando perfil carregar
   useEffect(() => {

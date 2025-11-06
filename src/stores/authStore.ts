@@ -92,25 +92,37 @@ export const useAuthStore = create<AuthState>()(
       /**
        * Sincroniza sessão com Supabase
        * Inclui proteção anti-loop e timeout
+       * 🔒 PROTEÇÃO ANTI-LOOP: Debounce + flag de progresso
        */
       syncSession: async () => {
         const state = get()
+        const now = Date.now()
+        const timeSinceLastSync = now - state.lastSync
         
-        // Proteção anti-loop: não permitir sync simultâneos
+        log.debug('syncSession chamado', {
+          syncInProgress: state.syncInProgress,
+          lastSync: state.lastSync,
+          timeSinceLastSync,
+          isInitialized: state.isInitialized,
+        })
+        
+        // 🚫 PREVENIR CONCORRÊNCIA: Ignorar se já está sincronizando
         if (state.syncInProgress) {
-          log.warn('Sync já em andamento, ignorando')
+          log.warn('⚠️ Sync já em andamento, ignorando chamada duplicada')
           return
         }
         
-        // Debounce: ignorar chamadas muito próximas (< 500ms)
-        const now = Date.now()
-        if (state.lastSync > 0 && now - state.lastSync < 500) {
-          log.warn('Sync muito recente, ignorando (debounce)')
+        // ⏱️ DEBOUNCE: Ignorar chamadas muito próximas (< 500ms)
+        // EXCETO se nunca sincronizou (lastSync === 0)
+        if (state.lastSync > 0 && timeSinceLastSync < 500) {
+          log.warn(`⚠️ Sync muito recente (${timeSinceLastSync}ms), ignorando (debounce)`)
           return
         }
         
         set({ syncInProgress: true, isLoading: true })
-        log.info('Iniciando sincronização de sessão')
+        log.info('🔄 Iniciando sincronização de sessão', {
+          isFirstSync: state.lastSync === 0,
+        })
         
         try {
           // Sincronizar com timeout e retry
@@ -132,7 +144,7 @@ export const useAuthStore = create<AuthState>()(
           )
           
           if (error) {
-            log.error('Erro ao sincronizar sessão', error)
+            log.error('❌ Erro ao sincronizar sessão', error)
             set({
               error: error.message,
               user: null,
@@ -143,7 +155,12 @@ export const useAuthStore = create<AuthState>()(
             return
           }
           
-          log.success('Sessão sincronizada', { userId: session?.user?.id })
+          const hasUser = !!session?.user
+          log.success(`✅ Sessão sincronizada com sucesso`, {
+            hasUser,
+            userId: session?.user?.id,
+            email: session?.user?.email,
+          })
           
           set({
             user: session?.user || null,
@@ -153,7 +170,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           })
         } catch (error: any) {
-          log.error('Falha crítica ao sincronizar sessão', error)
+          log.error('❌ Falha crítica ao sincronizar sessão', error)
           set({
             error: error?.message || 'Erro desconhecido ao sincronizar',
             user: null,
@@ -163,6 +180,7 @@ export const useAuthStore = create<AuthState>()(
           })
         } finally {
           set({ syncInProgress: false })
+          log.debug('🏁 syncSession finalizado')
         }
       },
       
