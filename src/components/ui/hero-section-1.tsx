@@ -801,7 +801,7 @@ const HeroHeader = () => {
                                             className={cn(
                                                 'transition-all duration-300 cursor-pointer text-xs h-9 px-4 lg:text-sm lg:h-11 lg:px-6 w-full sm:w-auto', 
                                                 isScrolled && 'lg:hidden lg:w-0 lg:opacity-0 lg:pointer-events-none',
-                                                isOnDarkSection && 'border-white/20 text-white hover:bg-white/10 active:bg-white/15'
+                                                isOnDarkSection && 'border-white/20 bg-white text-black hover:bg-white/90 active:bg-white/80'
                                             )}>
                                             <span>{t.nav.login}</span>
                                         </Button>
