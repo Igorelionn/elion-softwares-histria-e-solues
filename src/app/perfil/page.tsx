@@ -168,7 +168,7 @@ export default function PerfilPage() {
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
-        if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO')
+        if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO - VERSÃO OFFLINE-FIRST v2.0')
         let isSubscribed = true
 
         // 🛡️ RESET FORÇADO: Ao montar, limpar TODOS os flags (caso tenha ficado travado)
@@ -270,15 +270,18 @@ export default function PerfilPage() {
                 // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
 
-                // 🚀 OFFLINE-FIRST: Tentar cache localStorage primeiro (mais rápido)
+                // 🚀 OFFLINE-FIRST SIMPLIFICADO: Cache localStorage primeiro, sempre
+                if (FORCE_LOGS) console.error('[PERFIL] 💾 Verificando cache localStorage...')
                 const localCache = getLocalCache()
-                if (localCache && localCache.id === session.user.id) {
-                    if (FORCE_LOGS) console.error('[PERFIL] 💾 Usando cache localStorage')
 
-                    // Usar dados do cache local
+                if (localCache && localCache.id === session.user.id) {
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ CACHE ENCONTRADO! Carregando dados...')
+
+                    // Usar dados do cache local - SEMPRE funciona
                     setFullName(localCache.full_name || session.user.user_metadata?.full_name || session.user.email || '')
                     setCompany(localCache.company || '')
                     setAvatarUrl(localCache.avatar_url || '')
+                    setLocalLanguage(language)
 
                     // Check if user has password
                     const identities = session.user.identities || []
@@ -293,42 +296,31 @@ export default function PerfilPage() {
                     loadingInProgressRef.current = false
                     loadAttempts = 0
 
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Carregado do CACHE LOCAL em', Date.now() - startTime, 'ms')
+                    if (FORCE_LOGS) console.error('[PERFIL] 🎉 INTERFACE CARREGADA DO CACHE LOCAL!')
 
-                    // Tentar atualizar em background (não bloqueia UI)
-                    updateFromDatabaseInBackground(session)
+                    // Atualização opcional em background (não crítica)
+                    updateFromDatabaseInBackground(session).catch(() => {
+                        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Background update falhou, mas tudo OK')
+                    })
                     return
                 }
 
-                // 🚀 CACHE GLOBAL: Segundo nível de cache
-                const cacheAge = now - cachedProfileTimestamp
-                if (cachedProfile && cachedProfile.id === session.user.id && cacheAge < CACHE_DURATION) {
-                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 Usando cache global (idade:', cacheAge, 'ms)')
+                // ⚠️ SEM CACHE: Mostrar dados básicos e tentar carregar do banco
+                if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Nenhum cache encontrado, usando dados básicos temporariamente')
 
-                    // Usar dados do cache global e salvar no localStorage
-                    setLocalCache(cachedProfile)
-                    setFullName(cachedProfile.full_name || session.user.user_metadata?.full_name || session.user.email || '')
-                    setCompany(cachedProfile.company || '')
-                    setAvatarUrl(cachedProfile.avatar_url || '')
-                    setLocalLanguage(language)
+                setFullName(session.user.user_metadata?.full_name || session.user.email || '')
+                setCompany(session.user.user_metadata?.company || '')
+                setAvatarUrl(session.user.user_metadata?.avatar_url || '')
+                setLocalLanguage(language)
 
-                    // Check if user has password
-                    const identities = session.user.identities || []
-                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                    setHasPassword(hasEmailIdentity)
+                // Check if user has password
+                const identities = session.user.identities || []
+                const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                setHasPassword(hasEmailIdentity)
+                setIsAdmin(false) // Fallback seguro
 
-                    // @ts-ignore
-                    setIsAdmin(cachedProfile.role === 'admin')
-
-                    setLoading(false)
-                    isLoadingRef.current = false
-                    isCurrentlyLoading = false
-                    loadingInProgressRef.current = false
-                    loadAttempts = 0
-
-                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Carregado do CACHE GLOBAL em', Date.now() - startTime, 'ms')
-                    return
-                }
+                setError('Carregando dados do servidor...')
+                setLoading(false) // Permitir uso da interface
 
                 // ✅ Query otimizada - tentar múltiplas abordagens
                 if (FORCE_LOGS) console.error('[PERFIL] 🔍 Query HTTP iniciada:', new Date().toISOString())
@@ -413,34 +405,20 @@ export default function PerfilPage() {
 
                     // Se ainda há erro após retry
                     if (profileError) {
-                        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Usando fallback: dados básicos do user_metadata')
+                        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Falha total na query, mantendo dados básicos')
 
-                        // ✅ FALLBACK: Usar apenas dados básicos do user_metadata
-                        setFullName(session.user.user_metadata?.full_name || session.user.email || '')
-                        setCompany(session.user.user_metadata?.company || '')
-                        setAvatarUrl(session.user.user_metadata?.avatar_url || '')
-
-                        // Check if user has password
-                        const identities = session.user.identities || []
-                        const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                        setHasPassword(hasEmailIdentity)
-
-                        // Tentar role básico (assumir user se não conseguir)
-                        setIsAdmin(false) // Fallback seguro
+                        // ✅ Manter dados básicos já configurados acima
+                        // Interface já está funcional com dados do user_metadata
 
                         setLoading(false)
                         isLoadingRef.current = false
                         isCurrentlyLoading = false
                         loadingInProgressRef.current = false
 
-                        // Mostrar erro mais específico mas permitir uso
-                        const isUsingCache = localCache !== null
-                        const errorMsg = profileError.message?.includes('timeout')
-                            ? `Perfil carregado ${isUsingCache ? 'do cache' : 'com dados básicos'}. Alguns recursos podem estar limitados devido a problemas de conectividade.`
-                            : `Perfil carregado ${isUsingCache ? 'do cache' : 'com dados básicos'}. Alguns dados podem estar desatualizados.`
+                        // Mensagem clara sobre o status
+                        setError('Perfil carregado com dados básicos. Funcionalidades limitadas até conectar ao servidor.')
 
-                        setError(errorMsg)
-                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Fallback concluído - interface funcional')
+                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Modo offline ativado - interface funcional')
                         return
                     }
                 }
@@ -485,7 +463,10 @@ export default function PerfilPage() {
                 cachedProfile = profile
                 cachedProfileTimestamp = Date.now()
                 setLocalCache(profile) // Também salvar no localStorage
-                if (FORCE_LOGS) console.error('[PERFIL] 💾 Perfil salvo no cache (global + local)')
+                if (FORCE_LOGS) console.error('[PERFIL] 💾 CACHE CRIADO! Próximas visitas serão instantâneas')
+
+                // Limpar mensagem de erro se estava carregando
+                setError('')
 
                 if (isSubscribed) {
                 // @ts-ignore - TypeScript não reconhece colunas customizadas
