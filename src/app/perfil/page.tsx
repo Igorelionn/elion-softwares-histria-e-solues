@@ -319,7 +319,6 @@ export default function PerfilPage() {
                 setHasPassword(hasEmailIdentity)
                 setIsAdmin(false) // Fallback seguro
 
-                setError('Carregando dados do servidor...')
                 setLoading(false) // Permitir uso da interface
 
                 // ✅ Query otimizada - tentar múltiplas abordagens
