@@ -478,7 +478,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
+                        className="w-full bg-black !text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
                         disabled={isLoading}
                       >
                         {isLoading ? (
