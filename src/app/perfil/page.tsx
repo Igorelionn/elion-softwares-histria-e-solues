@@ -203,7 +203,7 @@ export default function PerfilPage() {
 
                 const queryPromise = supabase
                     .from('users')
-                    .select('id, full_name, company, avatar_url, created_at, updated_at, role')
+                    .select('id, full_name, company, avatar_url, created_at, updated_at')
                     .eq('id', session.user.id)
                     .maybeSingle()
 
