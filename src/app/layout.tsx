@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { BlockGuard } from "@/components/BlockGuard";
 import { SecurityURLCleaner } from "@/components/SecurityURLCleaner";
-import { AuthProvider } from "@/providers/AuthProvider";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Elion Softwares",
@@ -31,17 +30,15 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body className="antialiased relative">
-        <ErrorBoundary>
-          <AuthProvider>
-            <SecurityURLCleaner />
-            <LanguageProvider>
-              <BlockGuard>
-                {children}
-              </BlockGuard>
-            </LanguageProvider>
-            <Toaster />
-          </AuthProvider>
-        </ErrorBoundary>
+        <SecurityURLCleaner />
+        <QueryProvider>
+          <LanguageProvider>
+            <BlockGuard>
+              {children}
+            </BlockGuard>
+          </LanguageProvider>
+        </QueryProvider>
+        <Toaster />
       </body>
     </html>
   );

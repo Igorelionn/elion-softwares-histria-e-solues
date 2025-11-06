@@ -53,7 +53,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       } catch (error: any) {
         // Ignorar erros 406 silenciosamente
         if (error?.code !== '406') {
-          console.error('Error syncing language:', error)
+        console.error('Error syncing language:', error)
         }
       }
     }

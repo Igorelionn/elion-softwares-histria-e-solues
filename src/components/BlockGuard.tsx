@@ -87,8 +87,8 @@ export function BlockGuard({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Verificação inicial e periódica (sem listener redundante)
   useEffect(() => {
+    // Log removido para reduzir sobrecarga - só mostrar quando necessário
     let mounted = true
 
     const initCheck = async () => {
@@ -99,7 +99,7 @@ export function BlockGuard({ children }: { children: React.ReactNode }) {
           await checkBlockStatus(session.user.id)
         }
       } catch (err) {
-        console.error('[BlockGuard] Erro na verificação inicial:', err)
+        console.error('Erro na verificação inicial:', err)
       } finally {
         if (mounted) {
           setIsChecking(false)
@@ -109,17 +109,39 @@ export function BlockGuard({ children }: { children: React.ReactNode }) {
 
     initCheck()
 
+    // Listener para TODAS as mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+                
+        // Verificar bloqueio em TODOS os eventos de autenticação
+        if (session?.user && mounted) {
+          // Eventos importantes para verificar bloqueio
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+                        const blocked = await checkBlockStatus(session.user.id)
+            
+            // Se bloqueado, impedir que continue
+            if (blocked) {
+                          }
+          }
+        }
+
+        if (mounted) {
+          setIsChecking(false)
+        }
+      }
+    )
+
     // Verificar periodicamente (a cada 30 segundos)
-    // Não precisa de listener pois AuthProvider já gerencia autenticação
     const interval = setInterval(async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user && mounted) {
         await checkBlockStatus(session.user.id)
       }
-    }, 30000)
+    }, 30000) // 30 segundos
 
     return () => {
       mounted = false
+      subscription.unsubscribe()
       clearInterval(interval)
     }
   }, [pathname, router])
