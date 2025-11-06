@@ -919,11 +919,34 @@ export default function PerfilPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        console.log('[PERFIL] 💾 HandleSubmit iniciado')
-        console.log('[PERFIL] 📊 Estado - user:', !!user, 'saving:', saving, 'isSavingRef:', isSavingRef.current)
+        console.log('[PERFIL] 💾 HandleSubmit iniciado - Timestamp:', new Date().toISOString())
+        console.log('[PERFIL] 📊 Estado completo:', {
+            user: !!user,
+            userId: user?.id,
+            saving,
+            isSavingRef: isSavingRef.current,
+            loading,
+            isLoadingRef: isLoadingRef.current,
+            cacheLoaded: !!cachedProfile,
+            cacheTimestamp: cachedProfileTimestamp
+        })
 
         if (!user) {
             console.warn('[PERFIL] ⚠️ Sem usuário, cancelando save')
+            setError('Erro: Usuário não encontrado. Recarregue a página.')
+            return
+        }
+
+        if (!user.id) {
+            console.warn('[PERFIL] ⚠️ Usuário sem ID, cancelando save')
+            setError('Erro: ID do usuário não encontrado. Recarregue a página.')
+            return
+        }
+
+        // Verificar se estamos carregando dados - não permitir salvar enquanto carrega
+        if (loading || isLoadingRef.current) {
+            console.warn('[PERFIL] ⚠️ Ainda carregando dados, cancelando save')
+            setError('Aguarde o carregamento completo dos dados antes de salvar.')
             return
         }
 
@@ -949,34 +972,52 @@ export default function PerfilPage() {
             console.log('[PERFIL] 📡 Enviando atualização para Supabase...')
             const startTime = Date.now()
 
-            // Update users table com timeout de 5s
+            // Preparar dados para atualização
+            const updateData = {
+                full_name: fullName,
+                company: company,
+                language: localLanguage,
+                updated_at: new Date().toISOString()
+            }
+            console.log('[PERFIL] 📋 Dados preparados para update:', updateData)
+
+            // Update users table com timeout de 10s (aumentado)
             const updatePromise = supabase
                 .from('users')
-                .update({
-                    full_name: fullName,
-                    company: company,
-                    language: localLanguage,
-                    updated_at: new Date().toISOString()
-                })
+                .update(updateData)
                 .eq('id', user.id)
 
+            console.log('[PERFIL] ⏳ Iniciando Promise.race...')
+
             const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Update timeout')), 5000)
+                setTimeout(() => {
+                    console.error('[PERFIL] ⏰ TIMEOUT de 10s atingido!')
+                    reject(new Error('Update timeout'))
+                }, 10000) // Aumentado para 10s
             )
 
-            let data, updateError
+            let data, updateError, saveSuccessful = false
             try {
+                console.log('[PERFIL] 🏃 Executando Promise.race...')
                 const result = await Promise.race([updatePromise, timeoutPromise])
+                console.log('[PERFIL] ✅ Promise.race concluída')
                 data = result.data
                 updateError = result.error
+                saveSuccessful = !updateError
             } catch (err: any) {
-                console.error('[PERFIL] ❌ Update timeout ou erro:', err)
+                console.error('[PERFIL] ❌ Update falhou:', err)
                 data = null
                 updateError = { message: err?.message || 'Timeout ao salvar' }
+                saveSuccessful = false
             }
 
             const saveTime = Date.now() - startTime
-            console.log('[PERFIL] 📥 Resposta do Supabase em', saveTime, 'ms:', { data, error: updateError })
+            console.log('[PERFIL] 📥 Resposta do Supabase em', saveTime, 'ms:', {
+                data,
+                error: updateError,
+                hasData: !!data,
+                hasError: !!updateError
+            })
 
             if (updateError) {
                 console.error('[PERFIL] ❌ Erro na atualização:', updateError)
@@ -987,7 +1028,11 @@ export default function PerfilPage() {
 
             // Update global language
             console.log('[PERFIL] 🌐 Atualizando idioma global para:', localLanguage)
-            setLanguage(localLanguage as any)
+            try {
+                setLanguage(localLanguage as any)
+            } catch (langErr) {
+                console.warn('[PERFIL] ⚠️ Erro ao atualizar idioma global:', langErr)
+            }
 
             // Set success message
             console.log('[PERFIL] ✅ Mostrando mensagem de sucesso')
@@ -1008,11 +1053,40 @@ export default function PerfilPage() {
             setError(err.message || 'Erro ao atualizar perfil')
             }
         } finally {
-            console.log('[PERFIL] 🏁 Finalizando handleSubmit, resetando estado saving')
-            // Always reset saving state
-            isSavingRef.current = false
-            setSaving(false)
-            console.log('[PERFIL] 📊 Estado final - saving:', false, 'isSavingRef:', false)
+            console.log('[PERFIL] 🏁 Finalizando handleSubmit, resetando estado saving - Timestamp:', new Date().toISOString())
+
+            // SEMPRE resetar o estado saving, mesmo se der erro
+            try {
+                isSavingRef.current = false
+                setSaving(false)
+                console.log('[PERFIL] 📊 Estado final - saving:', false, 'isSavingRef:', false)
+            } catch (stateErr) {
+                console.error('[PERFIL] ❌ Erro crítico ao resetar estado:', stateErr)
+                // Forçar reset mesmo se der erro
+                isSavingRef.current = false
+            }
+
+            // Forçar atualização do cache local após salvar (só se foi sucesso)
+            if (user?.id && saveSuccessful) {
+                try {
+                    console.log('[PERFIL] 🔄 Atualizando cache local após salvar...')
+                    const updatedProfile = {
+                        id: user.id,
+                        full_name: fullName,
+                        company: company,
+                        avatar_url: avatarUrl,
+                        role: isAdmin ? 'admin' : 'user',
+                        updated_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    }
+                    cachedProfile = updatedProfile
+                    cachedProfileTimestamp = Date.now()
+                    setLocalCache(updatedProfile)
+                    console.log('[PERFIL] ✅ Cache local atualizado após salvar')
+                } catch (cacheErr) {
+                    console.warn('[PERFIL] ⚠️ Erro ao atualizar cache local:', cacheErr)
+                }
+            }
         }
     }
 
