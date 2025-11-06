@@ -24,6 +24,11 @@ let loadAttempts = 0
 const DEBOUNCE_TIME = 100 // ms (reduzido para ser mais responsivo)
 const MAX_LOAD_ATTEMPTS = 2
 
+// 🚀 CACHE GLOBAL: Armazenar último perfil carregado com sucesso
+let cachedProfile: any = null
+let cachedProfileTimestamp = 0
+const CACHE_DURATION = 10000 // 10 segundos de cache
+
 export default function PerfilPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -31,17 +36,17 @@ export default function PerfilPage() {
     const isLoadingRef = useRef(false)
     const loadingInProgressRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
-    
+
     const [user, setUser] = useState<SupabaseUser | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
-    
+
     const [fullName, setFullName] = useState('')
     const [company, setCompany] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [localLanguage, setLocalLanguage] = useState(language)
-    
+
     const [actualPassword, setActualPassword] = useState('') // Real password after verification
     const [showPassword, setShowPassword] = useState(false)
     const [showVerifyDialog, setShowVerifyDialog] = useState(false)
@@ -51,11 +56,11 @@ export default function PerfilPage() {
     const [showResetDialog, setShowResetDialog] = useState(false)
     const [sendingReset, setSendingReset] = useState(false)
     const [hasPassword, setHasPassword] = useState(true) // If user has password or only Google OAuth
-    
+
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [deleteConfirmation, setDeleteConfirmation] = useState('')
     const [deleting, setDeleting] = useState(false)
-    
+
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
     const [isAdmin, setIsAdmin] = useState(false)
@@ -63,12 +68,12 @@ export default function PerfilPage() {
     useEffect(() => {
         if (FORCE_LOGS) console.error('[PERFIL] 🚀 COMPONENTE MONTADO')
         let isSubscribed = true
-        
+
         // 🛡️ RESET FORÇADO: Ao montar, limpar TODOS os flags (caso tenha ficado travado)
         if (FORCE_LOGS) console.error('[PERFIL] 🔄 Resetando flags globais...')
         isCurrentlyLoading = false
         loadingInProgressRef.current = false
-        
+
         // 🛡️ TIMEOUT DE SEGURANÇA: Forçar liberação dos flags após 12s e tentar novamente
         const safetyTimeoutId = setTimeout(() => {
             if (isCurrentlyLoading || loadingInProgressRef.current) {
@@ -76,11 +81,11 @@ export default function PerfilPage() {
                 isCurrentlyLoading = false
                 loadingInProgressRef.current = false
                 isLoadingRef.current = false
-                
+
                 // Tentar carregar novamente se ainda estiver com loading true
                 if (loading && isSubscribed) {
                     loadAttempts++
-                    
+
                     // Se atingiu máximo de tentativas, desistir
                     if (loadAttempts >= MAX_LOAD_ATTEMPTS) {
                         console.error('[PERFIL] ❌ Máximo de tentativas atingido, desativando loading')
@@ -88,7 +93,7 @@ export default function PerfilPage() {
                         setError('Erro ao carregar perfil. Por favor, recarregue a página.')
                         return
                     }
-                    
+
                     console.warn(`[PERFIL] 🔄 Tentando carregar novamente (${loadAttempts}/${MAX_LOAD_ATTEMPTS})...`)
                     supabase.auth.getSession().then(({ data }) => {
                         if (data.session && isSubscribed) {
@@ -108,7 +113,7 @@ export default function PerfilPage() {
         // Função para carregar perfil (reutilizável)
         const carregarPerfil = async (session: any) => {
             const now = Date.now()
-            
+
             // 🛡️ PROTEÇÃO 1: Debounce - Evitar chamadas muito próximas
             if (now - lastLoadTimestamp < DEBOUNCE_TIME) {
                 if (FORCE_LOGS) console.error('[PERFIL] 🚫 Debounce: Chamada ignorada (muito próxima da anterior)')
@@ -120,14 +125,14 @@ export default function PerfilPage() {
                 if (FORCE_LOGS) console.error('[PERFIL] 🚫 Carga já em andamento, ignorando duplicata')
                 return
             }
-            
+
             // 🛡️ Marcar que está carregando
             isCurrentlyLoading = true
             loadingInProgressRef.current = true
             lastLoadTimestamp = now
-            
+
             if (FORCE_LOGS) console.error('[PERFIL] 📡 Iniciando carregarPerfil...', new Date().toISOString())
-            
+
             // ✅ VALIDAÇÃO 1: Componente ainda montado?
             if (!isSubscribed) {
                 if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, abortando carregarPerfil')
@@ -135,7 +140,7 @@ export default function PerfilPage() {
                 loadingInProgressRef.current = false
                 return
             }
-            
+
             // ✅ VALIDAÇÃO 2: Sessão válida?
             if (!session) {
                 console.warn('[PERFIL] ⚠️ Sessão inválida (null/undefined)')
@@ -145,7 +150,7 @@ export default function PerfilPage() {
                 loadingInProgressRef.current = false
                 return
             }
-            
+
             // ✅ VALIDAÇÃO 3: User ID existe?
             if (!session.user?.id) {
                 console.warn('[PERFIL] ⚠️ Sessão sem user.id:', session)
@@ -155,36 +160,65 @@ export default function PerfilPage() {
                 loadingInProgressRef.current = false
                 return
             }
-            
+
             try {
                 if (FORCE_LOGS) console.error('[PERFIL] 📡 Carregando perfil para user:', session.user.id.substring(0, 8) + '...')
                 const startTime = Date.now()
-                
+
                 // Sempre setar o user (mesmo se o perfil falhar)
                 setUser(session.user)
-                
-                // ✅ Query com timeout de 5s, especificando apenas colunas necessárias
-                if (FORCE_LOGS) console.error('[PERFIL] 🔍 Query iniciada:', new Date().toISOString())
+
+                // 🚀 USAR CACHE SE DISPONÍVEL E RECENTE
+                const cacheAge = now - cachedProfileTimestamp
+                if (cachedProfile && cachedProfile.id === session.user.id && cacheAge < CACHE_DURATION) {
+                    if (FORCE_LOGS) console.error('[PERFIL] 🎯 Usando cache (idade:', cacheAge, 'ms)')
+
+                    // Usar dados do cache
+                    setFullName(cachedProfile.full_name || session.user.user_metadata?.full_name || session.user.email || '')
+                    setCompany(cachedProfile.company || '')
+                    setAvatarUrl(cachedProfile.avatar_url || '')
+                    setLocalLanguage(language)
+
+                    // Check if user has password
+                    const identities = session.user.identities || []
+                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
+                    setHasPassword(hasEmailIdentity)
+
+                    // @ts-ignore
+                    setIsAdmin(cachedProfile.role === 'admin')
+
+                    setLoading(false)
+                    isLoadingRef.current = false
+                    isCurrentlyLoading = false
+                    loadingInProgressRef.current = false
+                    loadAttempts = 0
+
+                    if (FORCE_LOGS) console.error('[PERFIL] ✅ Carregado do CACHE em', Date.now() - startTime, 'ms')
+                    return
+                }
+
+                // ✅ Query com timeout de 10s, especificando apenas colunas necessárias
+                if (FORCE_LOGS) console.error('[PERFIL] 🔍 Query HTTP iniciada:', new Date().toISOString())
                 const queryStartTime = performance.now()
-                
+
                 const queryPromise = supabase
                     .from('users')
-                    .select('id, full_name, company, avatar_url, created_at, updated_at')
+                    .select('id, full_name, company, avatar_url, created_at, updated_at, role')
                     .eq('id', session.user.id)
                     .maybeSingle()
-                
-                const timeoutPromise = new Promise<never>((_, reject) => 
+
+                const timeoutPromise = new Promise<never>((_, reject) =>
                     setTimeout(() => reject(new Error('Query timeout')), 10000)
                 )
-                
+
                 let profile, profileError
                 try {
                     const result = await Promise.race([queryPromise, timeoutPromise])
                     profile = result.data
                     profileError = result.error
-                    
+
                     const queryEndTime = performance.now()
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Query levou:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
+                    if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Query HTTP levou:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
                 } catch (err: any) {
                     const queryEndTime = performance.now()
                     console.error('[PERFIL] ❌ Query timeout ou erro:', err)
@@ -192,7 +226,7 @@ export default function PerfilPage() {
                     profile = null
                     profileError = { message: err?.message || 'Timeout na query' }
                 }
-                
+
                 const loadTime = Date.now() - startTime
                 if (FORCE_LOGS) console.error('[PERFIL] 📥 Carregamento total em', loadTime, 'ms')
 
@@ -205,20 +239,20 @@ export default function PerfilPage() {
                         details: profileError.details,
                         hint: profileError.hint
                     })
-                    
+
                     // ✅ Mesmo com erro, setar dados básicos do user_metadata
                     setFullName(session.user.user_metadata?.full_name || session.user.email || '')
-                    
+
                     // Check if user has password
                     const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
                     setHasPassword(hasEmailIdentity)
-                    
+
                     setLoading(false)
                     isLoadingRef.current = false
                     isCurrentlyLoading = false
                     loadingInProgressRef.current = false
-                    
+
                     // Mostrar erro mas permitir uso básico
                     setError('Erro ao carregar dados completos do perfil. Alguns dados podem estar desatualizados.')
                 return
@@ -229,15 +263,15 @@ export default function PerfilPage() {
                     console.warn('[PERFIL] ⚠️ Nenhum dado de perfil retornado!')
                     console.warn('[PERFIL] 📋 User ID buscado:', session.user.id)
                     console.warn('[PERFIL] 💡 Possível causa: Usuário não existe na tabela users')
-                    
+
                     // Ainda assim, configurar dados básicos do user_metadata
                     setFullName(session.user.user_metadata?.full_name || session.user.email || '')
-                    
+
                     // Check if user has password mesmo sem perfil
             const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
             setHasPassword(hasEmailIdentity)
-            
+
                     setLoading(false)
                     isLoadingRef.current = false
                     isCurrentlyLoading = false
@@ -257,16 +291,21 @@ export default function PerfilPage() {
                     role: profile.role
                 })
 
+                // 🚀 SALVAR NO CACHE
+                cachedProfile = profile
+                cachedProfileTimestamp = Date.now()
+                if (FORCE_LOGS) console.error('[PERFIL] 💾 Perfil salvo no cache')
+
                 if (isSubscribed) {
                 setFullName(profile.full_name || session.user.user_metadata?.full_name || '')
                 setCompany(profile.company || '')
                 setAvatarUrl(profile.avatar_url || '')
-                
+
                     // Check if user has password
                     const identities = session.user.identities || []
                     const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
                     setHasPassword(hasEmailIdentity)
-                    
+
                     // @ts-ignore
                 if (profile.language && ['pt', 'en', 'es', 'fr', 'de', 'it', 'zh', 'ja'].includes(profile.language)) {
                     // @ts-ignore
@@ -274,10 +313,10 @@ export default function PerfilPage() {
                     // @ts-ignore
                     setLanguage(profile.language)
                 }
-                    
+
                     // @ts-ignore
                     setIsAdmin(profile.role === 'admin')
-                    
+
                     if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO COMPLETO em', Date.now() - startTime, 'ms')
             } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado durante carregamento')
@@ -285,7 +324,7 @@ export default function PerfilPage() {
             } catch (err: any) {
                 console.error('[PERFIL] ❌ Exceção ao carregar perfil:', err)
                 console.error('[PERFIL] 📋 Stack trace:', err instanceof Error ? err.stack : 'N/A')
-                
+
                 // Se for timeout, mostrar mensagem específica
                 if (err?.message?.includes('timeout') || err?.message?.includes('Timeout')) {
                     console.error('[PERFIL] 🕒 TIMEOUT na query ao banco')
@@ -300,30 +339,30 @@ export default function PerfilPage() {
                 } else {
                     if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, não alterando loading')
                 }
-                
+
                 // 🛡️ SEMPRE limpar flags globais
                 isCurrentlyLoading = false
                 loadingInProgressRef.current = false
-                
+
                 // 🔄 Resetar contador de tentativas ao completar
                 loadAttempts = 0
-                
+
                 if (FORCE_LOGS) console.error('[PERFIL] 🔓 Flags de controle liberados')
             }
         }
-        
+
         // 👂 Configurar listener de autenticação (APENAS UMA VEZ)
         if (FORCE_LOGS) console.error('[PERFIL] 👂 Configurando listener...')
-        
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (FORCE_LOGS) console.error('[PERFIL] 🔔 Event:', event, 'subscribed:', isSubscribed, 'saving:', isSavingRef.current)
-            
+
             // Ignorar eventos se componente foi desmontado
             if (!isSubscribed) {
                 if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado, ignorando evento')
                 return
             }
-            
+
             // Ignorar USER_UPDATED durante save para evitar conflitos
             if (isSavingRef.current && event === 'USER_UPDATED') {
                 if (FORCE_LOGS) console.error('[PERFIL] ⏸️ Salvando, ignorando USER_UPDATED')
@@ -336,7 +375,7 @@ export default function PerfilPage() {
                 router.push('/')
                 return
             }
-            
+
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ SIGNED_IN/REFRESHED - carregando via listener')
                 await carregarPerfil(session)
@@ -348,23 +387,23 @@ export default function PerfilPage() {
                 }
             }
         })
-        
+
         if (FORCE_LOGS) console.error('[PERFIL] ✅ Listener registrado')
-        
+
         // 🔧 BUSCA IMEDIATA: Forçar getSession() logo após listener ser registrado
         supabase.auth.getSession().then(({ data, error }) => {
             if (!isSubscribed) {
                 if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Componente desmontado antes da busca imediata')
                 return
             }
-            
+
             if (error) {
                 console.error('[PERFIL] ❌ Erro ao buscar sessão imediata:', error)
                 setLoading(false)
                 isLoadingRef.current = false
                 return
             }
-            
+
             if (data.session) {
                 if (FORCE_LOGS) console.error('[PERFIL] ⚡ Sessão encontrada imediatamente!')
                 carregarPerfil(data.session)
@@ -387,13 +426,13 @@ export default function PerfilPage() {
             isSubscribed = false
             isLoadingRef.current = false
             loadingInProgressRef.current = false
-            
+
             // 🛡️ Limpar flags globais
             isCurrentlyLoading = false
-            
+
             // 🛡️ Cancelar timeout de segurança
             clearTimeout(safetyTimeoutId)
-            
+
             // Cancelar listener de autenticação (PRIORITÁRIO)
             if (FORCE_LOGS) console.error('[PERFIL] 🗑️ Removendo listener...')
             try {
@@ -401,7 +440,7 @@ export default function PerfilPage() {
             } catch (err) {
                 console.error('[PERFIL] ⚠️ Erro ao remover listener:', err)
             }
-            
+
             if (FORCE_LOGS) console.error('[PERFIL] ✅ Cleanup completo')
         }
     }, []) // ⚠️ Executa apenas UMA vez
@@ -461,7 +500,7 @@ export default function PerfilPage() {
             // Verificar se o bucket existe e é público
             const { data: buckets } = await supabase.storage.listBuckets()
             const bucket = buckets?.find(b => b.name === 'profile-images')
-            
+
             if (!bucket) {
                 throw new Error('❌ Bucket "profile-images" não encontrado. Por favor, crie um bucket público chamado "profile-images" no Supabase Storage.')
             }
@@ -476,7 +515,7 @@ export default function PerfilPage() {
 
             if (uploadError) {
                 console.error('❌ Erro no upload:', uploadError)
-                
+
                 if (uploadError.message.includes('Bucket not found')) {
                     throw new Error('❌ Bucket "profile-images" não encontrado. Crie um bucket público no Supabase Storage.')
                 } else if (uploadError.message.includes('new row violates row-level security')) {
@@ -508,21 +547,21 @@ export default function PerfilPage() {
 
             setAvatarUrl(publicUrl)
             setSuccess('✅ Foto de perfil atualizada com sucesso!')
-            
+
             // Limpar input para permitir re-upload do mesmo arquivo
             if (fileInputRef.current) {
                 fileInputRef.current.value = ''
             }
         } catch (err: any) {
             console.error('❌ Error uploading avatar:', err)
-            
+
             let errorMessage = 'Erro ao fazer upload da imagem'
-            
+
             if (err.message.includes('Bucket not found') || err.message.includes('profile-images')) {
                 errorMessage = '❌ Bucket de imagens não configurado. Veja instruções no console.'
                 console.error(`
 🔧 CONFIGURAÇÃO NECESSÁRIA:
-                
+
 1. Acesse seu projeto no Supabase Dashboard
 2. Vá em Storage > Buckets
 3. Clique em "New bucket"
@@ -535,7 +574,7 @@ export default function PerfilPage() {
    - Nome: "Permitir usuários autenticados upload"
    - Target roles: authenticated
    - Policy: (auth.uid() = user_id)
-   
+
 9. Adicione política de SELECT:
    - Nome: "Permitir leitura pública"
    - Target roles: public
@@ -544,7 +583,7 @@ export default function PerfilPage() {
             } else {
                 errorMessage = err.message || errorMessage
             }
-            
+
             setError(errorMessage)
         } finally {
             setUploading(false)
@@ -556,7 +595,7 @@ export default function PerfilPage() {
 
         setVerifying(true)
         setError('')
-        
+
         try {
             // Verify password by trying to sign in
             const { error } = await supabase.auth.signInWithPassword({
@@ -606,14 +645,14 @@ export default function PerfilPage() {
 
             // Mostrar mensagem de sucesso e fechar dialog após 2 segundos
             const successMessage = hasPassword ? t.profile.resetEmailSent : t.profile.defineEmailSent
-            
+
             setSuccess(successMessage)
-            
+
             // Aguardar 2 segundos antes de fechar para o usuário ver a mensagem
             setTimeout(() => {
             setShowResetDialog(false)
             }, 2000)
-            
+
         } catch (err: any) {
             // Tratar erro de rate limit de forma mais amigável
             if (err.status === 429 || err.message?.includes('rate limit')) {
@@ -674,15 +713,15 @@ export default function PerfilPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         console.log('[PERFIL] 💾 HandleSubmit iniciado')
         console.log('[PERFIL] 📊 Estado - user:', !!user, 'saving:', saving, 'isSavingRef:', isSavingRef.current)
-        
+
         if (!user) {
             console.warn('[PERFIL] ⚠️ Sem usuário, cancelando save')
             return
         }
-        
+
         // Prevent multiple simultaneous saves
         if (isSavingRef.current) {
             console.log('[PERFIL] ⏸️ Já está salvando, ignorando')
@@ -704,7 +743,7 @@ export default function PerfilPage() {
         try {
             console.log('[PERFIL] 📡 Enviando atualização para Supabase...')
             const startTime = Date.now()
-            
+
             // Update users table com timeout de 5s
             const updatePromise = supabase
                 .from('users')
@@ -716,10 +755,10 @@ export default function PerfilPage() {
                 })
                 .eq('id', user.id)
 
-            const timeoutPromise = new Promise<never>((_, reject) => 
+            const timeoutPromise = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('Update timeout')), 5000)
             )
-            
+
             let data, updateError
             try {
                 const result = await Promise.race([updatePromise, timeoutPromise])
@@ -730,7 +769,7 @@ export default function PerfilPage() {
                 data = null
                 updateError = { message: err?.message || 'Timeout ao salvar' }
             }
-            
+
             const saveTime = Date.now() - startTime
             console.log('[PERFIL] 📥 Resposta do Supabase em', saveTime, 'ms:', { data, error: updateError })
 
@@ -756,7 +795,7 @@ export default function PerfilPage() {
                 details: err.details,
                 hint: err.hint
             })
-            
+
             // Mensagem específica para timeout
             if (err?.message?.includes('timeout') || err?.message?.includes('Timeout')) {
                 setError('Tempo esgotado ao salvar. Tente novamente.')
@@ -834,7 +873,7 @@ export default function PerfilPage() {
                 <div className="mb-8">
                     <div className="flex flex-col items-center">
                         <div className="relative">
-                            <div 
+                            <div
                                 onClick={!loading ? handleAvatarClick : undefined}
                                 className={cn(
                                     "relative w-28 h-28 rounded-full overflow-hidden border-2 border-gray-200 transition-colors bg-transparent",
@@ -877,6 +916,7 @@ export default function PerfilPage() {
                                 accept="image/*"
                                 onChange={handleFileChange}
                                 className="hidden"
+                                aria-label="Selecionar foto de perfil"
                             />
                         </div>
                         <p className="text-sm text-gray-600 mt-4 text-center">
@@ -1059,8 +1099,8 @@ export default function PerfilPage() {
                                                 value={showPassword ? actualPassword : '••••••••••'}
                                                 readOnly
                                                 className="h-11 pr-10 focus:outline-none focus:ring-0 focus:border-black cursor-default text-gray-500"
-                                                style={{ 
-                                                    boxShadow: 'none', 
+                                                style={{
+                                                    boxShadow: 'none',
                                                     letterSpacing: showPassword ? 'normal' : '3px',
                                                     fontSize: showPassword ? '14px' : '18px'
                                                 }}
@@ -1258,7 +1298,7 @@ export default function PerfilPage() {
                     <DialogHeader>
                         <DialogTitle>{hasPassword ? 'Redefinir Senha' : 'Definir Senha'}</DialogTitle>
                         <DialogDescription>
-                            {hasPassword 
+                            {hasPassword
                                 ? 'Você receberá um link de redefinição de senha no seu email. Por segurança, este link expira em 1 hora.'
                                 : 'Receba um link por email para definir sua senha. Este link expira em 1 hora.'
                             }
@@ -1272,14 +1312,14 @@ export default function PerfilPage() {
                                 <p className="text-xs mt-1">{t.profile.checkYourEmail}</p>
                             </div>
                         )}
-                        
+
                         {/* Error Message dentro do dialog */}
                         {error && (
                             <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-sm">
                                 {error}
                             </div>
                         )}
-                        
+
                         <div className="flex justify-end gap-3">
                             <Button
                                 type="button"
