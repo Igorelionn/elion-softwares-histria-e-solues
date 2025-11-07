@@ -300,7 +300,7 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-lg max-h-[80vh] bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-y-auto"
+              className="relative w-full max-w-sm sm:max-w-lg max-h-[80vh] bg-white border border-gray-200 rounded-3xl shadow-xl overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -320,9 +320,9 @@ export function AuthDialog({
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
-                      width={140}
-                      height={43}
-                      className="h-6 w-auto"
+                      width={120}
+                      height={37}
+                      className="h-5 w-auto"
                       priority
                     />
                   </div>
@@ -394,7 +394,7 @@ export function AuthDialog({
                           <Input
                             id="login-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                            placeholder="Sua senha"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
                             className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
@@ -575,7 +575,7 @@ export function AuthDialog({
                           <Input
                             id="signup-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                            placeholder="Crie uma senha"
                             value={signupPassword}
                             onChange={(e) => setSignupPassword(e.target.value)}
                             className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
@@ -636,7 +636,7 @@ export function AuthDialog({
                           <Input
                             id="signup-confirm-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                            placeholder="Confirme sua senha"
                             value={signupConfirmPassword}
                             onChange={(e) => setSignupConfirmPassword(e.target.value)}
                             className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
