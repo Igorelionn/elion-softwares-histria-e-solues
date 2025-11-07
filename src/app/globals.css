@@ -234,3 +234,14 @@ video::-webkit-media-controls-start-playback-button {
     color: rgb(20, 20, 20);
   }
 }
+
+/* Esconder scrollbar mas manter funcionalidade */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -300,7 +300,7 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-sm sm:max-w-lg max-h-[80vh] bg-white border border-gray-200 rounded-3xl shadow-xl overflow-y-auto"
+              className="relative w-full max-w-[340px] sm:max-w-md max-h-[85vh] bg-white border border-gray-200 rounded-3xl shadow-xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -314,9 +314,9 @@ export function AuthDialog({
               </button>
 
               {/* Content */}
-              <div className="p-5 md:p-6">
-                <div className="text-center mb-4">
-                  <div className="flex justify-center mb-3">
+              <div className="p-3 sm:p-5 md:p-6 max-h-[85vh] overflow-y-auto scrollbar-hide">
+                <div className="text-center mb-3">
+                  <div className="flex justify-center mb-2">
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
@@ -357,10 +357,10 @@ export function AuthDialog({
                   </AnimatePresence>
 
                   {/* Login Tab */}
-                  <TabsContent value="login" className="mt-4 space-y-3">
+                  <TabsContent value="login" className="mt-3 space-y-2.5">
                     <motion.form
                       onSubmit={handleLogin}
-                      className="space-y-3"
+                      className="space-y-2.5"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -519,10 +519,10 @@ export function AuthDialog({
                   </TabsContent>
 
                   {/* Signup Tab */}
-                  <TabsContent value="signup" className="mt-4 space-y-3">
+                  <TabsContent value="signup" className="mt-3 space-y-2.5">
                     <motion.form
                       onSubmit={handleSignup}
-                      className="space-y-3"
+                      className="space-y-2.5"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
