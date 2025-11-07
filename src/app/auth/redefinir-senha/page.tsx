@@ -47,12 +47,26 @@ export default function RedefinirSenhaPage() {
       return
     }
 
+    // Validação básica de força da senha
+    const weakPasswords = ['123456', 'password', '12345678', 'qwerty', 'abc123', '111111', '123123']
+    if (weakPasswords.includes(newPassword.toLowerCase())) {
+      setError("Esta senha é muito fraca e fácil de adivinhar. Por favor, escolha uma senha mais segura.")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       })
 
-      if (error) throw error
+      if (error) {
+        // Traduzir mensagens de erro do Supabase
+        if (error.message.includes('weak') || error.message.includes('easy to guess')) {
+          throw new Error("Esta senha é muito fraca e fácil de adivinhar. Por favor, escolha uma senha mais segura.")
+        }
+        throw error
+      }
 
       setSuccess(true)
       
@@ -62,7 +76,19 @@ export default function RedefinirSenhaPage() {
       }, 3000)
     } catch (err: any) {
       console.error('Erro ao redefinir senha:', err)
-      setError(err.message || "Erro ao redefinir senha")
+      
+      // Traduzir mensagens comuns do Supabase
+      let errorMessage = err.message || "Erro ao redefinir senha"
+      
+      if (errorMessage.includes('weak') || errorMessage.includes('easy to guess')) {
+        errorMessage = "Esta senha é muito fraca e fácil de adivinhar. Por favor, escolha uma senha mais segura."
+      } else if (errorMessage.includes('Password should be')) {
+        errorMessage = "A senha deve ter no mínimo 6 caracteres"
+      } else if (errorMessage.includes('Invalid') || errorMessage.includes('expired')) {
+        errorMessage = "Link de redefinição inválido ou expirado. Solicite um novo link."
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -134,7 +160,7 @@ export default function RedefinirSenhaPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-transparent focus:ring-0 focus:outline-none"
                 />
                 <button
                   type="button"
@@ -159,7 +185,7 @@ export default function RedefinirSenhaPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-transparent focus:ring-0 focus:outline-none"
                 />
                 <button
                   type="button"
