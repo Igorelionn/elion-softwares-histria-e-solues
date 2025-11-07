@@ -150,14 +150,14 @@ const VideoPlayer = ({ src }: { src: string }) => {
       <AnimatePresence>
         {showControls && (
           <motion.div
-            className="absolute bottom-0 mx-auto max-w-xl left-0 right-0 p-4 m-2 bg-[#11111198] backdrop-blur-md rounded-2xl"
+            className="absolute bottom-0 left-0 right-0 mx-2 mb-2 p-2.5 sm:p-3 md:p-4 bg-[#11111198] backdrop-blur-md rounded-xl sm:rounded-2xl"
             initial={{ y: 20, opacity: 0, filter: "blur(10px)" }}
             animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
             exit={{ y: 20, opacity: 0, filter: "blur(10px)" }}
             transition={{ duration: 0.6, ease: "circInOut", type: "spring" }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-white text-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+              <span className="text-white text-xs sm:text-sm whitespace-nowrap">
                 {formatTime(currentTime)}
               </span>
               <CustomSlider
@@ -165,11 +165,11 @@ const VideoPlayer = ({ src }: { src: string }) => {
                 onChange={handleSeek}
                 className="flex-1"
               />
-              <span className="text-white text-sm">{formatTime(duration)}</span>
+              <span className="text-white text-xs sm:text-sm whitespace-nowrap">{formatTime(duration)}</span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -178,12 +178,12 @@ const VideoPlayer = ({ src }: { src: string }) => {
                     onClick={togglePlay}
                     variant="ghost"
                     size="icon"
-                    className="text-white hover:bg-[#111111d1] hover:text-white"
+                    className="h-8 w-8 sm:h-10 sm:w-10 text-white hover:bg-[#111111d1] hover:text-white"
                   >
                     {isPlaying ? (
-                      <Pause className="h-5 w-5" />
+                      <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
                     ) : (
-                      <Play className="h-5 w-5" />
+                      <Play className="h-4 w-4 sm:h-5 sm:w-5" />
                     )}
                   </Button>
                 </motion.div>
@@ -196,19 +196,19 @@ const VideoPlayer = ({ src }: { src: string }) => {
                       onClick={toggleMute}
                       variant="ghost"
                       size="icon"
-                      className="text-white hover:bg-[#111111d1] hover:text-white"
+                      className="h-8 w-8 sm:h-10 sm:w-10 text-white hover:bg-[#111111d1] hover:text-white"
                     >
                       {isMuted ? (
-                        <VolumeX className="h-5 w-5" />
+                        <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />
                       ) : volume > 0.5 ? (
-                        <Volume2 className="h-5 w-5" />
+                        <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />
                       ) : (
-                        <Volume1 className="h-5 w-5" />
+                        <Volume1 className="h-4 w-4 sm:h-5 sm:w-5" />
                       )}
                     </Button>
                   </motion.div>
 
-                  <div className="w-24">
+                  <div className="w-16 sm:w-24">
                     <CustomSlider
                       value={volume * 100}
                       onChange={handleVolumeChange}
@@ -217,7 +217,7 @@ const VideoPlayer = ({ src }: { src: string }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {[0.5, 1, 1.5, 2].map((speed) => (
                   <motion.div
                     whileHover={{ scale: 1.1 }}
@@ -229,7 +229,7 @@ const VideoPlayer = ({ src }: { src: string }) => {
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        "text-white hover:bg-[#111111d1] hover:text-white",
+                        "h-8 w-8 sm:h-10 sm:w-10 text-white hover:bg-[#111111d1] hover:text-white text-xs sm:text-sm",
                         playbackSpeed === speed && "bg-[#111111d1]"
                       )}
                     >
