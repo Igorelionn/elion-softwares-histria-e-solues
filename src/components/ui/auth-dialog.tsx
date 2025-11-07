@@ -265,39 +265,22 @@ export function AuthDialog({
     setIsLoading(true)
 
     try {
-      // Verificar se o email existe no banco
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', resetEmail)
-        .maybeSingle()
-
-      if (checkError) {
-        console.error('Erro ao verificar email:', checkError)
-        throw new Error("Erro ao verificar email")
-      }
-
-      if (!existingUser) {
-        setError("Nenhuma conta encontrada com este email.")
-        setIsLoading(false)
-        return
-      }
-
-      // Se o email existe, enviar link de redefinição
+      // Enviar link de redefinição (Supabase só envia se o email existir)
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/auth/redefinir-senha`,
       })
 
       if (error) throw error
 
-      setSuccess("Link de redefinição enviado! Verifique seu email.")
+      // Sempre mostra mensagem de sucesso por segurança (não revela se email existe ou não)
+      setSuccess("Se existe uma conta com este email, você receberá um link de redefinição.")
       setResetEmail("")
 
-      // Voltar para login após 3 segundos
+      // Voltar para login após 4 segundos
       setTimeout(() => {
         setActiveTab("login")
         setSuccess("")
-      }, 3000)
+      }, 4000)
     } catch (err: any) {
       console.error('Erro ao solicitar redefinição:', err)
       setError(err.message || "Erro ao enviar link de redefinição")
