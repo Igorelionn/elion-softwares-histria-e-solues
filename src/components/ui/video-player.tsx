@@ -21,18 +21,69 @@ const CustomSlider = React.memo(({
   onChange: (value: number) => void;
   className?: string;
 }) => {
+  const [isDragging, setIsDragging] = React.useState(false);
+  const sliderRef = React.useRef<HTMLDivElement>(null);
+
+  const updateValue = React.useCallback((clientX: number) => {
+    if (!sliderRef.current) return;
+    
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const percentage = (x / rect.width) * 100;
+    onChange(Math.min(Math.max(percentage, 0), 100));
+  }, [onChange]);
+
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    updateValue(e.clientX);
+  }, [updateValue]);
+
+  const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    updateValue(e.touches[0].clientX);
+  }, [updateValue]);
+
+  React.useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
+      updateValue(e.clientX);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      updateValue(e.touches[0].clientX);
+    };
+
+    const handleEnd = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging, updateValue]);
+
   return (
     <motion.div
+      ref={sliderRef}
       className={cn(
-        "relative w-full h-1 bg-white/20 rounded-full cursor-pointer",
+        "relative w-full h-1 bg-white/20 rounded-full cursor-pointer touch-none",
         className
       )}
-      onClick={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const percentage = (x / rect.width) * 100;
-        onChange(Math.min(Math.max(percentage, 0), 100));
-      }}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       <motion.div
         className="absolute top-0 left-0 h-full bg-white rounded-full"
@@ -44,6 +95,8 @@ const CustomSlider = React.memo(({
     </motion.div>
   );
 });
+
+CustomSlider.displayName = 'CustomSlider';
 
 const VideoPlayer = ({ src }: { src: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
