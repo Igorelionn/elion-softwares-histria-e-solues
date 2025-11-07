@@ -97,7 +97,7 @@ export function AuthDialog({
     setIsLoading(true)
 
     try {
-      // PASSO 1: Verificar ANTES se o usu+írio pode fazer login
+      // PASSO 1: Verificar ANTES se o usuâ”œÃ­rio pode fazer login
       // @ts-ignore - check_login_allowed RPC function exists in database
       const { data: checkData, error: checkError } = (await supabase
         // @ts-ignore
@@ -113,13 +113,13 @@ export function AuthDialog({
         }
 
       if (checkError) {
-        console.error('Erro ao verificar permiss+úo de login:', checkError)
+        console.error('Erro ao verificar permissâ”œÃºo de login:', checkError)
       }
 
-      // Se n+úo permitido, bloquear login
+      // Se nâ”œÃºo permitido, bloquear login
       if (checkData && !checkData.allowed) {
         if (checkData.reason === 'deleted') {
-          throw new Error('Esta conta foi permanentemente exclu+¡da pelo administrador. Entre em contato com o suporte.')
+          throw new Error('Esta conta foi permanentemente excluâ”œÂ¡da pelo administrador. Entre em contato com o suporte.')
         } else if (checkData.reason === 'blocked') {
           throw new Error(`Sua conta foi bloqueada. ${checkData.blocked_reason || 'Entre em contato com o suporte.'}`)
         }
@@ -133,20 +133,20 @@ export function AuthDialog({
 
       if (error) throw error
 
-      // PASSO 3: Verifica+º+úo adicional p+¦s-login (seguran+ºa em camadas)
+      // PASSO 3: Verificaâ”œÂºâ”œÃºo adicional pâ”œâ”‚s-login (seguranâ”œÂºa em camadas)
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('is_blocked, blocked_reason')
         .eq('id', data.user?.id)
         .single() as { data: { is_blocked?: boolean; blocked_reason?: string } | null; error: any }
 
-      // Se o usu+írio n+úo existe no banco (foi deletado)
+      // Se o usuâ”œÃ­rio nâ”œÃºo existe no banco (foi deletado)
       if (profileError && profileError.code === 'PGRST116') {
         await supabase.auth.signOut()
         throw new Error('Sua conta foi removida do sistema.')
       }
 
-      // Se o usu+írio est+í bloqueado (verifica+º+úo secund+íria)
+      // Se o usuâ”œÃ­rio estâ”œÃ­ bloqueado (verificaâ”œÂºâ”œÃºo secundâ”œÃ­ria)
       if (!profileError && profile?.is_blocked) {
         await supabase.auth.signOut()
         throw new Error(`Sua conta foi bloqueada. ${profile.blocked_reason || 'Entre em contato com o suporte.'}`)
@@ -170,7 +170,7 @@ export function AuthDialog({
         setError("Por favor, confirme seu email antes de fazer login.")
       } else if (err.message?.includes('bloqueada') || err.message?.includes('bloqueado')) {
         setError(err.message)
-      } else if (err.message?.includes('exclu+¡da') || err.message?.includes('removida')) {
+      } else if (err.message?.includes('excluâ”œÂ¡da') || err.message?.includes('removida')) {
         setError(err.message)
       } else {
         setError(err.message || "Erro ao fazer login")
@@ -186,19 +186,19 @@ export function AuthDialog({
     setSuccess("")
 
     if (signupPassword !== signupConfirmPassword) {
-      setError("As senhas n+úo coincidem")
+      setError("As senhas nâ”œÃºo coincidem")
       return
     }
 
     if (signupPassword.length < 6) {
-      setError("A senha deve ter no m+¡nimo 6 caracteres")
+      setError("A senha deve ter no mâ”œÂ¡nimo 6 caracteres")
       return
     }
 
     setIsLoading(true)
 
     try {
-      // 1. Criar usu+írio no Supabase Auth
+      // 1. Criar usuâ”œÃ­rio no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
@@ -212,10 +212,10 @@ export function AuthDialog({
 
       if (authError) throw authError
 
-      // Nota: O perfil do usu+írio +® criado automaticamente via Database Trigger
-      // quando o usu+írio +® inserido em auth.users
+      // Nota: O perfil do usuâ”œÃ­rio â”œÂ® criado automaticamente via Database Trigger
+      // quando o usuâ”œÃ­rio â”œÂ® inserido em auth.users
 
-      // Verificar se confirma+º+úo de email +® necess+íria
+      // Verificar se confirmaâ”œÂºâ”œÃºo de email â”œÂ® necessâ”œÃ­ria
       const needsEmailConfirmation = authData.user && !authData.user.email_confirmed_at
 
       if (needsEmailConfirmation) {
@@ -236,7 +236,7 @@ export function AuthDialog({
           setSuccess("")
         }, 2000)
       } else {
-        // Com preventRedirect, fecha mais r+ípido pois o pai vai lidar
+        // Com preventRedirect, fecha mais râ”œÃ­pido pois o pai vai lidar
         setTimeout(() => {
           handleClose()
         }, 500)
@@ -244,9 +244,9 @@ export function AuthDialog({
     } catch (err: any) {
       console.error('Erro no cadastro:', err)
       if (err.message?.includes('User already registered')) {
-        setError("Este email j+í est+í cadastrado. Tente fazer login.")
+        setError("Este email jâ”œÃ­ estâ”œÃ­ cadastrado. Tente fazer login.")
       } else if (err.message?.includes('Password should be')) {
-        setError("A senha deve ter no m+¡nimo 6 caracteres.")
+        setError("A senha deve ter no mâ”œÂ¡nimo 6 caracteres.")
       } else {
         setError(err.message || "Erro ao criar conta")
       }
@@ -258,7 +258,7 @@ export function AuthDialog({
   const handleGoogleLogin = async () => {
     setIsLoading(true)
 
-    // Chamar callback antes do login com Google (para salvar dados do formul+írio)
+    // Chamar callback antes do login com Google (para salvar dados do formulâ”œÃ­rio)
     if (onBeforeGoogleLogin) {
       onBeforeGoogleLogin()
     }
@@ -394,7 +394,7 @@ export function AuthDialog({
                           <Input
                             id="login-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                            placeholder="Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
                             className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
@@ -507,7 +507,7 @@ export function AuthDialog({
                     </Button>
 
                     <p className="text-center text-sm text-gray-600 mt-6">
-                      Ainda n+úo tem uma conta?{" "}
+                      Ainda nâ”œÃºo tem uma conta?{" "}
                       <button
                         type="button"
                         onClick={() => setActiveTab("signup")}
@@ -575,7 +575,7 @@ export function AuthDialog({
                           <Input
                             id="signup-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                            placeholder="Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³"
                             value={signupPassword}
                             onChange={(e) => setSignupPassword(e.target.value)}
                             className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
@@ -624,7 +624,7 @@ export function AuthDialog({
                             </AnimatePresence>
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500">M+¡nimo de 6 caracteres</p>
+                        <p className="text-xs text-gray-500">Mâ”œÂ¡nimo de 6 caracteres</p>
                       </div>
 
                       <div className="space-y-2">
@@ -636,7 +636,7 @@ export function AuthDialog({
                           <Input
                             id="signup-confirm-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                            placeholder="Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³Ã”Ã‡Ã³"
                             value={signupConfirmPassword}
                             onChange={(e) => setSignupConfirmPassword(e.target.value)}
                             className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
@@ -700,19 +700,19 @@ export function AuthDialog({
                     </Button>
 
                     <p className="text-xs text-gray-500 text-center mt-6">
-                      Ao criar uma conta, voc+¬ concorda com nossos{" "}
+                      Ao criar uma conta, vocâ”œÂ¬ concorda com nossos{" "}
                       <a href="/termos-de-servico" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
-                        Termos de Servi+ºo
+                        Termos de Serviâ”œÂºo
                       </a>{" "}
                       e{" "}
                       <a href="/politica-de-privacidade" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
-                        Pol+¡tica de Privacidade
+                        Polâ”œÂ¡tica de Privacidade
                       </a>
                       .
                     </p>
 
                     <p className="text-center text-sm text-gray-600 mt-4">
-                      J+í tem uma conta?{" "}
+                      Jâ”œÃ­ tem uma conta?{" "}
                       <button
                         type="button"
                         onClick={() => setActiveTab("login")}
@@ -731,5 +731,4 @@ export function AuthDialog({
     </AnimatePresence>
   )
 }
-
 
