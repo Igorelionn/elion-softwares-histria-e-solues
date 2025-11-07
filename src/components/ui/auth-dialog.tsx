@@ -265,6 +265,25 @@ export function AuthDialog({
     setIsLoading(true)
 
     try {
+      // Verificar se o email existe no banco
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', resetEmail)
+        .maybeSingle()
+
+      if (checkError) {
+        console.error('Erro ao verificar email:', checkError)
+        throw new Error("Erro ao verificar email")
+      }
+
+      if (!existingUser) {
+        setError("Nenhuma conta encontrada com este email.")
+        setIsLoading(false)
+        return
+      }
+
+      // Se o email existe, enviar link de redefinição
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/auth/redefinir-senha`,
       })
