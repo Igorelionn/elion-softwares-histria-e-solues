@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "motion/react"
-import { Lock, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -94,126 +93,133 @@ export default function RedefinirSenhaPage() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="max-w-xl w-full text-center">
+          <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Senha Redefinida com Sucesso!
+          </h1>
+          <p className="text-gray-600 text-lg mb-4">
+            Sua senha foi redefinida com sucesso.
+          </p>
+          <p className="text-gray-500 text-base mb-8">
+            Você será redirecionado para seu perfil em alguns segundos...
+          </p>
+          <Button
+            onClick={() => router.push('/perfil')}
+            className="h-14 px-8 text-base bg-green-600 text-white hover:bg-green-700"
+          >
+            Ir para Perfil Agora
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white rounded-3xl shadow-xl p-6 sm:p-8"
-      >
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
+    <div className="min-h-screen bg-white flex items-start justify-center pt-16 p-8">
+      <div className="max-w-xl w-full">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="relative w-36 h-36 mx-auto mb-4">
             <Image
               src="/logo.png"
               alt="Elion Softwares"
-              width={140}
-              height={43}
-              className="h-6 w-auto"
-              priority
+              fill
+              className="object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Redefinir Senha
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-gray-600 text-base">
             Digite sua nova senha abaixo
           </p>
         </div>
 
-        {success ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-8"
-          >
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Senha Redefinida com Sucesso!
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Você será redirecionado em alguns segundos...
-            </p>
-          </motion.div>
-        ) : (
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+        <form onSubmit={handleResetPassword} className="space-y-4">
+          {error && (
+            <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* New Password */}
+          <div>
+            <Label htmlFor="newPassword" className="text-gray-900 font-medium text-sm mb-1.5 block">
+              Nova Senha
+            </Label>
+            <div className="relative">
+              <Input
+                id="newPassword"
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Digite sua nova senha"
+                className="h-10 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
+                style={{ boxShadow: 'none' }}
+                required
+                disabled={isLoading}
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                disabled={isLoading}
               >
-                {error}
-              </motion.div>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <Label htmlFor="confirmPassword" className="text-gray-900 font-medium text-sm mb-1.5 block">
+              Confirmar Nova Senha
+            </Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirme sua nova senha"
+                className="h-10 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-2 border-gray-200"
+                style={{ boxShadow: 'none' }}
+                required
+                disabled={isLoading}
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                disabled={isLoading}
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-12 text-base bg-black text-white hover:bg-gray-800 mt-6"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Redefinindo senha...
+              </div>
+            ) : (
+              'Redefinir Senha'
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="newPassword" className="text-gray-700 font-medium">
-                Nova Senha
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  id="newPassword"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Digite sua nova senha"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-transparent focus:ring-0 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">
-                Confirmar Nova Senha
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirme sua nova senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-transparent focus:ring-0 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redefinindo...
-                </div>
-              ) : (
-                "Redefinir Senha"
-              )}
-            </Button>
-          </form>
-        )}
-      </motion.div>
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }
