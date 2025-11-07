@@ -358,9 +358,11 @@ export function AuthDialog({
                       priority
                     />
                   </div>
-                  <p className="text-gray-600 text-sm">
-                    Entre ou crie sua conta para continuar
-                  </p>
+                  {activeTab !== "reset" && (
+                    <p className="text-gray-600 text-sm">
+                      Entre ou crie sua conta para continuar
+                    </p>
+                  )}
                 </div>
 
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full">
