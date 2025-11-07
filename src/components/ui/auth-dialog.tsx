@@ -27,7 +27,7 @@ export function AuthDialog({
   redirectTo,
   onBeforeGoogleLogin
 }: AuthDialogProps) {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">(defaultTab)
+  const [activeTab, setActiveTab] = useState<"login" | "signup" | "reset">(defaultTab)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -42,6 +42,9 @@ export function AuthDialog({
   const [signupEmail, setSignupEmail] = useState("")
   const [signupPassword, setSignupPassword] = useState("")
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("")
+
+  // Reset password form state
+  const [resetEmail, setResetEmail] = useState("")
 
   // Update tab when defaultTab changes
   useState(() => {
@@ -255,6 +258,35 @@ export function AuthDialog({
     }
   }
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setSuccess("")
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth/redefinir-senha`,
+      })
+
+      if (error) throw error
+
+      setSuccess("Link de redefinição enviado! Verifique seu email.")
+      setResetEmail("")
+
+      // Voltar para login após 3 segundos
+      setTimeout(() => {
+        setActiveTab("login")
+        setSuccess("")
+      }, 3000)
+    } catch (err: any) {
+      console.error('Erro ao solicitar redefinição:', err)
+      setError(err.message || "Erro ao enviar link de redefinição")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleGoogleLogin = async () => {
     setIsLoading(true)
 
@@ -447,6 +479,11 @@ export function AuthDialog({
                       <div className="flex items-center justify-end">
                         <button
                           type="button"
+                          onClick={() => {
+                            setActiveTab("reset")
+                            setError("")
+                            setSuccess("")
+                          }}
                           className="text-sm text-blue-800 hover:text-blue-900 transition-colors cursor-pointer"
                         >
                           Esqueceu sua senha?
@@ -719,6 +756,75 @@ export function AuthDialog({
                         className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
                       >
                         Entrar
+                      </button>
+                    </p>
+                  </TabsContent>
+
+                  {/* Reset Password Tab */}
+                  <TabsContent value="reset" className="mt-3 space-y-2.5">
+                    <motion.form
+                      onSubmit={handleResetPassword}
+                      className="space-y-2.5"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <div className="text-center mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                          Redefinir Senha
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Digite seu email e enviaremos um link para redefinir sua senha
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="resetEmail" className="text-gray-700 font-medium">
+                          Email
+                        </Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <Input
+                            id="resetEmail"
+                            type="email"
+                            placeholder="seu@email.com"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            required
+                            className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center justify-center">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Enviando...
+                          </div>
+                        ) : (
+                          "Enviar Link de Redefinição"
+                        )}
+                      </Button>
+                    </motion.form>
+
+                    <p className="text-center text-sm text-gray-600 mt-4">
+                      Lembrou sua senha?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("login")
+                          setError("")
+                          setSuccess("")
+                        }}
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                      >
+                        Voltar ao Login
                       </button>
                     </p>
                   </TabsContent>

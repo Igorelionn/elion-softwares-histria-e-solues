@@ -169,11 +169,9 @@ export default function AdminPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [cacheMessage, setCacheMessage] = useState<string>('')
 
-  // 🔒 PROTEÇÃO ANTI-LOOP: Refs para controlar loading e redirecionamentos
+  // Refs para controlar loading
   const isLoadingRef = useRef(false)
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const hasRedirectedRef = useRef(false)  // Previne redirecionamentos duplicados
-  const hasLoadedDataRef = useRef(false)  // Controla carregamento de dados
 
   const loadStats = useCallback(async () => {
     try {
@@ -436,58 +434,56 @@ export default function AdminPage() {
     }
   }
 
-  // 🛡️ PROTEÇÃO ANTI-LOOP: useEffect com dependências mínimas
   useEffect(() => {
     if (FORCE_LOGS) console.log('[ADMIN] 🚀 useEffect executado:', {
       adminLoading,
       isAdmin,
+      dataLoaded,
       adminError,
-      hasRedirected: hasRedirectedRef.current,
-      hasLoadedData: hasLoadedDataRef.current
+      isLoadingRef: isLoadingRef.current
     })
 
-    // 🚫 REDIRECIONAMENTO: Apenas se não for admin e ainda não redirecionou
-    if (!adminLoading && (!isAdmin || adminError) && !hasRedirectedRef.current) {
+    let isSubscribed = true
+
+    // Redirecionar se não for admin ou se houve erro
+    if (!adminLoading && (!isAdmin || adminError)) {
       const reason = adminError ? `Erro: ${adminError}` : 'Não é admin'
       if (FORCE_LOGS) console.log(`[ADMIN] ⚠️ Redirecionando para home - ${reason}`)
 
-      hasRedirectedRef.current = true  // 🔒 Marca como redirecionado
+      // Pequeno delay para mostrar a mensagem antes do redirecionamento
+      setTimeout(() => {
+        if (!isSubscribed) return
+        router.push('/')
+      }, 100)
 
-      // 🔄 REPLACE: Não adiciona histórico (previne volta indesejada)
-      router.replace('/')
       return
     }
 
-    // ✅ CARREGAMENTO: Se for admin e ainda não carregou
-    if (!adminLoading && isAdmin && !adminError && !hasLoadedDataRef.current) {
-      if (FORCE_LOGS) console.log('[ADMIN] ✅ É admin, carregando dados...')
-      hasLoadedDataRef.current = true  // 🔒 Marca como já carregado
-      
-      // Chamar loadData diretamente (função estável)
+    // Carregar dados se for admin E ainda não carregou
+    if (!adminLoading && isAdmin && !adminError && !dataLoaded && isSubscribed) {
+      if (FORCE_LOGS) console.log('[ADMIN] ✅ É admin e precisa carregar dados, iniciando...')
+      setDataLoaded(true)
       loadData()
     } else {
-      if (FORCE_LOGS) console.log('[ADMIN] ℹ️ Pulando ação:', {
-        motivo: adminLoading ? 'ainda verificando admin' :
-               hasLoadedDataRef.current ? 'dados já carregados' :
+      if (FORCE_LOGS) console.log('[ADMIN] ℹ️ Pulando carregamento:', {
+        motivo: adminLoading ? 'ainda carregando admin' :
+               dataLoaded ? 'já carregou' :
                adminError ? `erro: ${adminError}` :
                !isAdmin ? 'não é admin' : 'outro'
       })
     }
 
-    // 🧹 CLEANUP: Limpar refs ao desmontar
+    // Cleanup
     return () => {
-      if (FORCE_LOGS) console.log('[ADMIN] 🔚 Componente desmontado')
+      if (FORCE_LOGS) console.log('[ADMIN] 🔚 Componente desmontado, limpando refs...')
+      isSubscribed = false
       isLoadingRef.current = false
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current)
         loadingTimeoutRef.current = null
       }
     }
-    
-    // 🔧 DEPENDÊNCIAS MÍNIMAS: Apenas estados primitivos que indicam QUANDO agir
-    // NÃO incluir: loadData (função), router (causa loops), dataLoaded (controlado por ref)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, adminLoading, adminError])
+  }, [isAdmin, adminLoading, adminError, dataLoaded, loadData, router])
 
   const logActivity = async (action: string, targetType: string, targetId: string, details: any = {}) => {
     const { data: { user } } = await supabase.auth.getUser()
