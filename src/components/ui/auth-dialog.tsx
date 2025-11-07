@@ -314,8 +314,8 @@ export function AuthDialog({
               </button>
 
               {/* Content */}
-              <div className="p-6 md:p-8">
-                <div className="text-center mb-6">
+              <div className="p-5 md:p-6">
+                <div className="text-center mb-4">
                   <div className="flex justify-center mb-3">
                     <Image
                       src="/logo.png"
@@ -357,10 +357,10 @@ export function AuthDialog({
                   </AnimatePresence>
 
                   {/* Login Tab */}
-                  <TabsContent value="login" className="mt-6 space-y-4">
+                  <TabsContent value="login" className="mt-4 space-y-3">
                     <motion.form
                       onSubmit={handleLogin}
-                      className="space-y-4"
+                      className="space-y-3"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -455,7 +455,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -519,10 +519,10 @@ export function AuthDialog({
                   </TabsContent>
 
                   {/* Signup Tab */}
-                  <TabsContent value="signup" className="mt-6 space-y-4">
+                  <TabsContent value="signup" className="mt-4 space-y-3">
                     <motion.form
                       onSubmit={handleSignup}
-                      className="space-y-4"
+                      className="space-y-3"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -648,7 +648,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-6"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
                         disabled={isLoading}
                       >
                         {isLoading ? (
