@@ -169,6 +169,30 @@ const VideoPlayer = ({ src }: { src: string }) => {
     }
   }, []);
 
+  // Garantir que o vídeo carregue quando o componente montar
+  React.useEffect(() => {
+    if (videoRef.current) {
+      // Forçar o carregamento do vídeo
+      videoRef.current.load();
+      
+      // Garantir visibilidade
+      videoRef.current.style.opacity = '1';
+      
+      // Adicionar listener para erros
+      const handleError = () => {
+        console.error('Erro ao carregar vídeo');
+      };
+      
+      videoRef.current.addEventListener('error', handleError);
+      
+      return () => {
+        if (videoRef.current) {
+          videoRef.current.removeEventListener('error', handleError);
+        }
+      };
+    }
+  }, [src]);
+
   return (
     <motion.div
       className="relative w-full max-w-5xl mx-auto rounded-xl overflow-hidden bg-[#11111198] shadow-[0_0_30px_rgba(0,0,0,0.3)] backdrop-blur-sm"
@@ -185,11 +209,25 @@ const VideoPlayer = ({ src }: { src: string }) => {
         ref={videoRef}
         className="w-full h-full object-cover"
         onTimeUpdate={handleTimeUpdate}
+        onLoadedData={() => {
+          // Garantir que o vídeo está visível quando carregar
+          if (videoRef.current) {
+            videoRef.current.style.opacity = '1';
+          }
+        }}
+        onCanPlay={() => {
+          // Garantir visibilidade quando estiver pronto para tocar
+          if (videoRef.current) {
+            videoRef.current.style.opacity = '1';
+          }
+        }}
         src={src}
         onClick={togglePlay}
-        preload="auto"
+        preload="metadata"
         playsInline
+        poster=""
         style={{
+          opacity: 1,
           imageRendering: 'high-quality',
           WebkitFontSmoothing: 'antialiased',
           backfaceVisibility: 'hidden',
