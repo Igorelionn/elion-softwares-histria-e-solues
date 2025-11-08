@@ -262,10 +262,6 @@ export const translations = {
           answer: 'Certamente. Embora a sede operacional esteja estabelecida em Maceió, capital do estado de Alagoas, a Elion Softwares presta serviços a organizações em todo o território nacional mediante modelo de trabalho remoto. Empregamos ferramentas avançadas de comunicação corporativa e gestão de projetos que asseguram eficiência operacional, transparência processual e qualidade na entrega, independentemente da localização geográfica do contratante.',
         },
         {
-          question: 'A empresa trabalha com tecnologias específicas?',
-          answer: 'A Elion Softwares utiliza um stack tecnológico moderno e robusto, incluindo React, Next.js, Node.js, TypeScript, Python, PostgreSQL, MongoDB, entre outras tecnologias consolidadas no mercado. A seleção das ferramentas é realizada de forma criteriosa para cada projeto, priorizando invariavelmente performance, escalabilidade e manutenibilidade a longo prazo.',
-        },
-        {
           question: 'É possível realizar alterações durante o processo de desenvolvimento?',
           answer: 'Certamente. A Elion Softwares compreende que os requisitos empresariais podem evoluir durante o ciclo de desenvolvimento. Trabalhamos fundamentados em metodologia ágil, que faculta flexibilidade para ajustes iterativos durante a execução do projeto. Alterações substanciais no escopo originalmente estabelecido podem impactar o cronograma e o investimento previsto, sendo todas as implicações comunicadas de maneira transparente ao cliente antes da implementação.',
         },
@@ -543,10 +539,6 @@ export const translations = {
           answer: 'Certainly. Although the operational headquarters is established in Maceió, capital of the state of Alagoas, Elion Softwares provides services to organizations throughout the national territory through a remote work model. We employ advanced corporate communication and project management tools that ensure operational efficiency, process transparency, and delivery quality, regardless of the client\'s geographic location.',
         },
         {
-          question: 'Does the company work with specific technologies?',
-          answer: 'Elion Softwares uses a modern and robust technology stack, including React, Next.js, Node.js, TypeScript, Python, PostgreSQL, MongoDB, among other market-established technologies. Tool selection is performed carefully for each project, invariably prioritizing performance, scalability, and long-term maintainability.',
-        },
-        {
           question: 'Is it possible to make changes during the development process?',
           answer: 'Certainly. Elion Softwares understands that business requirements may evolve during the development cycle. We work based on agile methodology, which allows flexibility for iterative adjustments during project execution. Substantial changes to the originally established scope may impact the timeline and projected investment, with all implications communicated transparently to the client before implementation.',
         },
@@ -808,10 +800,6 @@ export const translations = {
         {
           question: '¿Elion Softwares atiende clientes ubicados en otros estados?',
           answer: 'Ciertamente. Aunque la sede operacional está establecida en Maceió, capital del estado de Alagoas, Elion Softwares presta servicios a organizaciones en todo el territorio nacional mediante modelo de trabajo remoto. Empleamos herramientas avanzadas de comunicación corporativa y gestión de proyectos que aseguran eficiencia operacional, transparencia procesal y calidad en la entrega, independientemente de la ubicación geográfica del contratante.',
-        },
-        {
-          question: '¿La empresa trabaja con tecnologías específicas?',
-          answer: 'Elion Softwares utiliza un stack tecnológico moderno y robusto, incluyendo React, Next.js, Node.js, TypeScript, Python, PostgreSQL, MongoDB, entre otras tecnologías consolidadas en el mercado. La selección de herramientas se realiza de forma criteriosa para cada proyecto, priorizando invariablemente performance, escalabilidad y mantenibilidad a largo plazo.',
         },
         {
           question: '¿Es posible realizar modificaciones durante el proceso de desarrollo?',
