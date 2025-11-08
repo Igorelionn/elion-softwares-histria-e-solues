@@ -82,7 +82,7 @@ export default function FAQPage() {
             ← {t.faq.back}
           </Link>
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src="/logo-white.png" alt="Elion Softwares" className="h-3.5 md:h-6" />
+            <img src="/logo-white.png" alt="Elion Softwares" className="h-4.5 md:h-6" />
           </Link>
         </div>
       </header>
