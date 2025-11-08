@@ -188,6 +188,11 @@ const HeroHeader = () => {
             
             // Load avatar and check admin status if user exists
             if (user) {
+                // Verificar se tem login Google para priorizar avatar do Google
+                const identities = user.identities || []
+                const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
+                const googleAvatarUrl = hasGoogleIdentity ? user.user_metadata?.avatar_url : null
+                
                 // @ts-ignore - role and is_blocked columns may not be in generated types
                 const { data: profile, error: profileError } = await (supabase as any)
                     .from('users')
@@ -207,14 +212,8 @@ const HeroHeader = () => {
                 // Se a coluna não existir (erro 406), ignorar e usar valores padrão
                 if (profileError && profileError.code === '406') {
                     console.log('[HeroSection] Columns role/is_blocked not found in users table, using defaults')
-                    // Apenas carregar avatar_url que sabemos que existe
-                    const { data: basicProfile } = await supabase
-                        .from('users')
-                        .select('avatar_url')
-                        .eq('id', user.id)
-                        .single()
-                    
-                    setAvatarUrl(basicProfile?.avatar_url || '')
+                    // Priorizar Google avatar ou usar avatar do banco
+                    setAvatarUrl(googleAvatarUrl || user.user_metadata?.avatar_url || '')
                     setIsAdmin(false)
                     return
                 }
@@ -229,16 +228,14 @@ const HeroHeader = () => {
                 }
                 
                 if (!profileError && profile) {
-                    if (profile.avatar_url) {
-                        setAvatarUrl(profile.avatar_url)
-                    } else {
-                        setAvatarUrl('')
-                    }
+                    // Priorizar Google avatar, depois avatar do banco
+                    const finalAvatarUrl = googleAvatarUrl || profile.avatar_url || ''
+                    setAvatarUrl(finalAvatarUrl)
                     
                     const isAdminResult = profile.role === 'admin'
                     setIsAdmin(isAdminResult)
                 } else {
-                    setAvatarUrl('')
+                    setAvatarUrl(googleAvatarUrl || '')
                     setIsAdmin(false)
                 }
             } else {
@@ -258,14 +255,21 @@ const HeroHeader = () => {
             const user = authSession.getUser()
             
             if (user) {
+                // Verificar se tem login Google para priorizar avatar do Google
+                const identities = user.identities || []
+                const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
+                const googleAvatarUrl = hasGoogleIdentity ? user.user_metadata?.avatar_url : null
+                
                 const { data: profile } = await supabase
                     .from('users')
                     .select('avatar_url')
                     .eq('id', user.id)
                     .single()
                 
-                if (profile?.avatar_url) {
-                    setAvatarUrl(profile.avatar_url)
+                // Priorizar Google avatar, depois avatar do banco
+                const finalAvatarUrl = googleAvatarUrl || profile?.avatar_url || ''
+                if (finalAvatarUrl) {
+                    setAvatarUrl(finalAvatarUrl)
                     setUser(user) // Garante que o user também está setado
                 }
             }
