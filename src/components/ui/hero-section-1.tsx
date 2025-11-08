@@ -170,6 +170,7 @@ const HeroHeader = () => {
     const [showUserMenu, setShowUserMenu] = React.useState(false)
     const [avatarUrl, setAvatarUrl] = React.useState<string>('')
     const [isAdmin, setIsAdmin] = React.useState(false)
+    const avatarCache = React.useRef<string>('')
 
     const menuItems = React.useMemo(() => [
         { name: t.nav.home, href: '#' },
@@ -231,11 +232,14 @@ const HeroHeader = () => {
                     // Priorizar Google avatar, depois avatar do banco
                     const finalAvatarUrl = googleAvatarUrl || profile.avatar_url || ''
                     setAvatarUrl(finalAvatarUrl)
+                    avatarCache.current = finalAvatarUrl // Cache para persistência
                     
                     const isAdminResult = profile.role === 'admin'
                     setIsAdmin(isAdminResult)
                 } else {
-                    setAvatarUrl(googleAvatarUrl || '')
+                    const fallbackUrl = googleAvatarUrl || ''
+                    setAvatarUrl(fallbackUrl)
+                    avatarCache.current = fallbackUrl
                     setIsAdmin(false)
                 }
             } else {
@@ -255,22 +259,36 @@ const HeroHeader = () => {
             const user = authSession.getUser()
             
             if (user) {
+                // Sempre garantir que o user está setado primeiro
+                setUser(user)
+                
+                // Se já tem avatar em cache, usar imediatamente
+                if (avatarCache.current) {
+                    setAvatarUrl(avatarCache.current)
+                }
+                
                 // Verificar se tem login Google para priorizar avatar do Google
                 const identities = user.identities || []
                 const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
                 const googleAvatarUrl = hasGoogleIdentity ? user.user_metadata?.avatar_url : null
                 
+                // Se tem Google avatar, usar imediatamente
+                if (googleAvatarUrl) {
+                    setAvatarUrl(googleAvatarUrl)
+                    avatarCache.current = googleAvatarUrl
+                    return
+                }
+                
+                // Caso contrário, buscar do banco
                 const { data: profile } = await supabase
                     .from('users')
                     .select('avatar_url')
                     .eq('id', user.id)
                     .single()
                 
-                // Priorizar Google avatar, depois avatar do banco
-                const finalAvatarUrl = googleAvatarUrl || profile?.avatar_url || ''
-                if (finalAvatarUrl) {
-                    setAvatarUrl(finalAvatarUrl)
-                    setUser(user) // Garante que o user também está setado
+                if (profile?.avatar_url) {
+                    setAvatarUrl(profile.avatar_url)
+                    avatarCache.current = profile.avatar_url
                 }
             }
         }
