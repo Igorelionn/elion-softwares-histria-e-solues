@@ -168,7 +168,13 @@ const HeroHeader = () => {
     const [user, setUser] = React.useState<SupabaseUser | null>(null)
     const [isCheckingAuth, setIsCheckingAuth] = React.useState(true)
     const [showUserMenu, setShowUserMenu] = React.useState(false)
-    const [avatarUrl, setAvatarUrl] = React.useState<string>('')
+    const [avatarUrl, setAvatarUrl] = React.useState<string>(() => {
+        // Carregar avatar do localStorage na inicialização
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('user_avatar_cache') || ''
+        }
+        return ''
+    })
     const [isAdmin, setIsAdmin] = React.useState(false)
     const avatarCache = React.useRef<string>('')
 
@@ -178,6 +184,15 @@ const HeroHeader = () => {
         { name: t.nav.developments, href: '#desenvolvimentos' },
         { name: t.nav.testimonials, href: '#depoimentos' },
     ], [t.nav.home, t.nav.about, t.nav.developments, t.nav.testimonials])
+
+    // Helper para salvar avatar com persistência
+    const saveAvatarUrl = React.useCallback((url: string) => {
+        setAvatarUrl(url)
+        avatarCache.current = url
+        if (typeof window !== 'undefined' && url) {
+            localStorage.setItem('user_avatar_cache', url)
+        }
+    }, [])
 
     // Monitor user session using singleton
     React.useEffect(() => {
@@ -214,7 +229,7 @@ const HeroHeader = () => {
                 if (profileError && profileError.code === '406') {
                     console.log('[HeroSection] Columns role/is_blocked not found in users table, using defaults')
                     // Priorizar Google avatar ou usar avatar do banco
-                    setAvatarUrl(googleAvatarUrl || user.user_metadata?.avatar_url || '')
+                    saveAvatarUrl(googleAvatarUrl || user.user_metadata?.avatar_url || '')
                     setIsAdmin(false)
                     return
                 }
@@ -223,7 +238,7 @@ const HeroHeader = () => {
                 if (!profileError && profile?.is_blocked) {
                     await supabase.auth.signOut()
                     setUser(null)
-                    setAvatarUrl('')
+                    saveAvatarUrl('')
                     setIsAdmin(false)
                     return
                 }
@@ -231,19 +246,17 @@ const HeroHeader = () => {
                 if (!profileError && profile) {
                     // Priorizar Google avatar, depois avatar do banco
                     const finalAvatarUrl = googleAvatarUrl || profile.avatar_url || ''
-                    setAvatarUrl(finalAvatarUrl)
-                    avatarCache.current = finalAvatarUrl // Cache para persistência
+                    saveAvatarUrl(finalAvatarUrl)
                     
                     const isAdminResult = profile.role === 'admin'
                     setIsAdmin(isAdminResult)
                 } else {
                     const fallbackUrl = googleAvatarUrl || ''
-                    setAvatarUrl(fallbackUrl)
-                    avatarCache.current = fallbackUrl
+                    saveAvatarUrl(fallbackUrl)
                     setIsAdmin(false)
                 }
             } else {
-                setAvatarUrl('')
+                saveAvatarUrl('')
                 setIsAdmin(false)
             }
         })
@@ -262,9 +275,14 @@ const HeroHeader = () => {
                 // Sempre garantir que o user está setado primeiro
                 setUser(user)
                 
-                // Se já tem avatar em cache, usar imediatamente
-                if (avatarCache.current) {
-                    setAvatarUrl(avatarCache.current)
+                // Carregar avatar do localStorage primeiro (mais rápido)
+                const cachedAvatar = typeof window !== 'undefined' 
+                    ? localStorage.getItem('user_avatar_cache') 
+                    : null
+                
+                if (cachedAvatar) {
+                    setAvatarUrl(cachedAvatar)
+                    avatarCache.current = cachedAvatar
                 }
                 
                 // Verificar se tem login Google para priorizar avatar do Google
@@ -272,10 +290,9 @@ const HeroHeader = () => {
                 const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
                 const googleAvatarUrl = hasGoogleIdentity ? user.user_metadata?.avatar_url : null
                 
-                // Se tem Google avatar, usar imediatamente
+                // Se tem Google avatar, usar e salvar
                 if (googleAvatarUrl) {
-                    setAvatarUrl(googleAvatarUrl)
-                    avatarCache.current = googleAvatarUrl
+                    saveAvatarUrl(googleAvatarUrl)
                     return
                 }
                 
@@ -287,8 +304,7 @@ const HeroHeader = () => {
                     .single()
                 
                 if (profile?.avatar_url) {
-                    setAvatarUrl(profile.avatar_url)
-                    avatarCache.current = profile.avatar_url
+                    saveAvatarUrl(profile.avatar_url)
                 }
             }
         }
@@ -385,6 +401,12 @@ const HeroHeader = () => {
             await supabase.auth.signOut()
             setUser(null)
             setAvatarUrl('')
+            avatarCache.current = ''
+            
+            // Limpar cache do localStorage
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('user_avatar_cache')
+            }
             
             // Redirecionar para página inicial
             window.location.href = '/'
@@ -393,6 +415,10 @@ const HeroHeader = () => {
             // Mesmo com erro, limpa os estados locais
             setUser(null)
             setAvatarUrl('')
+            avatarCache.current = ''
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('user_avatar_cache')
+            }
             window.location.href = '/'
         }
     }, [])
