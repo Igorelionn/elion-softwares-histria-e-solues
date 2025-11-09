@@ -11,13 +11,16 @@ export default function ConfirmadoPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Verificar se está no navegador
+    if (typeof window === 'undefined') return;
+
     // Limpar qualquer dado pendente do localStorage
     localStorage.removeItem('pending_meeting_data');
 
     // Dispara o confetti quando a página carregar - cores prata e branca
     const timer = setTimeout(() => {
       const colors = ['#C0C0C0', '#FFFFFF', '#E8E8E8', '#D3D3D3']; // Prata e branco
-      
+
       // Efeito de explosão múltipla
       const fireConfetti = (particleRatio: number, opts: any) => {
         confetti({
@@ -27,6 +30,7 @@ export default function ConfirmadoPage() {
         });
       };
 
+      // Disparar múltiplas ondas de confetti
       fireConfetti(0.25, {
         spread: 26,
         startVelocity: 55,
@@ -58,7 +62,7 @@ export default function ConfirmadoPage() {
         startVelocity: 45,
         origin: { y: 0.7 }
       });
-    }, 600);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -80,8 +84,7 @@ export default function ConfirmadoPage() {
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-[100px] md:h-[100px]"
-          style={{ overflow: 'visible' }}
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-[100px] md:h-[100px] overflow-visible"
         >
           {/* Círculo */}
           <motion.circle
@@ -146,10 +149,7 @@ export default function ConfirmadoPage() {
           transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
           className="space-y-2 flex flex-col items-center justify-center py-3 sm:py-4 px-4"
         >
-          <h1
-            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl text-center md:whitespace-nowrap tracking-tight text-white leading-tight py-2"
-            style={{ fontFamily: 'system-ui', fontWeight: 400 }}
-          >
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl text-center md:whitespace-nowrap tracking-tight text-white leading-tight py-2 font-normal [font-family:system-ui]">
             Reunião Solicitada
           </h1>
         </motion.div>
