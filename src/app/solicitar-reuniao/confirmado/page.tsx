@@ -2,56 +2,63 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import Confetti, { ConfettiRef } from "@/components/ui/confetti";
 import { BeamsBackground } from "@/components/ui/beams-background";
+import confetti from "canvas-confetti";
 
 export default function ConfirmadoPage() {
   const router = useRouter();
-  const confettiRef = useRef<ConfettiRef>(null);
 
   useEffect(() => {
     // Limpar qualquer dado pendente do localStorage
     localStorage.removeItem('pending_meeting_data');
-    
-    // Dispara o confetti quando a página carregar - múltiplas explosões
-    const fireConfetti = () => {
-      // Primeira explosão
-      confettiRef.current?.fire({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#C0C0C0', '#FFFFFF', '#E5E5E5', '#D3D3D3'], // Prata e branco
-        scalar: 1.2,
+
+    // Dispara o confetti quando a página carregar - cores prata e branca
+    const timer = setTimeout(() => {
+      const colors = ['#C0C0C0', '#FFFFFF', '#E8E8E8', '#D3D3D3']; // Prata e branco
+      
+      // Efeito de explosão múltipla
+      const fireConfetti = (particleRatio: number, opts: any) => {
+        confetti({
+          ...opts,
+          particleCount: Math.floor(200 * particleRatio),
+          colors: colors,
+        });
+      };
+
+      fireConfetti(0.25, {
+        spread: 26,
+        startVelocity: 55,
+        origin: { y: 0.7 }
       });
 
-      // Segunda explosão (um pouco depois)
-      setTimeout(() => {
-        confettiRef.current?.fire({
-          particleCount: 100,
-          spread: 90,
-          origin: { y: 0.5 },
-          colors: ['#C0C0C0', '#FFFFFF', '#E5E5E5', '#D3D3D3'], // Prata e branco
-          scalar: 1,
-        });
-      }, 300);
+      fireConfetti(0.2, {
+        spread: 60,
+        origin: { y: 0.7 }
+      });
 
-      // Terceira explosão (finalizando)
-      setTimeout(() => {
-        confettiRef.current?.fire({
-          particleCount: 80,
-          spread: 100,
-          origin: { y: 0.7 },
-          colors: ['#C0C0C0', '#FFFFFF', '#E5E5E5', '#D3D3D3'], // Prata e branco
-          scalar: 0.8,
-        });
-      }, 600);
-    };
+      fireConfetti(0.35, {
+        spread: 100,
+        decay: 0.91,
+        scalar: 0.8,
+        origin: { y: 0.7 }
+      });
 
-    const timer = setTimeout(() => {
-      fireConfetti();
-    }, 500);
+      fireConfetti(0.1, {
+        spread: 120,
+        startVelocity: 25,
+        decay: 0.92,
+        scalar: 1.2,
+        origin: { y: 0.7 }
+      });
+
+      fireConfetti(0.1, {
+        spread: 120,
+        startVelocity: 45,
+        origin: { y: 0.7 }
+      });
+    }, 600);
 
     return () => clearTimeout(timer);
   }, []);
@@ -59,10 +66,6 @@ export default function ConfirmadoPage() {
   return (
     <BeamsBackground intensity="medium" className="bg-black">
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-        {/* Confetti */}
-        <div className="relative z-20">
-          <Confetti ref={confettiRef} manualstart />
-        </div>
 
         {/* Ícone de Verificado - Posição Fixa no Topo */}
         <motion.div
@@ -90,13 +93,13 @@ export default function ConfirmadoPage() {
             fill="none"
             strokeLinecap="round"
             pathLength="1"
-            initial={{ 
+            initial={{
               strokeDasharray: "0.7 1",
-              opacity: 1 
+              opacity: 1
             }}
-            animate={{ 
+            animate={{
               strokeDasharray: "1 1",
-              opacity: 1 
+              opacity: 1
             }}
             transition={{
               delay: 0.2,
@@ -113,13 +116,13 @@ export default function ConfirmadoPage() {
             strokeLinejoin="round"
             fill="none"
             pathLength="1"
-            initial={{ 
+            initial={{
               strokeDasharray: "0 1",
-              opacity: 0 
+              opacity: 0
             }}
-            animate={{ 
+            animate={{
               strokeDasharray: "1 1",
-              opacity: 1 
+              opacity: 1
             }}
             transition={{
               delay: 0.2,
@@ -143,7 +146,7 @@ export default function ConfirmadoPage() {
           transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
           className="space-y-2 flex flex-col items-center justify-center py-3 sm:py-4 px-4"
         >
-          <h1 
+          <h1
             className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl text-center md:whitespace-nowrap tracking-tight text-white leading-tight py-2"
             style={{ fontFamily: 'system-ui', fontWeight: 400 }}
           >
