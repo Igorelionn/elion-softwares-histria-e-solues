@@ -2,20 +2,27 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { BeamsBackground } from "@/components/ui/beams-background";
 import confetti from "canvas-confetti";
 
 export default function ConfirmadoPage() {
   const router = useRouter();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // Verificar se está no navegador
-    if (typeof window === 'undefined') return;
+    // Verificar se está no navegador e se o canvas existe
+    if (typeof window === 'undefined' || !canvasRef.current) return;
 
     // Limpar qualquer dado pendente do localStorage
     localStorage.removeItem('pending_meeting_data');
+
+    // Criar instância do confetti com o canvas customizado
+    const myConfetti = confetti.create(canvasRef.current, {
+      resize: true,
+      useWorker: true,
+    });
 
     // Dispara o confetti quando a página carregar - cores prata e branca
     const timer = setTimeout(() => {
@@ -23,7 +30,7 @@ export default function ConfirmadoPage() {
 
       // Efeito de explosão múltipla
       const fireConfetti = (particleRatio: number, opts: any) => {
-        confetti({
+        myConfetti({
           ...opts,
           particleCount: Math.floor(200 * particleRatio),
           colors: colors,
@@ -64,11 +71,20 @@ export default function ConfirmadoPage() {
       });
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      myConfetti.reset();
+    };
   }, []);
 
   return (
     <BeamsBackground intensity="medium" className="bg-black">
+      {/* Canvas de Confetti - Fixo na frente de tudo */}
+      <canvas
+        ref={canvasRef}
+        className="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999]"
+      />
+      
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
 
         {/* Ícone de Verificado - Posição Fixa no Topo */}
