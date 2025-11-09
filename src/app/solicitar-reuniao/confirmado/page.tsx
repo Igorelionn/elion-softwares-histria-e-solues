@@ -2,89 +2,70 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BeamsBackground } from "@/components/ui/beams-background";
 import confetti from "canvas-confetti";
 
 export default function ConfirmadoPage() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // Verificar se está no navegador e se o canvas existe
-    if (typeof window === 'undefined' || !canvasRef.current) return;
+    // Verificar se está no navegador
+    if (typeof window === 'undefined') return;
 
     // Limpar qualquer dado pendente do localStorage
     localStorage.removeItem('pending_meeting_data');
 
-    // Criar instância do confetti com o canvas customizado
-    const myConfetti = confetti.create(canvasRef.current, {
-      resize: true,
-      useWorker: true,
-    });
-
     // Dispara o confetti quando a página carregar - cores prata e branca
     const timer = setTimeout(() => {
-      const colors = ['#C0C0C0', '#FFFFFF', '#E8E8E8', '#D3D3D3']; // Prata e branco
+      const colors = ['#C0C0C0', '#FFFFFF', '#E8E8E8', '#D3D3D3', '#F5F5F5']; // Prata e branco
 
-      // Efeito de explosão múltipla
-      const fireConfetti = (particleRatio: number, opts: any) => {
-        myConfetti({
-          ...opts,
-          particleCount: Math.floor(200 * particleRatio),
-          colors: colors,
-        });
+      const defaults = {
+        startVelocity: 30,
+        spread: 360,
+        ticks: 60,
+        zIndex: 99999,
+        colors: colors,
       };
 
-      // Disparar múltiplas ondas de confetti
-      fireConfetti(0.25, {
-        spread: 26,
-        startVelocity: 55,
-        origin: { y: 0.7 }
-      });
+      const randomInRange = (min: number, max: number) =>
+        Math.random() * (max - min) + min;
 
-      fireConfetti(0.2, {
-        spread: 60,
-        origin: { y: 0.7 }
-      });
+      // Efeito de fogos de artifício com cores prata e branca
+      const duration = 3 * 1000; // 3 segundos
+      const animationEnd = Date.now() + duration;
 
-      fireConfetti(0.35, {
-        spread: 100,
-        decay: 0.91,
-        scalar: 0.8,
-        origin: { y: 0.7 }
-      });
+      const interval = window.setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
 
-      fireConfetti(0.1, {
-        spread: 120,
-        startVelocity: 25,
-        decay: 0.92,
-        scalar: 1.2,
-        origin: { y: 0.7 }
-      });
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
 
-      fireConfetti(0.1, {
-        spread: 120,
-        startVelocity: 45,
-        origin: { y: 0.7 }
-      });
+        const particleCount = 50 * (timeLeft / duration);
+        
+        // Explosão do lado esquerdo
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        });
+        
+        // Explosão do lado direito
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        });
+      }, 250);
     }, 500);
 
-    return () => {
-      clearTimeout(timer);
-      myConfetti.reset();
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   return (
     <BeamsBackground intensity="medium" className="bg-black">
-      {/* Canvas de Confetti - Fixo na frente de tudo */}
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999]"
-      />
-      
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
 
         {/* Ícone de Verificado - Posição Fixa no Topo */}
