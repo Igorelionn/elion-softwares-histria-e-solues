@@ -17,12 +17,13 @@ interface ConfettiProps {
   globalOptions?: CanvasConfettiGlobalOptions;
   manualstart?: boolean;
   children?: ReactNode;
+  className?: string;
 }
 
 const ConfettiContext = createContext<ConfettiRef | null>(null);
 
 export const Confetti = forwardRef<ConfettiRef, ConfettiProps>((props, ref) => {
-  const { options, globalOptions = { resize: true, useWorker: true }, manualstart = false, children, ...rest } = props;
+  const { options, globalOptions = { resize: true, useWorker: true }, manualstart = false, children, className, ...rest } = props;
   const instanceRef = useRef<CanvasConfettiCreateTypes | null>(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -65,7 +66,11 @@ export const Confetti = forwardRef<ConfettiRef, ConfettiProps>((props, ref) => {
 
   return (
     <ConfettiContext.Provider value={api}>
-      <canvas ref={canvasRef} {...rest} className="pointer-events-none fixed inset-0 z-50 h-full w-full" />
+      <canvas 
+        ref={canvasRef} 
+        {...rest} 
+        className={className || "pointer-events-none fixed inset-0 z-50 h-full w-full"} 
+      />
       {children}
     </ConfettiContext.Provider>
   );

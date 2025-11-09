@@ -15,26 +15,59 @@ export default function ConfirmadoPage() {
     // Limpar qualquer dado pendente do localStorage
     localStorage.removeItem('pending_meeting_data');
     
-    // Dispara o confetti quando a página carregar
-    const timer = setTimeout(() => {
+    console.log('[ConfirmadoPage] Iniciando confetti...');
+    
+    // Dispara múltiplas explosões de confetti
+    const timers: NodeJS.Timeout[] = [];
+    
+    // Primeira explosão
+    timers.push(setTimeout(() => {
+      console.log('[ConfirmadoPage] Disparando confetti 1');
       confettiRef.current?.fire({
-        particleCount: 100,
+        particleCount: 150,
         spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#0f172a', '#FFFFFF', '#64748b'],
+        origin: { x: 0.5, y: 0.6 },
+        colors: ['#0f172a', '#FFFFFF', '#64748b', '#22c55e'],
       });
-    }, 600);
+    }, 500));
 
-    return () => clearTimeout(timer);
+    // Segunda explosão (esquerda)
+    timers.push(setTimeout(() => {
+      console.log('[ConfirmadoPage] Disparando confetti 2');
+      confettiRef.current?.fire({
+        particleCount: 80,
+        spread: 60,
+        origin: { x: 0.3, y: 0.7 },
+        colors: ['#0f172a', '#FFFFFF', '#64748b', '#22c55e'],
+      });
+    }, 700));
+
+    // Terceira explosão (direita)
+    timers.push(setTimeout(() => {
+      console.log('[ConfirmadoPage] Disparando confetti 3');
+      confettiRef.current?.fire({
+        particleCount: 80,
+        spread: 60,
+        origin: { x: 0.7, y: 0.7 },
+        colors: ['#0f172a', '#FFFFFF', '#64748b', '#22c55e'],
+      });
+    }, 900));
+
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
   }, []);
 
   return (
     <BeamsBackground intensity="medium" className="bg-black">
+      {/* Confetti - Posicionado fora do container para garantir visibilidade total */}
+      <Confetti 
+        ref={confettiRef} 
+        manualstart 
+        className="pointer-events-none fixed inset-0 z-[9999] h-full w-full"
+      />
+      
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-        {/* Confetti */}
-        <div className="relative z-20">
-          <Confetti ref={confettiRef} manualstart />
-        </div>
 
         {/* Ícone de Verificado - Posição Fixa no Topo */}
         <motion.div
