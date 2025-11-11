@@ -5,14 +5,14 @@ import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const userImages = [
-  "https://randomuser.me/api/portraits/women/44.jpg",
+  "https://randomuser.me/api/portraits/women/22.jpg",
   "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/65.jpg",
+  "https://randomuser.me/api/portraits/women/33.jpg",
   "https://randomuser.me/api/portraits/men/52.jpg",
-  "https://randomuser.me/api/portraits/women/28.jpg",
-  "https://randomuser.me/api/portraits/women/47.jpg",
+  "https://randomuser.me/api/portraits/women/56.jpg",
+  "https://randomuser.me/api/portraits/women/19.jpg",
   "https://randomuser.me/api/portraits/men/46.jpg",
-  "https://randomuser.me/api/portraits/women/67.jpg",
+  "https://randomuser.me/api/portraits/women/41.jpg",
   "https://randomuser.me/api/portraits/men/43.jpg",
 ];
 
