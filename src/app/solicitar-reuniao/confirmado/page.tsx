@@ -44,14 +44,14 @@ export default function ConfirmadoPage() {
         }
 
         const particleCount = 50 * (timeLeft / duration);
-        
+
         // Explosão do lado esquerdo
         confetti({
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
         });
-        
+
         // Explosão do lado direito
         confetti({
           ...defaults,
@@ -183,4 +183,3 @@ export default function ConfirmadoPage() {
     </BeamsBackground>
   );
 }
-
