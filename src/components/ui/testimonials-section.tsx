@@ -7,7 +7,7 @@ import { useTranslation } from "@/contexts/LanguageContext";
 const userImages = [
   "https://randomuser.me/api/portraits/women/12.jpg",
   "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/36.jpg",
+  "https://randomuser.me/api/portraits/women/24.jpg", // Juliana Costa - TROCADA
   "https://randomuser.me/api/portraits/men/52.jpg",
   "https://randomuser.me/api/portraits/women/51.jpg",
   "https://randomuser.me/api/portraits/women/19.jpg", // Amanda Silva - MANTIDA
