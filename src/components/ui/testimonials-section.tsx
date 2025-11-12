@@ -5,15 +5,14 @@ import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const userImages = [
-  "https://randomuser.me/api/portraits/women/12.jpg",
-  "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/24.jpg", // Juliana Costa - TROCADA
-  "https://randomuser.me/api/portraits/men/52.jpg",
-  "https://randomuser.me/api/portraits/women/51.jpg",
+  "https://randomuser.me/api/portraits/women/12.jpg", // Carolina Mendes
+  "https://randomuser.me/api/portraits/men/32.jpg", // Ricardo Santos
+  "https://randomuser.me/api/portraits/men/52.jpg", // Fernando Almeida
+  "https://randomuser.me/api/portraits/women/51.jpg", // Patricia Oliveira
   "https://randomuser.me/api/portraits/women/19.jpg", // Amanda Silva - MANTIDA
-  "https://randomuser.me/api/portraits/men/46.jpg",
-  "https://randomuser.me/api/portraits/women/62.jpg",
-  "https://randomuser.me/api/portraits/men/43.jpg",
+  "https://randomuser.me/api/portraits/men/46.jpg", // Lucas Ferreira
+  "https://randomuser.me/api/portraits/women/62.jpg", // Beatriz Rodrigues
+  "https://randomuser.me/api/portraits/men/43.jpg", // Gabriel Martins
 ];
 
 export const TestimonialsSection = () => {
