@@ -5,14 +5,14 @@ import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const userImages = [
-  "https://randomuser.me/api/portraits/women/68.jpg",
+  "https://randomuser.me/api/portraits/men/25.jpg",
   "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/75.jpg",
+  "https://randomuser.me/api/portraits/men/67.jpg",
   "https://randomuser.me/api/portraits/men/52.jpg",
-  "https://randomuser.me/api/portraits/women/83.jpg",
+  "https://randomuser.me/api/portraits/men/78.jpg",
   "https://randomuser.me/api/portraits/women/19.jpg", // Amanda Silva - MANTIDA
   "https://randomuser.me/api/portraits/men/46.jpg",
-  "https://randomuser.me/api/portraits/women/90.jpg",
+  "https://randomuser.me/api/portraits/men/85.jpg",
   "https://randomuser.me/api/portraits/men/43.jpg",
 ];
 
