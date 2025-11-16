@@ -17,9 +17,9 @@ async function resizeFavicon() {
     const currentWidth = metadata.width;
     const currentHeight = metadata.height;
     
-    // Calcular novo tamanho (85% do original - "diminuir bem pouco")
-    const newWidth = Math.round(currentWidth * 0.85);
-    const newHeight = Math.round(currentHeight * 0.85);
+    // Calcular novo tamanho (95% do original - "um pouco maior")
+    const newWidth = Math.round(currentWidth * 0.95);
+    const newHeight = Math.round(currentHeight * 0.95);
     
     console.log(`Tamanho original: ${currentWidth}x${currentHeight}`);
     console.log(`Novo tamanho: ${newWidth}x${newHeight}`);
