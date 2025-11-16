@@ -28,9 +28,6 @@ export const metadata: Metadata = {
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
-    other: [
-      { rel: "manifest", url: "/site.webmanifest" },
-    ],
   },
   openGraph: {
     type: "website",
@@ -79,6 +76,20 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="relative">
       <head>
+        {/* Web App Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Theme Color para Android/Chrome */}
+        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+        
+        {/* Apple Touch Icon */}
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Elion Softwares" />
+        
         {/* Preconnect para recursos externos críticos */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
