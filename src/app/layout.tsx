@@ -5,45 +5,44 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { BlockGuard } from "@/components/BlockGuard";
 import { SecurityURLCleaner } from "@/components/SecurityURLCleaner";
-import SchemaOrganization from "@/components/SchemaOrganization";
+import { StructuredData } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://elionsoftwares.com.br'),
+  metadataBase: new URL('https://elionsoftwares.com'),
   title: {
-    default: "Elion Softwares - História e Soluções",
+    default: "Elion Softwares - Desenvolvimento de Software sob Medida",
     template: "%s | Elion Softwares"
   },
-  description: "Desenvolvimento de software personalizado, soluções tecnológicas inovadoras e consultoria em TI. Transformamos suas ideias em realidade com tecnologia de ponta.",
-  keywords: ["desenvolvimento de software", "software personalizado", "consultoria TI", "desenvolvimento web", "soluções tecnológicas", "Elion Softwares"],
+  description: "Empresas modernas demandam mais do que softwares, necessitam de sistemas que evoluam em sintonia com sua trajetória. A Elion Softwares desenvolve plataformas sob medida que se conectam à essência do seu negócio.",
+  keywords: ["desenvolvimento de software", "software sob medida", "sistemas personalizados", "elion softwares", "desenvolvimento web", "aplicações empresariais", "soluções tecnológicas"],
   authors: [{ name: "Elion Softwares" }],
   creator: "Elion Softwares",
   publisher: "Elion Softwares",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
-    shortcut: "/favicon.png",
   },
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: "https://elionsoftwares.com.br",
+    url: "https://elionsoftwares.com",
     siteName: "Elion Softwares",
-    title: "Elion Softwares - História e Soluções",
-    description: "Desenvolvimento de software personalizado, soluções tecnológicas inovadoras e consultoria em TI",
+    title: "Elion Softwares - Desenvolvimento de Software sob Medida",
+    description: "Desenvolvemos plataformas sob medida que se conectam à essência do seu negócio. Excelência em engenharia de software.",
     images: [
       {
-        url: "/logo.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Elion Softwares Logo",
+        alt: "Elion Softwares - Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Elion Softwares - História e Soluções",
-    description: "Desenvolvimento de software personalizado, soluções tecnológicas inovadoras e consultoria em TI",
-    images: ["/logo.png"],
+    title: "Elion Softwares - Desenvolvimento de Software sob Medida",
+    description: "Desenvolvemos plataformas sob medida que se conectam à essência do seu negócio.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -57,7 +56,8 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "B8ZFo1HH0h-p8pRPaG_FA5Ip2xptNEo9hsHxlhsX9n0",
+    // Adicione seu código de verificação do Google Search Console aqui quando disponível
+    // google: "seu-codigo-aqui",
   },
 };
 
@@ -77,7 +77,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body className="antialiased relative">
-        <SchemaOrganization />
+        <StructuredData />
         <SecurityURLCleaner />
         <QueryProvider>
         <LanguageProvider>

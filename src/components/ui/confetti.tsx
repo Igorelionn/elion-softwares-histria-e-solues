@@ -115,7 +115,7 @@ function ConfettiButton({ options, children, ...props }: ConfettiButtonProps) {
 
   return (
     <Button onClick={handleClick} {...props}>
-      {children}
+        {children}
     </Button>
   )
 }

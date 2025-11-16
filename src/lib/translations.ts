@@ -83,6 +83,11 @@ export const translations = {
           date: '22 de fevereiro de 2025',
         },
         {
+          text: 'O suporte técnico é excepcional. Sempre disponíveis e prontos para resolver qualquer questão com agilidade e eficiência.',
+          author: 'Juliana Costa',
+          date: '08 de março de 2025',
+        },
+        {
           text: 'As soluções da Elion transformaram completamente nossa operação. Recomendo fortemente para qualquer empresa que busca inovação.',
           author: 'Fernando Almeida',
           date: '14 de abril de 2025',
@@ -353,6 +358,11 @@ export const translations = {
           text: 'Implementation was quick and hassle-free. The Elion team guided us through every step with professionalism and dedication.',
           author: 'Ricardo Santos',
           date: 'February 22, 2025',
+        },
+        {
+          text: 'Technical support is exceptional. Always available and ready to resolve any issue with agility and efficiency.',
+          author: 'Juliana Costa',
+          date: 'March 08, 2025',
         },
         {
           text: 'Elion\'s solutions completely transformed our operation. I strongly recommend it to any company seeking innovation.',
@@ -627,6 +637,11 @@ export const translations = {
           date: '22 de febrero de 2025',
         },
         {
+          text: 'El soporte técnico es excepcional. Siempre disponibles y listos para resolver cualquier problema con agilidad y eficiencia.',
+          author: 'Juliana Costa',
+          date: '08 de marzo de 2025',
+        },
+        {
           text: 'Las soluciones de Elion transformaron completamente nuestra operación. Lo recomiendo encarecidamente a cualquier empresa que busque innovación.',
           author: 'Fernando Almeida',
           date: '14 de abril de 2025',
@@ -883,6 +898,11 @@ export const translations = {
           text: 'La mise en œuvre a été rapide et sans complications. L\'équipe d\'Elion nous a guidés à chaque étape avec professionnalisme et dévouement.',
           author: 'Ricardo Santos',
           date: '22 février 2025',
+        },
+        {
+          text: 'Le support technique est exceptionnel. Toujours disponibles et prêts à résoudre tout problème avec agilité et efficacité.',
+          author: 'Juliana Costa',
+          date: '08 mars 2025',
         },
         {
           text: 'Les solutions d\'Elion ont complètement transformé notre opération. Je le recommande vivement à toute entreprise recherchant l\'innovation.',
@@ -1147,6 +1167,11 @@ export const translations = {
           date: '22. Februar 2025',
         },
         {
+          text: 'Der technische Support ist außergewöhnlich. Immer verfügbar und bereit, jedes Problem mit Agilität und Effizienz zu lösen.',
+          author: 'Juliana Costa',
+          date: '08. März 2025',
+        },
+        {
           text: 'Die Lösungen von Elion haben unseren Betrieb vollständig transformiert. Ich empfehle es jedem Unternehmen, das Innovation sucht.',
           author: 'Fernando Almeida',
           date: '14. April 2025',
@@ -1377,6 +1402,11 @@ export const translations = {
           text: 'L\'implementazione è stata rapida e senza complicazioni. Il team di Elion ci ha guidato in ogni fase con professionalità e dedizione.',
           author: 'Ricardo Santos',
           date: '22 febbraio 2025',
+        },
+        {
+          text: 'Il supporto tecnico è eccezionale. Sempre disponibili e pronti a risolvere qualsiasi problema con agilità ed efficienza.',
+          author: 'Juliana Costa',
+          date: '08 marzo 2025',
         },
         {
           text: 'Le soluzioni di Elion hanno completamente trasformato la nostra operazione. Lo consiglio vivamente a qualsiasi azienda che cerca innovazione.',
@@ -1611,6 +1641,11 @@ export const translations = {
           date: '2025年2月22日',
         },
         {
+          text: '技术支持非常出色。始终可用并准备以敏捷和高效的方式解决任何问题。',
+          author: 'Juliana Costa',
+          date: '2025年3月8日',
+        },
+        {
           text: 'Elion 的解决方案完全改变了我们的运营。我强烈推荐给任何寻求创新的公司。',
           author: 'Fernando Almeida',
           date: '2025年4月14日',
@@ -1841,6 +1876,11 @@ export const translations = {
           text: '実装は迅速で複雑さがありませんでした。Elionチームは、プロフェッショナリズムと献身で私たちを各ステップで導いてくれました。',
           author: 'Ricardo Santos',
           date: '2025年2月22日',
+        },
+        {
+          text: 'テクニカルサポートは卓越しています。常に利用可能で、迅速かつ効率的にあらゆる問題を解決する準備ができています。',
+          author: 'Juliana Costa',
+          date: '2025年3月8日',
         },
         {
           text: 'Elionのソリューションは、私たちの運用を完全に変革しました。イノベーションを求めるあらゆる企業に強くお勧めします。',
