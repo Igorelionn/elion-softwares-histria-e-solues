@@ -1,0 +1,29 @@
+# robots.txt para Elion Softwares
+# Permite que todos os robôs de busca indexem o site
+
+User-agent: *
+Allow: /
+
+# Bloquear arquivos e diretórios administrativos/privados
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /perfil/
+Disallow: /reunioes-agendadas/
+Disallow: /conta-bloqueada/
+Disallow: /redefinir-senha/
+Disallow: /auth/
+
+# Sitemap
+Sitemap: https://elionsoftwares.com.br/sitemap.xml
+
+# Configurações específicas para Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Configurações específicas para Bing
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
