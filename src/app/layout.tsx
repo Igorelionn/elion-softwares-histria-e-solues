@@ -69,6 +69,14 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="relative">
       <head>
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Elion Softwares" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        
         {/* Preconnect para recursos externos críticos */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
