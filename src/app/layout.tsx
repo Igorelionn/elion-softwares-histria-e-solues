@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   title: "Elion Softwares",
   description: "História e Soluções",
   icons: {
-    icon: "/logo.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
@@ -32,11 +33,11 @@ export default function RootLayout({
       <body className="antialiased relative">
         <SecurityURLCleaner />
         <QueryProvider>
-          <LanguageProvider>
-            <BlockGuard>
-              {children}
-            </BlockGuard>
-          </LanguageProvider>
+        <LanguageProvider>
+          <BlockGuard>
+            {children}
+          </BlockGuard>
+        </LanguageProvider>
         </QueryProvider>
         <Toaster />
       </body>
