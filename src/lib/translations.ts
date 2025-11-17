@@ -225,7 +225,7 @@ export const translations = {
         },
         {
           question: 'Qual o prazo estimado para a conclusão e entrega de um projeto?',
-          answer: 'O cronograma de execução é estabelecido mediante análise criteriosa da complexidade arquitetural e da amplitude do escopo proposto. Projetos de menor envergadura, tais como páginas de apresentação institucional, demandam entre duas a quatro semanas para conclusão. Sistemas de maior sofisticação técnica requerem entre dois a seis meses de desenvolvimento. Na fase inicial de levantamento de requisitos, elaboramos um cronograma pormenorizado contemplando todas as etapas do ciclo de vida do projeto.',
+          answer: 'O cronograma de execução é estabelecido mediante análise criteriosa da complexidade arquitetural e da amplitude do escopo proposto. Projetos de menor envergadura, tais como páginas de apresentação institucional, possuem tempo de desenvolvimento mais ágil. Sistemas de maior sofisticação técnica requerem cronogramas mais extensos devido à complexidade envolvida. Na fase inicial de levantamento de requisitos, elaboramos um cronograma pormenorizado contemplando todas as etapas do ciclo de vida do projeto.',
         },
         {
           question: 'Como se estrutura a metodologia de desenvolvimento adotada pela empresa?',
@@ -484,7 +484,7 @@ export const translations = {
         },
         {
           question: 'What is the estimated timeframe for project completion and delivery?',
-          answer: 'The execution schedule is established through careful analysis of the architectural complexity and scope amplitude. Smaller projects, such as institutional presentation pages, require two to four weeks for completion. More technically sophisticated systems require two to six months of development. In the initial requirements gathering phase, we develop a detailed schedule covering all stages of the project lifecycle.',
+          answer: 'The execution schedule is established through careful analysis of the architectural complexity and scope amplitude. Smaller projects, such as institutional presentation pages, have a more agile development timeframe. More technically sophisticated systems require longer schedules due to the complexity involved. In the initial requirements gathering phase, we develop a detailed schedule covering all stages of the project lifecycle.',
         },
         {
           question: 'How is the company\'s development methodology structured?',
@@ -742,7 +742,7 @@ export const translations = {
         },
         {
           question: '¿Cuál es el plazo estimado para la conclusión y entrega de un proyecto?',
-          answer: 'El cronograma de ejecución se establece mediante un análisis cuidadoso de la complejidad arquitectural y la amplitud del alcance propuesto. Proyectos de menor envergadura, como páginas de presentación institucional, requieren entre dos y cuatro semanas para su conclusión. Sistemas de mayor sofisticación técnica requieren entre dos y seis meses de desarrollo. En la fase inicial de recopilación de requisitos, elaboramos un cronograma detallado que contempla todas las etapas del ciclo de vida del proyecto.',
+          answer: 'El cronograma de ejecución se establece mediante un análisis cuidadoso de la complejidad arquitectural y la amplitud del alcance propuesto. Proyectos de menor envergadura, como páginas de presentación institucional, tienen un tiempo de desarrollo más ágil. Sistemas de mayor sofisticación técnica requieren cronogramas más extensos debido a la complejidad involucrada. En la fase inicial de recopilación de requisitos, elaboramos un cronograma detallado que contempla todas las etapas del ciclo de vida del proyecto.',
         },
         {
           question: '¿Cómo se estructura la metodología de desarrollo adoptada por la empresa?',
@@ -1000,7 +1000,7 @@ export const translations = {
         },
         {
           question: 'Quel est le délai estimé pour l\'achèvement et la livraison d\'un projet?',
-          answer: 'Le calendrier d\'exécution est établi par une analyse minutieuse de la complexité architecturale et de l\'ampleur du périmètre proposé. Les projets de moindre envergure, tels que les pages de présentation institutionnelle, nécessitent deux à quatre semaines pour leur achèvement. Les systèmes de plus grande sophistication technique nécessitent deux à six mois de développement. Dans la phase initiale de collecte des exigences, nous élaborons un calendrier détaillé couvrant toutes les étapes du cycle de vie du projet.',
+          answer: 'Le calendrier d\'exécution est établi par une analyse minutieuse de la complexité architecturale et de l\'ampleur du périmètre proposé. Les projets de moindre envergure, tels que les pages de présentation institutionnelle, ont un délai de développement plus agile. Les systèmes de plus grande sophistication technique nécessitent des calendriers plus longs en raison de la complexité impliquée. Dans la phase initiale de collecte des exigences, nous élaborons un calendrier détaillé couvrant toutes les étapes du cycle de vie du projet.',
         },
         {
           question: 'Comment se structure la méthodologie de développement adoptée par l\'entreprise?',
@@ -1257,7 +1257,7 @@ export const translations = {
       back: 'Zurück',
       items: [
         { question: 'Welche technologischen Lösungen bietet Elion Softwares an?', answer: 'Elion Softwares entwickelt maßgeschneiderte digitale Lösungen, einschließlich Corporate Institutional Platforms, E-Commerce-Ökosysteme, hochkomplexe Websysteme, native und hybride mobile Anwendungen, plattformübergreifende Desktop-Software und integrierte Unternehmensverwaltungssysteme.' },
-        { question: 'Wie lang ist die geschätzte Zeit für Projektabschluss und -lieferung?', answer: 'Der Ausführungsplan wird durch sorgfältige Analyse der architektonischen Komplexität und des Umfangs festgelegt. Kleinere Projekte benötigen zwei bis vier Wochen, während technisch anspruchsvollere Systeme zwei bis sechs Monate Entwicklung erfordern.' },
+        { question: 'Wie lang ist die geschätzte Zeit für Projektabschluss und -lieferung?', answer: 'Der Ausführungsplan wird durch sorgfältige Analyse der architektonischen Komplexität und des Umfangs festgelegt. Kleinere Projekte haben einen agileren Entwicklungszeitrahmen, während technisch anspruchsvollere Systeme längere Zeitpläne aufgrund der Komplexität erfordern.' },
         { question: 'Wie ist die Entwicklungsmethodik des Unternehmens strukturiert?', answer: 'Die Methodik von Elion Softwares folgt einer systematischen Struktur mit sieben Phasen: Anforderungserhebung, strategische Planung, Design-Konzeption, Implementierung nach Software-Engineering-Prinzipien, Qualitätstests, Bereitstellung und Training sowie kontinuierlicher technischer Support.' },
         { question: 'Bietet das Unternehmen technische Unterstützung nach Projektabschluss?', answer: 'Sicherlich. Elion Softwares bietet unterschiedliche Wartungs- und spezialisierte technische Supportpläne, einschließlich Fehlerbehebungen, Sicherheitsupdates, Leistungsoptimierungen und Implementierung zusätzlicher Funktionen.' },
         { question: 'Wie lautet das Verfahren zur Anforderung eines Geschäftsangebots?', answer: 'Um ein detailliertes Geschäftsangebot anzufordern, können Interessenten das elektronische Formular "Meeting anfordern" auf der Website nutzen, eine E-Mail an oficialelionsoftwares@gmail.com senden oder über Social-Media-Plattformen Kontakt aufnehmen.' },
@@ -1489,7 +1489,7 @@ export const translations = {
       back: 'Indietro',
       items: [
         { question: 'Qual è la portata delle soluzioni tecnologiche offerte da Elion Softwares?', answer: 'Elion Softwares si dedica allo sviluppo di soluzioni digitali su misura, comprese piattaforme istituzionali aziendali, ecosistemi di e-commerce, sistemi web altamente complessi, applicazioni mobili native e ibride, software desktop multipiattaforma e sistemi integrati di gestione aziendale.' },
-        { question: 'Qual è il tempo stimato per il completamento e la consegna di un progetto?', answer: 'Il programma di esecuzione viene stabilito attraverso un\'attenta analisi della complessità architettonica e dell\'ampiezza del perimetro. I progetti più piccoli richiedono da due a quattro settimane, mentre i sistemi tecnicamente più sofisticati richiedono da due a sei mesi di sviluppo.' },
+        { question: 'Qual è il tempo stimato per il completamento e la consegna di un progetto?', answer: 'Il programma di esecuzione viene stabilito attraverso un\'attenta analisi della complessità architettonica e dell\'ampiezza del perimetro. I progetti più piccoli hanno un tempo di sviluppo più agile, mentre i sistemi tecnicamente più sofisticati richiedono tempi più lunghi a causa della complessità coinvolta.' },
         { question: 'Come è strutturata la metodologia di sviluppo adottata dall\'azienda?', answer: 'La metodologia di Elion Softwares segue una struttura sistemática composta da sette fasi: raccolta approfondita dei requisiti, pianificazione strategica, concezione del design, implementazione seguendo i principi di ingegneria del software, test di qualità, distribuzione e formazione, e supporto tecnico continuo.' },
         { question: 'L\'azienda fornisce assistenza tecnica dopo il completamento del progetto?', answer: 'Certamente. Elion Softwares offre piani distinti di manutenzione e supporto tecnico specializzato, incluse correzioni di bug, aggiornamenti di sicurezza, ottimizzazioni delle prestazioni e implementazione di funzionalità aggiuntive.' },
         { question: 'Qual è la procedura per richiedere una proposta commerciale?', answer: 'Per richiedere una proposta commerciale dettagliata, gli interessati possono utilizzare il modulo elettronico "Richiedi riunione" disponibile sul sito web, inviare una corrispondenza elettronica a oficialelionsoftwares@gmail.com o stabilire un contatto tramite le piattaforme dei social media.' },
@@ -1721,7 +1721,7 @@ export const translations = {
       back: '返回',
       items: [
         { question: 'Elion Softwares 提供哪些技术解决方案？', answer: 'Elion Softwares 致力于开发定制数字解决方案，包括企业机构平台、电子商务生态系统、高度复杂的网络系统、原生和混合移动应用、跨平台桌面软件以及集成企业管理系统。' },
-        { question: '项目完成和交付的预计时间是多少？', answer: '执行时间表通过仔细分析架构复杂性和范围确定。较小的项目需要两到四周，而技术上更复杂的系统需要两到六个月的开发。' },
+        { question: '项目完成和交付的预计时间是多少？', answer: '执行时间表通过仔细分析架构复杂性和范围确定。较小的项目具有更敏捷的开发时间，而技术上更复杂的系统由于复杂性需要更长的时间表。' },
         { question: '公司采用的开发方法论如何构建？', answer: 'Elion Softwares 的方法论遵循七个阶段的系统结构：需求收集、战略规划、设计概念、遵循软件工程原则的实施、质量测试、部署和培训以及持续技术支持。' },
         { question: '公司在项目完成后是否提供技术援助？', answer: '当然。Elion Softwares 提供不同的维护和专业技术支持计划，包括错误修复、安全更新、性能优化和实施附加功能。' },
         { question: '请求商业提案的程序是什么？', answer: '要请求详细的商业提案，感兴趣的各方可以使用网站上提供的"请求会议"电子表格，发送电子邮件至 oficialelionsoftwares@gmail.com，或通过社交媒体平台建立联系。' },
@@ -1953,7 +1953,7 @@ export const translations = {
       back: '戻る',
       items: [
         { question: 'Elion Softwaresが提供する技術ソリューションの範囲は何ですか？', answer: 'Elion Softwaresは、企業機関プラットフォーム、eコマースエコシステム、高度に複雑なWebシステム、ネイティブおよびハイブリッドモバイルアプリケーション、クロスプラットフォームデスクトップソフトウェア、統合企業管理システムを含むカスタムデジタルソリューションの開発に専念しています。' },
-        { question: 'プロジェクトの完了と納品の推定時間はどのくらいですか？', answer: '実行スケジュールは、アーキテクチャの複雑さと範囲の分析を通じて確立されます。小規模プロジェクトは2〜4週間、技術的に洗練されたシステムは2〜6か月の開発が必要です。' },
+        { question: 'プロジェクトの完了と納品の推定時間はどのくらいですか？', answer: '実行スケジュールは、アーキテクチャの複雑さと範囲の分析を通じて確立されます。小規模プロジェクトはより機敏な開発時間を持ち、技術的に洗練されたシステムは複雑さのためにより長いスケジュールが必要です。' },
         { question: '会社が採用している開発方法論はどのように構造化されていますか？', answer: 'Elion Softwaresの方法論は、7つのフェーズで構成される体系的な構造に従います：要件収集、戦略的計画、設計構想、ソフトウェアエンジニアリング原則に従った実装、品質テスト、デプロイメントとトレーニング、継続的な技術サポート。' },
         { question: 'プロジェクト完了後、会社は技術支援を提供しますか？', answer: 'もちろん。Elion Softwaresは、バグ修正、セキュリティアップデート、パフォーマンス最適化、追加機能の実装を含む、異なるメンテナンスおよび専門的な技術サポートプランを提供しています。' },
         { question: '商業提案を依頼する手順は何ですか？', answer: '詳細な商業提案を依頼するには、ウェブサイトで利用可能な「ミーティングをリクエスト」電子フォームを使用するか、oficialelionsoftwares@gmail.comに電子メールを送信するか、ソーシャルメディアプラットフォームを通じて連絡を確立できます。' },
