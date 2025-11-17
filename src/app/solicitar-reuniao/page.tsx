@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCalendarInput } from "@/components/ui/glass-calendar-input";
-import { GlassTimePicker } from "@/components/ui/glass-time-picker";
 import { CountrySelector, formatPhoneByCountry, countries, type Country } from "@/components/ui/country-selector";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { AuthDialog } from "@/components/ui/auth-dialog";
+import { TimeSelector } from "@/components/ui/time-selector";
 
 interface Question {
   id: number;
@@ -405,29 +405,40 @@ export default function SolicitarReuniaoPage() {
     setPendingSubmit(false);
     
     try {
-      // Formatar data para o formato correto (timestamp para compatibilidade com o banco)
+      // Formatar data para o formato correto
       const meetingDate = answers[8] as string;
       const meetingTime = answers[9] as string;
       const [year, month, day] = meetingDate.split('-').map(Number);
-      const meetingDateObj = new Date(year, month - 1, day);
-      const formattedDate = meetingDateObj.toISOString();
+      const formattedDate = new Date(year, month - 1, day).toISOString().split('T')[0] + 'T00:00:00.000Z';
+
+      // Verificar se o horário já está ocupado
+      const { data: existingMeeting, error: timeCheckError } = await (supabase as any)
+        .from('meetings')
+        .select('id')
+        .eq('meeting_date', formattedDate)
+        .eq('meeting_time', meetingTime)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1);
+
+      if (timeCheckError) {
+        console.error('Erro ao verificar disponibilidade:', timeCheckError);
+      } else if (existingMeeting && existingMeeting.length > 0) {
+        alert('Este horário acabou de ser reservado. Por favor, selecione outro horário.');
+        // Voltar para a pergunta do horário
+        setCurrentStep(8); // Pergunta 9 (índice 8)
+        setIsReviewStep(false);
+        setIsSubmitting(false);
+        return;
+      }
 
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      // Buscar reuniões na mesma data e horário
-      const startOfDay = new Date(meetingDateObj);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(meetingDateObj);
-      endOfDay.setHours(23, 59, 59, 999);
-      
       const { data: recentMeetings, error: checkError } = await (supabase as any)
         .from('meetings')
         .select('id, email, meeting_date, meeting_time')
         .eq('user_id', userIdToUse)
         .eq('email', answers[2] as string)
-        .gte('meeting_date', startOfDay.toISOString())
-        .lte('meeting_date', endOfDay.toISOString())
+        .eq('meeting_date', formattedDate)
         .eq('meeting_time', meetingTime)
         .gte('created_at', fiveMinutesAgo);
 
@@ -535,6 +546,11 @@ export default function SolicitarReuniaoPage() {
       } catch {
         return answer as string;
       }
+    }
+    
+    // Formatar horário
+    if (question.type === "time" && typeof answer === "string") {
+      return answer;
     }
     
     // Formatar telefone
@@ -888,7 +904,7 @@ export default function SolicitarReuniaoPage() {
                 )}
 
                 {currentQuestion.type === "time" && (
-                  <GlassTimePicker
+                  <TimeSelector
                     selectedDate={
                       answers[8]
                         ? (() => {
@@ -900,8 +916,6 @@ export default function SolicitarReuniaoPage() {
                     }
                     selectedTime={(answers[currentQuestion.id] as string) || null}
                     onTimeSelect={(time) => handleAnswerChange(time)}
-                    placeholder="Selecione um horário"
-                    size="large"
                   />
                 )}
 
