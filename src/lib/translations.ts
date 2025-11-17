@@ -233,7 +233,7 @@ export const translations = {
         },
         {
           question: 'A empresa disponibiliza assistência técnica após a conclusão do projeto?',
-          answer: 'Certamente. A Elion Softwares oferece distintos planos de manutenção e suporte técnico especializado, contemplando correção de inconsistências, atualizações de segurança em conformidade com as melhores práticas do mercado, otimizações de desempenho e performance, implementação de funcionalidades adicionais, bem como suporte técnico dedicado com profissionais qualificados. Os contratos de manutenção podem ser firmados em periodicidade mensal ou anual, conforme a conveniência do contratante.',
+          answer: 'Sim. A Elion Softwares oferece distintos planos de manutenção e suporte técnico especializado, contemplando correção de inconsistências, atualizações de segurança em conformidade com as melhores práticas do mercado, otimizações de desempenho e performance, implementação de funcionalidades adicionais, bem como suporte técnico dedicado com profissionais qualificados. Os contratos de manutenção podem ser firmados em periodicidade mensal ou anual, conforme a conveniência do contratante.',
         },
         {
           question: 'Qual o procedimento para solicitação de proposta comercial?',
@@ -241,11 +241,11 @@ export const translations = {
         },
         {
           question: 'A Elion Softwares atende clientes localizados em outras unidades federativas?',
-          answer: 'Certamente. Embora a sede operacional esteja estabelecida em Maceió, capital do estado de Alagoas, a Elion Softwares presta serviços a organizações em todo o território nacional mediante modelo de trabalho remoto. Empregamos ferramentas avançadas de comunicação corporativa e gestão de projetos que asseguram eficiência operacional, transparência processual e qualidade na entrega, independentemente da localização geográfica do contratante.',
+          answer: 'Sim. Embora a sede operacional esteja estabelecida em Maceió, capital do estado de Alagoas, a Elion Softwares presta serviços a organizações em todo o território nacional mediante modelo de trabalho remoto. Empregamos ferramentas avançadas de comunicação corporativa e gestão de projetos que asseguram eficiência operacional, transparência processual e qualidade na entrega, independentemente da localização geográfica do contratante.',
         },
         {
           question: 'É possível realizar alterações durante o processo de desenvolvimento?',
-          answer: 'Certamente. A Elion Softwares compreende que os requisitos empresariais podem evoluir durante o ciclo de desenvolvimento. Trabalhamos fundamentados em metodologia ágil, que faculta flexibilidade para ajustes iterativos durante a execução do projeto. Alterações substanciais no escopo originalmente estabelecido podem impactar o cronograma e o investimento previsto, sendo todas as implicações comunicadas de maneira transparente ao cliente antes da implementação.',
+          answer: 'Sim. A Elion Softwares compreende que os requisitos empresariais podem evoluir durante o ciclo de desenvolvimento. Trabalhamos fundamentados em metodologia ágil, que faculta flexibilidade para ajustes iterativos durante a execução do projeto. Alterações substanciais no escopo originalmente estabelecido podem impactar o cronograma e o investimento previsto, sendo todas as implicações comunicadas de maneira transparente ao cliente antes da implementação.',
         },
         {
           question: 'Como é assegurada a segurança dos dados e informações?',
@@ -253,7 +253,7 @@ export const translations = {
         },
         {
           question: 'A empresa fornece treinamento para utilização do sistema desenvolvido?',
-          answer: 'Certamente. Após a conclusão e entrega do projeto, a Elion Softwares providencia sessões estruturadas de capacitação técnica para a equipe operacional do contratante. O programa de treinamento inclui documentação técnica pormenorizada, materiais audiovisuais instrucionais e acompanhamento técnico durante o período de transição. Nosso objetivo é assegurar que todos os usuários estejam plenamente capacitados na operação da solução desenvolvida.',
+          answer: 'Sim. Após a conclusão e entrega do projeto, a Elion Softwares providencia sessões estruturadas de capacitação técnica para a equipe operacional do contratante. O programa de treinamento inclui documentação técnica pormenorizada, materiais audiovisuais instrucionais e acompanhamento técnico durante o período de transição. Nosso objetivo é assegurar que todos os usuários estejam plenamente capacitados na operação da solução desenvolvida.',
         },
       ],
     },
@@ -492,7 +492,7 @@ export const translations = {
         },
         {
           question: 'Does the company provide technical assistance after project completion?',
-          answer: 'Certainly. Elion Softwares offers distinct maintenance and specialized technical support plans, including bug fixes, security updates in compliance with industry best practices, performance optimizations, implementation of additional features, as well as dedicated technical support with qualified professionals. Maintenance contracts can be established on a monthly or annual basis, according to the client\'s convenience.',
+          answer: 'Yes. Elion Softwares offers distinct maintenance and specialized technical support plans, including bug fixes, security updates in compliance with industry best practices, performance optimizations, implementation of additional features, as well as dedicated technical support with qualified professionals. Maintenance contracts can be established on a monthly or annual basis, according to the client\'s convenience.',
         },
         {
           question: 'What is the procedure for requesting a commercial proposal?',
@@ -500,11 +500,11 @@ export const translations = {
         },
         {
           question: 'Does Elion Softwares serve clients located in other states?',
-          answer: 'Certainly. Although the operational headquarters is established in Maceió, capital of the state of Alagoas, Elion Softwares provides services to organizations throughout the national territory through a remote work model. We employ advanced corporate communication and project management tools that ensure operational efficiency, process transparency, and delivery quality, regardless of the client\'s geographic location.',
+          answer: 'Yes. Although the operational headquarters is established in Maceió, capital of the state of Alagoas, Elion Softwares provides services to organizations throughout the national territory through a remote work model. We employ advanced corporate communication and project management tools that ensure operational efficiency, process transparency, and delivery quality, regardless of the client\'s geographic location.',
         },
         {
           question: 'Is it possible to make changes during the development process?',
-          answer: 'Certainly. Elion Softwares understands that business requirements may evolve during the development cycle. We work based on agile methodology, which allows flexibility for iterative adjustments during project execution. Substantial changes to the originally established scope may impact the timeline and projected investment, with all implications communicated transparently to the client before implementation.',
+          answer: 'Yes. Elion Softwares understands that business requirements may evolve during the development cycle. We work based on agile methodology, which allows flexibility for iterative adjustments during project execution. Substantial changes to the originally established scope may impact the timeline and projected investment, with all implications communicated transparently to the client before implementation.',
         },
         {
           question: 'How is data and information security ensured?',
@@ -512,7 +512,7 @@ export const translations = {
         },
         {
           question: 'Does the company provide training for using the developed system?',
-          answer: 'Certainly. After project completion and delivery, Elion Softwares provides structured technical training sessions for the client\'s operational team. The training program includes detailed technical documentation, instructional audiovisual materials, and technical support during the transition period. Our goal is to ensure that all users are fully capable of operating the developed solution.',
+          answer: 'Yes. After project completion and delivery, Elion Softwares provides structured technical training sessions for the client\'s operational team. The training program includes detailed technical documentation, instructional audiovisual materials, and technical support during the transition period. Our goal is to ensure that all users are fully capable of operating the developed solution.',
         },
       ],
     },
@@ -750,7 +750,7 @@ export const translations = {
         },
         {
           question: '¿La empresa proporciona asistencia técnica después de la conclusión del proyecto?',
-          answer: 'Ciertamente. Elion Softwares ofrece distintos planes de mantenimiento y soporte técnico especializado, contemplando corrección de inconsistencias, actualizaciones de seguridad en conformidad con las mejores prácticas del mercado, optimizaciones de rendimiento y performance, implementación de funcionalidades adicionales, así como soporte técnico dedicado con profesionales calificados. Los contratos de mantenimiento pueden ser firmados en periodicidad mensual o anual, según la conveniencia del contratante.',
+          answer: 'Sí. Elion Softwares ofrece distintos planes de mantenimiento y soporte técnico especializado, contemplando corrección de inconsistencias, actualizaciones de seguridad en conformidad con las mejores prácticas del mercado, optimizaciones de rendimiento y performance, implementación de funcionalidades adicionales, así como soporte técnico dedicado con profesionales calificados. Los contratos de mantenimiento pueden ser firmados en periodicidad mensual o anual, según la conveniencia del contratante.',
         },
         {
           question: '¿Cuál es el procedimiento para solicitar una propuesta comercial?',
@@ -758,11 +758,11 @@ export const translations = {
         },
         {
           question: '¿Elion Softwares atiende clientes ubicados en otros estados?',
-          answer: 'Ciertamente. Aunque la sede operacional está establecida en Maceió, capital del estado de Alagoas, Elion Softwares presta servicios a organizaciones en todo el territorio nacional mediante modelo de trabajo remoto. Empleamos herramientas avanzadas de comunicación corporativa y gestión de proyectos que aseguran eficiencia operacional, transparencia procesal y calidad en la entrega, independientemente de la ubicación geográfica del contratante.',
+          answer: 'Sí. Aunque la sede operacional está establecida en Maceió, capital del estado de Alagoas, Elion Softwares presta servicios a organizaciones en todo el territorio nacional mediante modelo de trabajo remoto. Empleamos herramientas avanzadas de comunicación corporativa y gestión de proyectos que aseguran eficiencia operacional, transparencia procesal y calidad en la entrega, independientemente de la ubicación geográfica del contratante.',
         },
         {
           question: '¿Es posible realizar modificaciones durante el proceso de desarrollo?',
-          answer: 'Ciertamente. Elion Softwares comprende que los requisitos empresariales pueden evolucionar durante el ciclo de desarrollo. Trabajamos fundamentados en metodología ágil, que faculta flexibilidad para ajustes iterativos durante la ejecución del proyecto. Modificaciones sustanciales en el alcance originalmente establecido pueden impactar el cronograma y la inversión prevista, siendo todas las implicaciones comunicadas de manera transparente al cliente antes de la implementación.',
+          answer: 'Sí. Elion Softwares comprende que los requisitos empresariales pueden evolucionar durante el ciclo de desarrollo. Trabajamos fundamentados en metodología ágil, que faculta flexibilidad para ajustes iterativos durante la ejecución del proyecto. Modificaciones sustanciales en el alcance originalmente establecido pueden impactar el cronograma y la inversión prevista, siendo todas las implicaciones comunicadas de manera transparente al cliente antes de la implementación.',
         },
         {
           question: '¿Cómo se asegura la seguridad de los datos e informaciones?',
@@ -770,7 +770,7 @@ export const translations = {
         },
         {
           question: '¿La empresa proporciona capacitación para utilización del sistema desarrollado?',
-          answer: 'Ciertamente. Tras la conclusión y entrega del proyecto, Elion Softwares proporciona sesiones estructuradas de capacitación técnica para el equipo operacional del contratante. El programa de capacitación incluye documentación técnica pormenorizada, materiales audiovisuales instructivos y acompañamiento técnico durante el período de transición. Nuestro objetivo es asegurar que todos los usuarios estén plenamente capacitados en la operación de la solución desarrollada.',
+          answer: 'Sí. Tras la conclusión y entrega del proyecto, Elion Softwares proporciona sesiones estructuradas de capacitación técnica para el equipo operacional del contratante. El programa de capacitación incluye documentación técnica pormenorizada, materiales audiovisuales instructivos y acompañamiento técnico durante el período de transición. Nuestro objetivo es asegurar que todos los usuarios estén plenamente capacitados en la operación de la solución desarrollada.',
         },
       ],
     },
@@ -1008,7 +1008,7 @@ export const translations = {
         },
         {
           question: 'L\'entreprise fournit-elle une assistance technique après l\'achèvement du projet?',
-          answer: 'Certainement. Elion Softwares propose des plans distincts de maintenance et de support technique spécialisé, comprenant la correction d\'incohérences, des mises à jour de sécurité conformes aux meilleures pratiques du marché, des optimisations de performance, la mise en œuvre de fonctionnalités supplémentaires, ainsi qu\'un support technique dédié avec des professionnels qualifiés. Les contrats de maintenance peuvent être établis sur une base mensuelle ou annuelle, selon la convenance du client.',
+          answer: 'Oui. Elion Softwares propose des plans distincts de maintenance et de support technique spécialisé, comprenant la correction d\'incohérences, des mises à jour de sécurité conformes aux meilleures pratiques du marché, des optimisations de performance, la mise en œuvre de fonctionnalités supplémentaires, ainsi qu\'un support technique dédié avec des professionnels qualifiés. Les contrats de maintenance peuvent être établis sur une base mensuelle ou annuelle, selon la convenance du client.',
         },
         {
           question: 'Quelle est la procédure pour demander une proposition commerciale?',
@@ -1016,7 +1016,7 @@ export const translations = {
         },
         {
           question: 'Elion Softwares sert-elle des clients situés dans d\'autres états?',
-          answer: 'Certainement. Bien que le siège opérationnel soit établi à Maceió, capitale de l\'état d\'Alagoas, Elion Softwares fournit des services aux organisations sur tout le territoire national via un modèle de travail à distance. Nous employons des outils avancés de communication d\'entreprise et de gestion de projets qui assurent l\'efficacité opérationnelle, la transparence des processus et la qualité de livraison, quelle que soit la localisation géographique du client.',
+          answer: 'Oui. Bien que le siège opérationnel soit établi à Maceió, capitale de l\'état d\'Alagoas, Elion Softwares fournit des services aux organisations sur tout le territoire national via un modèle de travail à distance. Nous employons des outils avancés de communication d\'entreprise et de gestion de projets qui assurent l\'efficacité opérationnelle, la transparence des processus et la qualité de livraison, quelle que soit la localisation géographique du client.',
         },
         {
           question: 'L\'entreprise travaille-t-elle avec des technologies spécifiques?',
@@ -1024,7 +1024,7 @@ export const translations = {
         },
         {
           question: 'Est-il possible d\'apporter des modifications pendant le processus de développement?',
-          answer: 'Certainement. Elion Softwares comprend que les exigences commerciales peuvent évoluer pendant le cycle de développement. Nous travaillons sur la base d\'une méthodologie agile, qui permet une flexibilité pour des ajustements itératifs pendant l\'exécution du projet. Des modifications substantielles du périmètre initialement établi peuvent impacter le calendrier et l\'investissement projeté, toutes les implications étant communiquées de manière transparente au client avant la mise en œuvre.',
+          answer: 'Oui. Elion Softwares comprend que les exigences commerciales peuvent évoluer pendant le cycle de développement. Nous travaillons sur la base d\'une méthodologie agile, qui permet une flexibilité pour des ajustements itératifs pendant l\'exécution du projet. Des modifications substantielles du périmètre initialement établi peuvent impacter le calendrier et l\'investissement projeté, toutes les implications étant communiquées de manière transparente au client avant la mise en œuvre.',
         },
         {
           question: 'Comment la sécurité des données et des informations est-elle assurée?',
@@ -1032,7 +1032,7 @@ export const translations = {
         },
         {
           question: 'L\'entreprise fournit-elle une formation pour l\'utilisation du système développé?',
-          answer: 'Certainement. Après l\'achèvement et la livraison du projet, Elion Softwares fournit des sessions de formation technique structurées pour l\'équipe opérationnelle du client. Le programme de formation comprend une documentation technique détaillée, des matériels audiovisuels pédagogiques et un accompagnement technique pendant la période de transition. Notre objectif est d\'assurer que tous les utilisateurs soient pleinement capables d\'opérer la solution développée.',
+          answer: 'Oui. Après l\'achèvement et la livraison du projet, Elion Softwares fournit des sessions de formation technique structurées pour l\'équipe opérationnelle du client. Le programme de formation comprend une documentation technique détaillée, des matériels audiovisuels pédagogiques et un accompagnement technique pendant la période de transition. Notre objectif est d\'assurer que tous les utilisateurs soient pleinement capables d\'opérer la solution développée.',
         },
       ],
     },
@@ -1259,13 +1259,13 @@ export const translations = {
         { question: 'Welche technologischen Lösungen bietet Elion Softwares an?', answer: 'Elion Softwares entwickelt maßgeschneiderte digitale Lösungen, einschließlich Corporate Institutional Platforms, E-Commerce-Ökosysteme, hochkomplexe Websysteme, native und hybride mobile Anwendungen, plattformübergreifende Desktop-Software und integrierte Unternehmensverwaltungssysteme.' },
         { question: 'Wie lang ist die geschätzte Zeit für Projektabschluss und -lieferung?', answer: 'Der Ausführungsplan wird durch sorgfältige Analyse der architektonischen Komplexität und des Umfangs festgelegt. Kleinere Projekte haben einen agileren Entwicklungszeitrahmen, während technisch anspruchsvollere Systeme längere Zeitpläne aufgrund der Komplexität erfordern.' },
         { question: 'Wie ist die Entwicklungsmethodik des Unternehmens strukturiert?', answer: 'Die Methodik von Elion Softwares folgt einer systematischen Struktur mit sieben Phasen: Anforderungserhebung, strategische Planung, Design-Konzeption, Implementierung nach Software-Engineering-Prinzipien, Qualitätstests, Bereitstellung und Training sowie kontinuierlicher technischer Support.' },
-        { question: 'Bietet das Unternehmen technische Unterstützung nach Projektabschluss?', answer: 'Sicherlich. Elion Softwares bietet unterschiedliche Wartungs- und spezialisierte technische Supportpläne, einschließlich Fehlerbehebungen, Sicherheitsupdates, Leistungsoptimierungen und Implementierung zusätzlicher Funktionen.' },
+        { question: 'Bietet das Unternehmen technische Unterstützung nach Projektabschluss?', answer: 'Ja. Elion Softwares bietet unterschiedliche Wartungs- und spezialisierte technische Supportpläne, einschließlich Fehlerbehebungen, Sicherheitsupdates, Leistungsoptimierungen und Implementierung zusätzlicher Funktionen.' },
         { question: 'Wie lautet das Verfahren zur Anforderung eines Geschäftsangebots?', answer: 'Um ein detailliertes Geschäftsangebot anzufordern, können Interessenten das elektronische Formular "Meeting anfordern" auf der Website nutzen, eine E-Mail an oficialelionsoftwares@gmail.com senden oder über Social-Media-Plattformen Kontakt aufnehmen.' },
-        { question: 'Betreut Elion Softwares Kunden in anderen Bundesstaaten?', answer: 'Sicherlich. Obwohl der Hauptsitz in Maceió, Alagoas, liegt, bietet Elion Softwares Dienstleistungen für Organisationen im ganzen Land durch ein Remote-Arbeitsmodell an.' },
+        { question: 'Betreut Elion Softwares Kunden in anderen Bundesstaaten?', answer: 'Ja. Obwohl der Hauptsitz in Maceió, Alagoas, liegt, bietet Elion Softwares Dienstleistungen für Organisationen im ganzen Land durch ein Remote-Arbeitsmodell an.' },
         { question: 'Arbeitet das Unternehmen mit spezifischen Technologien?', answer: 'Elion Softwares verwendet einen modernen und robusten Technologie-Stack, einschließlich React, Next.js, Node.js, TypeScript, Python, PostgreSQL, MongoDB und andere etablierte Markt-Technologien.' },
-        { question: 'Sind Änderungen während des Entwicklungsprozesses möglich?', answer: 'Sicherlich. Elion Softwares versteht, dass Geschäftsanforderungen sich während des Entwicklungszyklus weiterentwickeln können. Wir arbeiten auf der Grundlage agiler Methodik, die Flexibilität für iterative Anpassungen ermöglicht.' },
+        { question: 'Sind Änderungen während des Entwicklungsprozesses möglich?', answer: 'Ja. Elion Softwares versteht, dass Geschäftsanforderungen sich während des Entwicklungszyklus weiterentwickeln können. Wir arbeiten auf der Grundlage agiler Methodik, die Flexibilität für iterative Anpassungen ermöglicht.' },
         { question: 'Wie wird die Sicherheit von Daten und Informationen gewährleistet?', answer: 'Informationssicherheit ist ein grundlegender Pfeiler in der Entwicklungsarchitektur von Elion Softwares. Wir implementieren rigoros Best Practices der Cybersicherheit, einschließlich Datenverschlüsselung, robuste Authentifizierungsmechanismen und automatisierte Backup-Richtlinien.' },
-        { question: 'Bietet das Unternehmen Schulungen für die Nutzung des entwickelten Systems?', answer: 'Sicherlich. Nach Projektabschluss und -lieferung bietet Elion Softwares strukturierte technische Schulungen für das Betriebsteam des Kunden an, einschließlich detaillierter technischer Dokumentation und audiovisueller Anleitungen.' },
+        { question: 'Bietet das Unternehmen Schulungen für die Nutzung des entwickelten Systems?', answer: 'Ja. Nach Projektabschluss und -lieferung bietet Elion Softwares strukturierte technische Schulungen für das Betriebsteam des Kunden an, einschließlich detaillierter technischer Dokumentation und audiovisueller Anleitungen.' },
       ],
     },
   },
@@ -1491,13 +1491,13 @@ export const translations = {
         { question: 'Qual è la portata delle soluzioni tecnologiche offerte da Elion Softwares?', answer: 'Elion Softwares si dedica allo sviluppo di soluzioni digitali su misura, comprese piattaforme istituzionali aziendali, ecosistemi di e-commerce, sistemi web altamente complessi, applicazioni mobili native e ibride, software desktop multipiattaforma e sistemi integrati di gestione aziendale.' },
         { question: 'Qual è il tempo stimato per il completamento e la consegna di un progetto?', answer: 'Il programma di esecuzione viene stabilito attraverso un\'attenta analisi della complessità architettonica e dell\'ampiezza del perimetro. I progetti più piccoli hanno un tempo di sviluppo più agile, mentre i sistemi tecnicamente più sofisticati richiedono tempi più lunghi a causa della complessità coinvolta.' },
         { question: 'Come è strutturata la metodologia di sviluppo adottata dall\'azienda?', answer: 'La metodologia di Elion Softwares segue una struttura sistemática composta da sette fasi: raccolta approfondita dei requisiti, pianificazione strategica, concezione del design, implementazione seguendo i principi di ingegneria del software, test di qualità, distribuzione e formazione, e supporto tecnico continuo.' },
-        { question: 'L\'azienda fornisce assistenza tecnica dopo il completamento del progetto?', answer: 'Certamente. Elion Softwares offre piani distinti di manutenzione e supporto tecnico specializzato, incluse correzioni di bug, aggiornamenti di sicurezza, ottimizzazioni delle prestazioni e implementazione di funzionalità aggiuntive.' },
+        { question: 'L\'azienda fornisce assistenza tecnica dopo il completamento del progetto?', answer: 'Sì. Elion Softwares offre piani distinti di manutenzione e supporto tecnico specializzato, incluse correzioni di bug, aggiornamenti di sicurezza, ottimizzazioni delle prestazioni e implementazione di funzionalità aggiuntive.' },
         { question: 'Qual è la procedura per richiedere una proposta commerciale?', answer: 'Per richiedere una proposta commerciale dettagliata, gli interessati possono utilizzare il modulo elettronico "Richiedi riunione" disponibile sul sito web, inviare una corrispondenza elettronica a oficialelionsoftwares@gmail.com o stabilire un contatto tramite le piattaforme dei social media.' },
-        { question: 'Elion Softwares serve clienti situati in altri stati?', answer: 'Certamente. Sebbene la sede operativa sia a Maceió, Alagoas, Elion Softwares fornisce servizi a organizzazioni in tutto il territorio nazionale attraverso un modello di lavoro remoto.' },
+        { question: 'Elion Softwares serve clienti situati in altri stati?', answer: 'Sì. Sebbene la sede operativa sia a Maceió, Alagoas, Elion Softwares fornisce servizi a organizzazioni in tutto il territorio nazionale attraverso un modello di lavoro remoto.' },
         { question: 'L\'azienda lavora con tecnologie specifiche?', answer: 'Elion Softwares utilizza uno stack tecnologico moderno e robusto, tra cui React, Next.js, Node.js, TypeScript, Python, PostgreSQL, MongoDB e altre tecnologie consolidate sul mercato.' },
-        { question: 'È possibile apportare modifiche durante il processo di sviluppo?', answer: 'Certamente. Elion Softwares comprende che i requisiti aziendali possono evolversi durante il ciclo di sviluppo. Lavoriamo su base di metodologia agile, che consente flessibilità per aggiustamenti iterativi.' },
+        { question: 'È possibile apportare modifiche durante il processo di sviluppo?', answer: 'Sì. Elion Softwares comprende che i requisiti aziendali possono evolversi durante il ciclo di sviluppo. Lavoriamo su base di metodologia agile, che consente flessibilità per aggiustamenti iterativi.' },
         { question: 'Come viene garantita la sicurezza dei dati e delle informazioni?', answer: 'La sicurezza delle informazioni è un pilastro fondamentale nell\'architettura di sviluppo di Elion Softwares. Implementiamo rigorosamente le migliori pratiche di sicurezza informatica, inclusa la crittografia dei dati, meccanismi robusti di autenticazione e politiche di backup automatizzate.' },
-        { question: 'L\'azienda fornisce formazione per l\'utilizzo del sistema sviluppato?', answer: 'Certamente. Dopo il completamento e la consegna del progetto, Elion Softwares fornisce sessioni strutturate di formazione tecnica per il team operativo del cliente, inclusa documentazione tecnica dettagliata e materiali audiovisivi didattici.' },
+        { question: 'L\'azienda fornisce formazione per l\'utilizzo del sistema sviluppato?', answer: 'Sì. Dopo il completamento e la consegna del progetto, Elion Softwares fornisce sessioni strutturate di formazione tecnica per il team operativo del cliente, inclusa documentazione tecnica dettagliata e materiali audiovisivi didattici.' },
       ],
     },
   },
