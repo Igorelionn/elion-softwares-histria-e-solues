@@ -27,7 +27,7 @@ interface GlassCalendarProps {
   size?: "normal" | "large";
 }
 
-export const GlassCalendar = React.memo(function GlassCalendar({
+export function GlassCalendar({
   selectedDate,
   onDateSelect,
   className,
@@ -44,12 +44,12 @@ export const GlassCalendar = React.memo(function GlassCalendar({
     setCurrentMonth(selectedDate || new Date());
   }, [selectedDate]);
 
-  const monthStart = React.useMemo(() => startOfMonth(currentMonth), [currentMonth]);
-  const monthEnd = React.useMemo(() => endOfMonth(currentMonth), [currentMonth]);
-  const startDate = React.useMemo(() => startOfWeek(monthStart, { weekStartsOn: 0 }), [monthStart]);
-  const endDate = React.useMemo(() => endOfWeek(monthEnd, { weekStartsOn: 0 }), [monthEnd]);
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
-  const dateRange = React.useMemo(() => eachDayOfInterval({ start: startDate, end: endDate }), [startDate, endDate]);
+  const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
 
   const nextMonth = () => {
     setDirection(1);
@@ -273,5 +273,5 @@ export const GlassCalendar = React.memo(function GlassCalendar({
       </div>
     </div>
   );
-});
+}
 

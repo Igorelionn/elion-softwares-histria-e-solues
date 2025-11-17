@@ -8,18 +8,16 @@ import { Input } from "@/components/ui/input";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCalendarInput } from "@/components/ui/glass-calendar-input";
-import { GlassTimePicker } from "@/components/ui/glass-time-picker";
 import { CountrySelector, formatPhoneByCountry, countries, type Country } from "@/components/ui/country-selector";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { AuthDialog } from "@/components/ui/auth-dialog";
-import { getAvailableTimes } from "@/lib/meeting-times";
 
 interface Question {
   id: number;
   question: string;
-  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date" | "time";
+  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date";
   options?: string[];
   placeholder?: string;
 }
@@ -93,12 +91,6 @@ const questions: Question[] = [
     type: "date",
     placeholder: "Selecione uma data",
   },
-  {
-    id: 9,
-    question: "Qual horário prefere para a reunião?",
-    type: "time",
-    placeholder: "Selecione um horário",
-  },
 ];
 
 export default function SolicitarReuniaoPage() {
@@ -121,33 +113,6 @@ export default function SolicitarReuniaoPage() {
   const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("signup");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const hasCheckedSavedData = useRef(false);
-  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
-  const [isLoadingTimes, setIsLoadingTimes] = useState(false);
-
-  // Carregar horários disponíveis quando a data for selecionada
-  useEffect(() => {
-    const loadAvailableTimes = async () => {
-      const selectedDate = answers[8];
-      if (selectedDate && typeof selectedDate === 'string') {
-        setIsLoadingTimes(true);
-        try {
-          const [year, month, day] = selectedDate.split('-').map(Number);
-          const date = new Date(year, month - 1, day);
-          const times = await getAvailableTimes(date);
-          setAvailableTimes(times);
-        } catch (error) {
-          console.error('Erro ao carregar horários:', error);
-          setAvailableTimes([]);
-        } finally {
-          setIsLoadingTimes(false);
-        }
-      } else {
-        setAvailableTimes([]);
-      }
-    };
-
-    loadAvailableTimes();
-  }, [answers[8]]);
 
   useEffect(() => {
     checkUser();
@@ -468,7 +433,6 @@ export default function SolicitarReuniaoPage() {
         timeline: answers[6] as string,
         budget: answers[7] as string,
         meeting_date: formattedDate,
-        meeting_time: answers[9] as string, // Horário selecionado
         status: 'pending',
         created_at: new Date().toISOString()
       };
@@ -901,17 +865,6 @@ export default function SolicitarReuniaoPage() {
                     onDateSelect={(date) => handleAnswerChange(format(date, "yyyy-MM-dd"))}
                     placeholder="DD/MM/AAAA"
                     size="large"
-                  />
-                )}
-
-                {currentQuestion.type === "time" && (
-                  <GlassTimePicker
-                    selectedTime={(answers[currentQuestion.id] as string) || null}
-                    onTimeSelect={(time) => handleAnswerChange(time)}
-                    availableTimes={availableTimes}
-                    placeholder={isLoadingTimes ? "Carregando horários..." : currentQuestion.placeholder}
-                    disabled={!answers[8] || isLoadingTimes}
-                    variant="dark"
                   />
                 )}
 
