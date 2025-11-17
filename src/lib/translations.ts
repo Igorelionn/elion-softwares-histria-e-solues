@@ -73,11 +73,6 @@ export const translations = {
       subtitle: 'Veja o que nossos clientes têm a dizer sobre nós.',
       items: [
         {
-          text: 'A Elion Softwares revolucionou nossa gestão digital. A plataforma intuitiva e o suporte excepcional tornaram tudo mais eficiente.',
-          author: 'Carolina Mendes',
-          date: '15 de janeiro de 2025',
-        },
-        {
           text: 'A implementação foi rápida e sem complicações. A equipe da Elion nos guiou em cada etapa com profissionalismo e dedicação.',
           author: 'Ricardo Santos',
           date: '22 de fevereiro de 2025',
@@ -86,11 +81,6 @@ export const translations = {
           text: 'O suporte técnico é excepcional. Sempre disponíveis e prontos para resolver qualquer questão com agilidade e eficiência.',
           author: 'Juliana Costa',
           date: '08 de março de 2025',
-        },
-        {
-          text: 'As soluções da Elion transformaram completamente nossa operação. Recomendo fortemente para qualquer empresa que busca inovação.',
-          author: 'Fernando Almeida',
-          date: '14 de abril de 2025',
         },
         {
           text: 'A qualidade do código e a arquitetura robusta entregues pela Elion superaram nossas expectativas. Parceria de longo prazo garantida.',
@@ -103,19 +93,9 @@ export const translations = {
           date: '03 de junho de 2025',
         },
         {
-          text: 'Nossa presença digital cresceu exponencialmente após a parceria com a Elion. Design impecável e funcionalidades perfeitas.',
-          author: 'Lucas Ferreira',
-          date: '19 de julho de 2025',
-        },
-        {
           text: 'A Elion entregou uma solução que superou todas as expectativas. Entenderam nossa visão e a transformaram em realidade.',
           author: 'Beatriz Rodrigues',
           date: '05 de agosto de 2025',
-        },
-        {
-          text: 'Desde a implementação, nosso e-commerce teve um aumento significativo nas conversões. A plataforma é simplesmente excepcional.',
-          author: 'Gabriel Martins',
-          date: '11 de setembro de 2025',
         },
       ],
     },
@@ -337,11 +317,6 @@ export const translations = {
       subtitle: 'See what our clients have to say about us.',
       items: [
         {
-          text: 'Elion Softwares revolutionized our digital management. The intuitive platform and exceptional support made everything more efficient.',
-          author: 'Carolina Mendes',
-          date: 'January 15, 2025',
-        },
-        {
           text: 'Implementation was quick and hassle-free. The Elion team guided us through every step with professionalism and dedication.',
           author: 'Ricardo Santos',
           date: 'February 22, 2025',
@@ -350,11 +325,6 @@ export const translations = {
           text: 'Technical support is exceptional. Always available and ready to resolve any issue with agility and efficiency.',
           author: 'Juliana Costa',
           date: 'March 08, 2025',
-        },
-        {
-          text: 'Elion\'s solutions completely transformed our operation. I strongly recommend it to any company seeking innovation.',
-          author: 'Fernando Almeida',
-          date: 'April 14, 2025',
         },
         {
           text: 'The code quality and robust architecture delivered by Elion exceeded our expectations. Long-term partnership guaranteed.',
@@ -367,19 +337,9 @@ export const translations = {
           date: 'June 03, 2025',
         },
         {
-          text: 'Our digital presence grew exponentially after partnering with Elion. Impeccable design and perfect features.',
-          author: 'Lucas Ferreira',
-          date: 'July 19, 2025',
-        },
-        {
           text: 'Elion delivered a solution that exceeded all expectations. They understood our vision and turned it into reality.',
           author: 'Beatriz Rodrigues',
           date: 'August 05, 2025',
-        },
-        {
-          text: 'Since implementation, our e-commerce has had a significant increase in conversions. The platform is simply exceptional.',
-          author: 'Gabriel Martins',
-          date: 'September 11, 2025',
         },
       ],
     },
@@ -601,11 +561,6 @@ export const translations = {
       subtitle: 'Vea lo que nuestros clientes tienen que decir sobre nosotros.',
       items: [
         {
-          text: 'Elion Softwares revolucionó nuestra gestión digital. La plataforma intuitiva y el soporte excepcional lo hicieron todo más eficiente.',
-          author: 'Carolina Mendes',
-          date: '15 de enero de 2025',
-        },
-        {
           text: 'La implementación fue rápida y sin complicaciones. El equipo de Elion nos guió en cada paso con profesionalismo y dedicación.',
           author: 'Ricardo Santos',
           date: '22 de febrero de 2025',
@@ -614,11 +569,6 @@ export const translations = {
           text: 'El soporte técnico es excepcional. Siempre disponibles y listos para resolver cualquier problema con agilidad y eficiencia.',
           author: 'Juliana Costa',
           date: '08 de marzo de 2025',
-        },
-        {
-          text: 'Las soluciones de Elion transformaron completamente nuestra operación. Lo recomiendo encarecidamente a cualquier empresa que busque innovación.',
-          author: 'Fernando Almeida',
-          date: '14 de abril de 2025',
         },
         {
           text: 'La calidad del código y la arquitectura robusta entregadas por Elion superaron nuestras expectativas. Asociación a largo plazo garantizada.',
@@ -631,19 +581,9 @@ export const translations = {
           date: '03 de junio de 2025',
         },
         {
-          text: 'Nuestra presencia digital creció exponencialmente después de asociarnos con Elion. Diseño impecable y funcionalidades perfectas.',
-          author: 'Lucas Ferreira',
-          date: '19 de julio de 2025',
-        },
-        {
           text: 'Elion entregó una solución que superó todas las expectativas. Entendieron nuestra visión y la transformaron en realidad.',
           author: 'Beatriz Rodrigues',
           date: '05 de agosto de 2025',
-        },
-        {
-          text: 'Desde la implementación, nuestro e-commerce tuvo un aumento significativo en las conversiones. La plataforma es simplemente excepcional.',
-          author: 'Gabriel Martins',
-          date: '11 de septiembre de 2025',
         },
       ],
     },
@@ -864,11 +804,6 @@ export const translations = {
       subtitle: 'Découvrez ce que nos clients disent de nous.',
       items: [
         {
-          text: 'Elion Softwares a révolutionné notre gestion numérique. La plateforme intuitive et le support exceptionnel ont rendu tout plus efficace.',
-          author: 'Carolina Mendes',
-          date: '15 janvier 2025',
-        },
-        {
           text: 'La mise en œuvre a été rapide et sans complications. L\'équipe d\'Elion nous a guidés à chaque étape avec professionnalisme et dévouement.',
           author: 'Ricardo Santos',
           date: '22 février 2025',
@@ -877,11 +812,6 @@ export const translations = {
           text: 'Le support technique est exceptionnel. Toujours disponibles et prêts à résoudre tout problème avec agilité et efficacité.',
           author: 'Juliana Costa',
           date: '08 mars 2025',
-        },
-        {
-          text: 'Les solutions d\'Elion ont complètement transformé notre opération. Je le recommande vivement à toute entreprise recherchant l\'innovation.',
-          author: 'Fernando Almeida',
-          date: '14 avril 2025',
         },
         {
           text: 'La qualité du code et l\'architecture robuste livrées par Elion ont dépassé nos attentes. Partenariat à long terme garanti.',
@@ -894,19 +824,9 @@ export const translations = {
           date: '03 juin 2025',
         },
         {
-          text: 'Notre présence numérique a augmenté exponentiellement après le partenariat avec Elion. Design impeccable et fonctionnalités parfaites.',
-          author: 'Lucas Ferreira',
-          date: '19 juillet 2025',
-        },
-        {
           text: 'Elion a livré une solution qui a dépassé toutes les attentes. Ils ont compris notre vision et l\'ont transformée en réalité.',
           author: 'Beatriz Rodrigues',
           date: '05 août 2025',
-        },
-        {
-          text: 'Depuis la mise en œuvre, notre e-commerce a connu une augmentation significative des conversions. La plateforme est tout simplement exceptionnelle.',
-          author: 'Gabriel Martins',
-          date: '11 septembre 2025',
         },
       ],
     },
@@ -1131,11 +1051,6 @@ export const translations = {
       subtitle: 'Erfahren Sie, was unsere Kunden über uns sagen.',
       items: [
         {
-          text: 'Elion Softwares hat unser digitales Management revolutioniert. Die intuitive Plattform und der außergewöhnliche Support haben alles effizienter gemacht.',
-          author: 'Carolina Mendes',
-          date: '15. Januar 2025',
-        },
-        {
           text: 'Die Implementierung war schnell und unkompliziert. Das Elion-Team hat uns bei jedem Schritt mit Professionalität und Hingabe geleitet.',
           author: 'Ricardo Santos',
           date: '22. Februar 2025',
@@ -1144,11 +1059,6 @@ export const translations = {
           text: 'Der technische Support ist außergewöhnlich. Immer verfügbar und bereit, jedes Problem mit Agilität und Effizienz zu lösen.',
           author: 'Juliana Costa',
           date: '08. März 2025',
-        },
-        {
-          text: 'Die Lösungen von Elion haben unseren Betrieb vollständig transformiert. Ich empfehle es jedem Unternehmen, das Innovation sucht.',
-          author: 'Fernando Almeida',
-          date: '14. April 2025',
         },
         {
           text: 'Die Codequalität und robuste Architektur von Elion haben unsere Erwartungen übertroffen. Langfristige Partnerschaft garantiert.',
@@ -1161,19 +1071,9 @@ export const translations = {
           date: '03. Juni 2025',
         },
         {
-          text: 'Unsere digitale Präsenz ist nach der Partnerschaft mit Elion exponentiell gewachsen. Makelloses Design und perfekte Funktionalitäten.',
-          author: 'Lucas Ferreira',
-          date: '19. Juli 2025',
-        },
-        {
           text: 'Elion hat eine Lösung geliefert, die alle Erwartungen übertroffen hat. Sie haben unsere Vision verstanden und in Realität verwandelt.',
           author: 'Beatriz Rodrigues',
           date: '05. August 2025',
-        },
-        {
-          text: 'Seit der Implementierung hat unser E-Commerce eine signifikante Steigerung der Conversions erfahren. Die Plattform ist einfach außergewöhnlich.',
-          author: 'Gabriel Martins',
-          date: '11. September 2025',
         },
       ],
     },
@@ -1368,11 +1268,6 @@ export const translations = {
       subtitle: 'Scopri cosa dicono di noi i nostri clienti.',
       items: [
         {
-          text: 'Elion Softwares ha rivoluzionato la nostra gestione digitale. La piattaforma intuitiva e il supporto eccezionale hanno reso tutto più efficiente.',
-          author: 'Carolina Mendes',
-          date: '15 gennaio 2025',
-        },
-        {
           text: 'L\'implementazione è stata rapida e senza complicazioni. Il team di Elion ci ha guidato in ogni fase con professionalità e dedizione.',
           author: 'Ricardo Santos',
           date: '22 febbraio 2025',
@@ -1381,11 +1276,6 @@ export const translations = {
           text: 'Il supporto tecnico è eccezionale. Sempre disponibili e pronti a risolvere qualsiasi problema con agilità ed efficienza.',
           author: 'Juliana Costa',
           date: '08 marzo 2025',
-        },
-        {
-          text: 'Le soluzioni di Elion hanno completamente trasformato la nostra operazione. Lo consiglio vivamente a qualsiasi azienda che cerca innovazione.',
-          author: 'Fernando Almeida',
-          date: '14 aprile 2025',
         },
         {
           text: 'La qualità del codice e l\'architettura robusta consegnate da Elion hanno superato le nostre aspettative. Partnership a lungo termine garantita.',
@@ -1398,19 +1288,9 @@ export const translations = {
           date: '03 giugno 2025',
         },
         {
-          text: 'La nostra presenza digitale è cresciuta esponenzialmente dopo la partnership con Elion. Design impeccabile e funzionalità perfette.',
-          author: 'Lucas Ferreira',
-          date: '19 luglio 2025',
-        },
-        {
           text: 'Elion ha consegnato una soluzione che ha superato tutte le aspettative. Hanno compreso la nostra visione e l\'hanno trasformata in realtà.',
           author: 'Beatriz Rodrigues',
           date: '05 agosto 2025',
-        },
-        {
-          text: 'Dall\'implementazione, il nostro e-commerce ha registrato un aumento significativo delle conversioni. La piattaforma è semplicemente eccezionale.',
-          author: 'Gabriel Martins',
-          date: '11 settembre 2025',
         },
       ],
     },
@@ -1605,11 +1485,6 @@ export const translations = {
       subtitle: '了解我们的客户对我们的评价。',
       items: [
         {
-          text: 'Elion Softwares 彻底改变了我们的数字管理。直观的平台和卓越的支持使一切变得更加高效。',
-          author: 'Carolina Mendes',
-          date: '2025年1月15日',
-        },
-        {
           text: '实施迅速且没有复杂性。Elion 团队以专业和奉献精神指导我们完成每一步。',
           author: 'Ricardo Santos',
           date: '2025年2月22日',
@@ -1618,11 +1493,6 @@ export const translations = {
           text: '技术支持非常出色。始终可用并准备以敏捷和高效的方式解决任何问题。',
           author: 'Juliana Costa',
           date: '2025年3月8日',
-        },
-        {
-          text: 'Elion 的解决方案完全改变了我们的运营。我强烈推荐给任何寻求创新的公司。',
-          author: 'Fernando Almeida',
-          date: '2025年4月14日',
         },
         {
           text: 'Elion 交付的代码质量和稳健架构超出了我们的预期。保证长期合作。',
@@ -1635,19 +1505,9 @@ export const translations = {
           date: '2025年6月3日',
         },
         {
-          text: '与 Elion 合作后，我们的数字存在呈指数级增长。无可挑剔的设计和完美的功能。',
-          author: 'Lucas Ferreira',
-          date: '2025年7月19日',
-        },
-        {
           text: 'Elion 交付了一个超出所有期望的解决方案。他们理解了我们的愿景并将其变为现实。',
           author: 'Beatriz Rodrigues',
           date: '2025年8月5日',
-        },
-        {
-          text: '自实施以来，我们的电子商务转化率显著增加。这个平台简直太棒了。',
-          author: 'Gabriel Martins',
-          date: '2025年9月11日',
         },
       ],
     },
@@ -1842,11 +1702,6 @@ export const translations = {
       subtitle: 'お客様が私たちについて何と言っているかをご覧ください。',
       items: [
         {
-          text: 'Elion Softwaresは私たちのデジタル管理を革命的に変えました。直感的なプラットフォームと優れたサポートにより、すべてがより効率的になりました。',
-          author: 'Carolina Mendes',
-          date: '2025年1月15日',
-        },
-        {
           text: '実装は迅速で複雑さがありませんでした。Elionチームは、プロフェッショナリズムと献身で私たちを各ステップで導いてくれました。',
           author: 'Ricardo Santos',
           date: '2025年2月22日',
@@ -1855,11 +1710,6 @@ export const translations = {
           text: 'テクニカルサポートは卓越しています。常に利用可能で、迅速かつ効率的にあらゆる問題を解決する準備ができています。',
           author: 'Juliana Costa',
           date: '2025年3月8日',
-        },
-        {
-          text: 'Elionのソリューションは、私たちの運用を完全に変革しました。イノベーションを求めるあらゆる企業に強くお勧めします。',
-          author: 'Fernando Almeida',
-          date: '2025年4月14日',
         },
         {
           text: 'Elionが提供したコード品質と堅牢なアーキテクチャは、私たちの期待を超えました。長期的なパートナーシップが保証されています。',
@@ -1872,19 +1722,9 @@ export const translations = {
           date: '2025年6月3日',
         },
         {
-          text: 'Elionとのパートナーシップ後、私たちのデジタルプレゼンスは指数関数的に成長しました。完璧なデザインと完璧な機能。',
-          author: 'Lucas Ferreira',
-          date: '2025年7月19日',
-        },
-        {
           text: 'Elionは、すべての期待を超えるソリューションを提供しました。彼らは私たちのビジョンを理解し、それを現実に変えました。',
           author: 'Beatriz Rodrigues',
           date: '2025年8月5日',
-        },
-        {
-          text: '実装以来、私たちのeコマースはコンバージョンの大幅な増加を経験しました。プラットフォームは単に優れています。',
-          author: 'Gabriel Martins',
-          date: '2025年9月11日',
         },
       ],
     },
