@@ -30,7 +30,7 @@ export const translations = {
     about: {
       title: 'Nosso Legado',
       quote: '"Não existe atalho para a excelência. A perfeição é alcançada através da atenção aos detalhes, e os detalhes compõem a perfeição."',
-      quoteAuthor: '— Michelangelo',
+      quoteAuthor: '',
       paragraph1: 'Movida por esse princípio, a Elion Softwares adota essa verdade como guia em cada decisão.',
       paragraph2: 'Em um mundo dominado pela pressa, privilegiamos a precisão, conscientes de que o verdadeiro domínio nasce da execução meticulosa.',
       paragraph3: 'Mais do que desenvolver softwares, criamos sistemas que evoluem em perfeita sintonia com as empresas que os utilizam.',
@@ -294,7 +294,7 @@ export const translations = {
     about: {
       title: 'Our Legacy',
       quote: '"There is no shortcut to excellence. Perfection is achieved through attention to detail, and details make perfection."',
-      quoteAuthor: '— Michelangelo',
+      quoteAuthor: '',
       paragraph1: 'Driven by this principle, Elion Softwares adopts this truth as a guide in every decision, line of code and vision focused on the future.',
       paragraph2: 'In a world dominated by haste, we privilege precision, aware that true mastery is born from meticulous and grounded execution.',
       paragraph3: 'More than developing software, we create systems that evolve in perfect sync with the companies that use them.',
@@ -1088,7 +1088,7 @@ export const translations = {
     about: {
       title: 'Unser Vermächtnis',
       quote: '"Es gibt keine Abkürzung zur Exzellenz. Perfektion wird durch Aufmerksamkeit für Details erreicht, und Details machen die Perfektion aus."',
-      quoteAuthor: '— Michelangelo',
+      quoteAuthor: '',
       paragraph1: 'Geleitet von diesem Prinzip nimmt Elion Softwares diese Wahrheit als Leitfaden in jeder Entscheidung, jeder Codezeile und jeder zukunftsorientierten Vision an.',
       paragraph2: 'In einer von Eile dominierten Welt priorisieren wir Präzision, im Bewusstsein, dass wahre Meisterschaft aus sorgfältiger und fundierter Ausführung entsteht.',
       paragraph3: 'Mehr als Software zu entwickeln, schaffen wir Systeme, die sich in perfekter Synchronisation mit den Unternehmen entwickeln, die sie nutzen.',
@@ -1325,7 +1325,7 @@ export const translations = {
     about: {
       title: 'Il Nostro Lascito',
       quote: '"Non esiste scorciatoia per l\'eccellenza. La perfezione si raggiunge attraverso l\'attenzione ai dettagli, e i dettagli compongono la perfezione."',
-      quoteAuthor: '— Michelangelo',
+      quoteAuthor: '',
       paragraph1: 'Guidata da questo principio, Elion Softwares abbraccia questa verità come guida in ogni decisione, riga di codice e visione orientata al futuro.',
       paragraph2: 'In un mondo dominato dalla fretta, privilegiamo la precisione, consapevoli che la vera maestria nasce da un\'esecuzione meticolosa e fondata.',
       paragraph3: 'Più che sviluppare software, creiamo sistemi che evolvono in perfetta sincronia con le aziende che li utilizzano.',
