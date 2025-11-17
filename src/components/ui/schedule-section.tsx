@@ -50,7 +50,7 @@ export const ScheduleSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             viewport={{ once: true }}
-            className="relative xl:-ml-16 2xl:-ml-32 px-4 md:px-6 lg:px-6 xl:pl-2 xl:-mt-8"
+            className="relative xl:-ml-16 2xl:-ml-32 px-4 md:px-6 lg:px-6 xl:pl-2 xl:-mt-4"
           >
             <div className="relative max-w-2xl mx-auto xl:max-w-none">
               {/* Imagem principal */}
