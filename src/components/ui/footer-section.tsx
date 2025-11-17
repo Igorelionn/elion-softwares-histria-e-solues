@@ -24,8 +24,8 @@ export function Footer() {
 			label: t.footer.resources,
 			links: [
 				{ title: t.footer.faqs, href: '/faq' },
-				{ title: t.footer.privacy, href: '#' },
-				{ title: t.footer.terms, href: '#' },
+				{ title: t.footer.privacy, href: '/politica-de-privacidade' },
+				{ title: t.footer.terms, href: '/termos-de-servico' },
 			],
 		},
 		{

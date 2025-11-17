@@ -1,121 +1,130 @@
+'use client'
+
 import { Metadata } from 'next'
 import Link from 'next/link'
-
-export const metadata: Metadata = {
-  title: 'Termos de Serviço | Elion Softwares',
-  description: 'Termos de Serviço da Elion Softwares',
-}
+import { motion } from 'framer-motion'
 
 export default function TermosDeServicoPage() {
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Termos de Serviço</h1>
-          <p className="text-gray-600">Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
-        </div>
-
-        <div className="prose prose-lg max-w-none space-y-8">
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Aceitação dos Termos</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Ao acessar e usar os serviços da Elion Softwares, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com qualquer parte destes termos, não poderá usar nossos serviços.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Descrição dos Serviços</h2>
-            <p className="text-gray-700 leading-relaxed mb-3">
-              A Elion Softwares oferece serviços de desenvolvimento de software, consultoria tecnológica e soluções personalizadas para empresas e indivíduos. Nossos serviços incluem, mas não se limitam a:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>Desenvolvimento de aplicações web e mobile</li>
-              <li>Consultoria em tecnologia e transformação digital</li>
-              <li>Manutenção e suporte de sistemas</li>
-              <li>Soluções personalizadas de software</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Uso dos Serviços</h2>
-            <p className="text-gray-700 leading-relaxed mb-3">
-              Você concorda em usar nossos serviços apenas para fins legais e de acordo com estes Termos. Você não deve:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>Usar os serviços de qualquer forma que viole leis ou regulamentos aplicáveis</li>
-              <li>Tentar obter acesso não autorizado a qualquer parte dos serviços</li>
-              <li>Interferir ou interromper os serviços ou servidores conectados aos serviços</li>
-              <li>Reproduzir, duplicar, copiar ou revender qualquer parte dos serviços sem permissão</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Propriedade Intelectual</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Todo o conteúdo, recursos e propriedade intelectual relacionados aos nossos serviços são de propriedade da Elion Softwares ou de seus licenciadores. Você não pode copiar, modificar, distribuir ou criar trabalhos derivados sem nossa permissão expressa por escrito.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Contas de Usuário</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Ao criar uma conta conosco, você é responsável por manter a segurança de sua conta e senha. Você é totalmente responsável por todas as atividades que ocorrem em sua conta. Você deve notificar-nos imediatamente sobre qualquer uso não autorizado de sua conta.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Pagamentos e Reembolsos</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Os termos de pagamento e reembolso serão especificados em contratos individuais ou propostas de serviço. Os preços estão sujeitos a alterações, mas as alterações não afetarão pedidos já confirmados.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Limitação de Responsabilidade</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Na extensão máxima permitida por lei, a Elion Softwares não será responsável por quaisquer danos indiretos, incidentais, especiais, consequenciais ou punitivos resultantes do uso ou incapacidade de usar nossos serviços.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Modificações dos Termos</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Reservamo-nos o direito de modificar estes termos a qualquer momento. Notificaremos você sobre alterações significativas por e-mail ou através de um aviso em nosso site. O uso continuado dos serviços após tais alterações constitui sua aceitação dos novos termos.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Rescisão</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Podemos encerrar ou suspender seu acesso aos nossos serviços imediatamente, sem aviso prévio ou responsabilidade, por qualquer motivo, incluindo, sem limitação, se você violar os Termos de Serviço.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Lei Aplicável</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Estes Termos serão regidos e interpretados de acordo com as leis do Brasil, sem considerar suas disposições sobre conflitos de leis.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Contato</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Se você tiver alguma dúvida sobre estes Termos de Serviço, entre em contato conosco através do nosso site ou por e-mail.
-            </p>
-          </section>
-        </div>
-
-        <div className="mt-12 text-center">
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <header className="bg-black sticky top-0 z-50 border-b border-white/5">
+        <div className="w-full px-6 sm:px-8 md:px-16 lg:px-24 py-8 md:py-10 flex items-center justify-between">
           <Link 
-            href="/" 
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            href="/"
+            className="text-white/60 hover:text-white text-sm md:text-base font-medium transition-colors"
+          >
+            ← Voltar
+          </Link>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img src="/logo-white.png" alt="Elion Softwares" className="h-5 md:h-6" />
+          </Link>
+        </div>
+      </header>
+
+      {/* Conteúdo */}
+      <main className="max-w-3xl mx-auto px-6 py-12 md:py-20">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 md:mb-16"
+        >
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Termos de Serviço
+          </h1>
+          <p className="text-white/40 text-sm">
+            Última atualização: {new Date().toLocaleDateString('pt-BR')}
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="space-y-10 md:space-y-12"
+        >
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Aceitação dos Termos</h2>
+            <p className="text-white/60 leading-relaxed">
+              Ao utilizar os serviços da Elion Softwares, você concorda com estes termos. Se não concordar, não utilize nossos serviços.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Serviços Oferecidos</h2>
+            <p className="text-white/60 leading-relaxed">
+              Desenvolvemos soluções de software sob medida, incluindo aplicações web, mobile, consultoria tecnológica e manutenção de sistemas.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Uso Adequado</h2>
+            <p className="text-white/60 leading-relaxed">
+              Você deve utilizar nossos serviços de forma legal e ética, respeitando as leis aplicáveis e os direitos de terceiros.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Propriedade Intelectual</h2>
+            <p className="text-white/60 leading-relaxed">
+              Todo conteúdo e propriedade intelectual dos nossos serviços pertencem à Elion Softwares, salvo acordo específico em contrário.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Responsabilidades</h2>
+            <p className="text-white/60 leading-relaxed">
+              Você é responsável pela segurança de sua conta e pelas atividades realizadas através dela.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Limitação de Responsabilidade</h2>
+            <p className="text-white/60 leading-relaxed">
+              A Elion Softwares não se responsabiliza por danos indiretos decorrentes do uso ou impossibilidade de uso dos serviços, na extensão máxima permitida por lei.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Alterações</h2>
+            <p className="text-white/60 leading-relaxed">
+              Reservamos o direito de modificar estes termos a qualquer momento. Alterações significativas serão comunicadas previamente.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Lei Aplicável</h2>
+            <p className="text-white/60 leading-relaxed">
+              Estes termos são regidos pelas leis brasileiras, com jurisdição no foro da comarca de Maceió, Alagoas.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">Contato</h2>
+            <p className="text-white/60 leading-relaxed">
+              Para dúvidas sobre estes termos, entre em contato através do e-mail{' '}
+              <a href="mailto:oficialelionsoftwares@gmail.com" className="text-white/80 hover:text-white transition-colors underline">
+                oficialelionsoftwares@gmail.com
+              </a>
+            </p>
+          </section>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="mt-16 pt-8 border-t border-white/10 text-center"
+        >
+          <Link
+            href="/"
+            className="inline-flex items-center text-white/60 hover:text-white transition-colors text-sm"
           >
             ← Voltar para a página inicial
           </Link>
-        </div>
-      </div>
+        </motion.div>
+      </main>
     </div>
   )
 }
-
