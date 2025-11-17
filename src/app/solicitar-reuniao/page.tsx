@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCalendarInput } from "@/components/ui/glass-calendar-input";
+import { GlassTimePicker } from "@/components/ui/glass-time-picker";
 import { CountrySelector, formatPhoneByCountry, countries, type Country } from "@/components/ui/country-selector";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,7 @@ import { AuthDialog } from "@/components/ui/auth-dialog";
 interface Question {
   id: number;
   question: string;
-  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date";
+  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date" | "time";
   options?: string[];
   placeholder?: string;
 }
@@ -90,6 +91,12 @@ const questions: Question[] = [
     question: "Em qual data deseja agendar o encontro?",
     type: "date",
     placeholder: "Selecione uma data",
+  },
+  {
+    id: 9,
+    question: "Qual horário prefere para a reunião?",
+    type: "time",
+    placeholder: "Selecione um horário",
   },
 ];
 
@@ -400,17 +407,19 @@ export default function SolicitarReuniaoPage() {
     try {
       // Formatar data para o formato correto
       const meetingDate = answers[8] as string;
+      const meetingTime = answers[9] as string;
       const [year, month, day] = meetingDate.split('-').map(Number);
-      const formattedDate = new Date(year, month - 1, day).toISOString();
+      const formattedDate = format(new Date(year, month - 1, day), "yyyy-MM-dd");
 
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: recentMeetings, error: checkError } = await (supabase as any)
         .from('meetings')
-        .select('id, email, meeting_date')
+        .select('id, email, meeting_date, meeting_time')
         .eq('user_id', userIdToUse)
         .eq('email', answers[2] as string)
         .eq('meeting_date', formattedDate)
+        .eq('meeting_time', meetingTime)
         .gte('created_at', fiveMinutesAgo);
 
       if (checkError) {
@@ -433,6 +442,7 @@ export default function SolicitarReuniaoPage() {
         timeline: answers[6] as string,
         budget: answers[7] as string,
         meeting_date: formattedDate,
+        meeting_time: meetingTime,
         status: 'pending',
         created_at: new Date().toISOString()
       };
@@ -864,6 +874,24 @@ export default function SolicitarReuniaoPage() {
                     }
                     onDateSelect={(date) => handleAnswerChange(format(date, "yyyy-MM-dd"))}
                     placeholder="DD/MM/AAAA"
+                    size="large"
+                  />
+                )}
+
+                {currentQuestion.type === "time" && (
+                  <GlassTimePicker
+                    selectedDate={
+                      answers[8]
+                        ? (() => {
+                            const dateStr = answers[8] as string;
+                            const [year, month, day] = dateStr.split('-').map(Number);
+                            return new Date(year, month - 1, day);
+                          })()
+                        : null
+                    }
+                    selectedTime={(answers[currentQuestion.id] as string) || null}
+                    onTimeSelect={(time) => handleAnswerChange(time)}
+                    placeholder="Selecione um horário"
                     size="large"
                   />
                 )}
