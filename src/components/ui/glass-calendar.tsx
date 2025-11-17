@@ -27,7 +27,7 @@ interface GlassCalendarProps {
   size?: "normal" | "large";
 }
 
-export function GlassCalendar({
+export const GlassCalendar = React.memo(function GlassCalendar({
   selectedDate,
   onDateSelect,
   className,
@@ -44,12 +44,12 @@ export function GlassCalendar({
     setCurrentMonth(selectedDate || new Date());
   }, [selectedDate]);
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const monthStart = React.useMemo(() => startOfMonth(currentMonth), [currentMonth]);
+  const monthEnd = React.useMemo(() => endOfMonth(currentMonth), [currentMonth]);
+  const startDate = React.useMemo(() => startOfWeek(monthStart, { weekStartsOn: 0 }), [monthStart]);
+  const endDate = React.useMemo(() => endOfWeek(monthEnd, { weekStartsOn: 0 }), [monthEnd]);
 
-  const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
+  const dateRange = React.useMemo(() => eachDayOfInterval({ start: startDate, end: endDate }), [startDate, endDate]);
 
   const nextMonth = () => {
     setDirection(1);
@@ -180,12 +180,12 @@ export function GlassCalendar({
             >
             {dateRange.map((day, idx) => {
               const isCurrentMonth = isSameMonth(day, currentMonth);
-              
+
               // Normalizar datas para comparação (apenas ano, mês, dia)
               const normalizedDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
               const normalizedSelected = selectedDate ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()) : null;
               const isSelected = normalizedSelected ? normalizedDay.getTime() === normalizedSelected.getTime() : false;
-              
+
               const isTodayDate = isToday(day);
               const today = new Date();
               const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -273,5 +273,5 @@ export function GlassCalendar({
       </div>
     </div>
   );
-}
+});
 

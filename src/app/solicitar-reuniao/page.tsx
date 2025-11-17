@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { AnimatedInput } from "@/components/ui/animated-input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCalendarInput } from "@/components/ui/glass-calendar-input";
+import { GlassTimePicker } from "@/components/ui/glass-time-picker";
 import { CountrySelector, formatPhoneByCountry, countries, type Country } from "@/components/ui/country-selector";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { AuthDialog } from "@/components/ui/auth-dialog";
-import { TimeSelector } from "@/components/ui/time-selector";
+import { getAvailableTimes } from "@/lib/meeting-times";
 
 interface Question {
   id: number;
@@ -120,6 +121,33 @@ export default function SolicitarReuniaoPage() {
   const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("signup");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const hasCheckedSavedData = useRef(false);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+
+  // Carregar horários disponíveis quando a data for selecionada
+  useEffect(() => {
+    const loadAvailableTimes = async () => {
+      const selectedDate = answers[8];
+      if (selectedDate && typeof selectedDate === 'string') {
+        setIsLoadingTimes(true);
+        try {
+          const [year, month, day] = selectedDate.split('-').map(Number);
+          const date = new Date(year, month - 1, day);
+          const times = await getAvailableTimes(date);
+          setAvailableTimes(times);
+        } catch (error) {
+          console.error('Erro ao carregar horários:', error);
+          setAvailableTimes([]);
+        } finally {
+          setIsLoadingTimes(false);
+        }
+      } else {
+        setAvailableTimes([]);
+      }
+    };
+
+    loadAvailableTimes();
+  }, [answers[8]]);
 
   useEffect(() => {
     checkUser();
@@ -407,39 +435,17 @@ export default function SolicitarReuniaoPage() {
     try {
       // Formatar data para o formato correto
       const meetingDate = answers[8] as string;
-      const meetingTime = answers[9] as string;
       const [year, month, day] = meetingDate.split('-').map(Number);
-      const formattedDate = new Date(year, month - 1, day).toISOString().split('T')[0] + 'T00:00:00.000Z';
-
-      // Verificar se o horário já está ocupado
-      const { data: existingMeeting, error: timeCheckError } = await (supabase as any)
-        .from('meetings')
-        .select('id')
-        .eq('meeting_date', formattedDate)
-        .eq('meeting_time', meetingTime)
-        .in('status', ['pending', 'confirmed'])
-        .limit(1);
-
-      if (timeCheckError) {
-        console.error('Erro ao verificar disponibilidade:', timeCheckError);
-      } else if (existingMeeting && existingMeeting.length > 0) {
-        alert('Este horário acabou de ser reservado. Por favor, selecione outro horário.');
-        // Voltar para a pergunta do horário
-        setCurrentStep(8); // Pergunta 9 (índice 8)
-        setIsReviewStep(false);
-        setIsSubmitting(false);
-        return;
-      }
+      const formattedDate = new Date(year, month - 1, day).toISOString();
 
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: recentMeetings, error: checkError } = await (supabase as any)
         .from('meetings')
-        .select('id, email, meeting_date, meeting_time')
+        .select('id, email, meeting_date')
         .eq('user_id', userIdToUse)
         .eq('email', answers[2] as string)
         .eq('meeting_date', formattedDate)
-        .eq('meeting_time', meetingTime)
         .gte('created_at', fiveMinutesAgo);
 
       if (checkError) {
@@ -462,7 +468,7 @@ export default function SolicitarReuniaoPage() {
         timeline: answers[6] as string,
         budget: answers[7] as string,
         meeting_date: formattedDate,
-        meeting_time: meetingTime,
+        meeting_time: answers[9] as string, // Horário selecionado
         status: 'pending',
         created_at: new Date().toISOString()
       };
@@ -546,11 +552,6 @@ export default function SolicitarReuniaoPage() {
       } catch {
         return answer as string;
       }
-    }
-    
-    // Formatar horário
-    if (question.type === "time" && typeof answer === "string") {
-      return answer;
     }
     
     // Formatar telefone
@@ -904,18 +905,13 @@ export default function SolicitarReuniaoPage() {
                 )}
 
                 {currentQuestion.type === "time" && (
-                  <TimeSelector
-                    selectedDate={
-                      answers[8]
-                        ? (() => {
-                            const dateStr = answers[8] as string;
-                            const [year, month, day] = dateStr.split('-').map(Number);
-                            return new Date(year, month - 1, day);
-                          })()
-                        : null
-                    }
+                  <GlassTimePicker
                     selectedTime={(answers[currentQuestion.id] as string) || null}
                     onTimeSelect={(time) => handleAnswerChange(time)}
+                    availableTimes={availableTimes}
+                    placeholder={isLoadingTimes ? "Carregando horários..." : currentQuestion.placeholder}
+                    disabled={!answers[8] || isLoadingTimes}
+                    variant="dark"
                   />
                 )}
 
