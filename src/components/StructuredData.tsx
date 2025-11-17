@@ -22,7 +22,7 @@ export function StructuredData() {
       "availableLanguage": ["Portuguese", "English"]
     },
     "sameAs": [
-      "https://www.instagram.com/elionsoftwares",
+      "https://www.instagram.com/elionsoftwares_?igsh=MWR4d3U5ZWg5c3hzcw==",
       "https://www.facebook.com/elionsoftwares",
       "https://www.youtube.com/@elionsoftwares"
     ]

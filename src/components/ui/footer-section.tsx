@@ -48,7 +48,7 @@ export function Footer() {
 		{
 			label: t.footer.social,
 			links: [
-				{ title: 'Instagram', href: 'https://www.instagram.com/elionsoftwares', icon: Instagram },
+				{ title: 'Instagram', href: 'https://www.instagram.com/elionsoftwares_?igsh=MWR4d3U5ZWg5c3hzcw==', icon: Instagram },
 				{ title: 'Facebook', href: 'https://www.facebook.com/share/1DFAojYNLg/', icon: Facebook },
 				{ title: 'YouTube', href: 'https://www.youtube.com/channel/UCngt5-koheVlwaYmJf4rQPQ', icon: Youtube },
 			],
