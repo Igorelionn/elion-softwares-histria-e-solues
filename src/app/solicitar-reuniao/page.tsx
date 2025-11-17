@@ -405,20 +405,29 @@ export default function SolicitarReuniaoPage() {
     setPendingSubmit(false);
     
     try {
-      // Formatar data para o formato correto
+      // Formatar data para o formato correto (timestamp para compatibilidade com o banco)
       const meetingDate = answers[8] as string;
       const meetingTime = answers[9] as string;
       const [year, month, day] = meetingDate.split('-').map(Number);
-      const formattedDate = format(new Date(year, month - 1, day), "yyyy-MM-dd");
+      const meetingDateObj = new Date(year, month - 1, day);
+      const formattedDate = meetingDateObj.toISOString();
 
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
+      // Buscar reuniões na mesma data e horário
+      const startOfDay = new Date(meetingDateObj);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(meetingDateObj);
+      endOfDay.setHours(23, 59, 59, 999);
+      
       const { data: recentMeetings, error: checkError } = await (supabase as any)
         .from('meetings')
         .select('id, email, meeting_date, meeting_time')
         .eq('user_id', userIdToUse)
         .eq('email', answers[2] as string)
-        .eq('meeting_date', formattedDate)
+        .gte('meeting_date', startOfDay.toISOString())
+        .lte('meeting_date', endOfDay.toISOString())
         .eq('meeting_time', meetingTime)
         .gte('created_at', fiveMinutesAgo);
 

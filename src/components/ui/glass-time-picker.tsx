@@ -51,13 +51,18 @@ export function GlassTimePicker({
 
     setIsLoading(true);
     try {
-      const dateString = format(selectedDate, "yyyy-MM-dd");
+      // Formatar data para início e fim do dia (timezone UTC)
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
       
       // Buscar reuniões confirmadas ou pendentes para esta data
       const { data, error } = await (supabase as any)
         .from('meetings')
         .select('meeting_time')
-        .eq('meeting_date', dateString)
+        .gte('meeting_date', startOfDay.toISOString())
+        .lte('meeting_date', endOfDay.toISOString())
         .in('status', ['pending', 'confirmed']);
 
       if (error) {
