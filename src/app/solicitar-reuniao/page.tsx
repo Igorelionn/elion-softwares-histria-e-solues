@@ -680,32 +680,31 @@ export default function SolicitarReuniaoPage() {
         meeting_time: meetingData.meeting_time
       });
 
-      // Salvar no banco de dados com timeout de 20s (aumentado de 10s)
+      // Salvar no banco de dados SEM timeout artificial (deixar Supabase gerenciar)
       const insertStart = performance.now();
-      let result: any;
+      
+      const result = await (supabase as any)
+        .from('meetings')
+        .insert([meetingData]);
 
-      try {
-        result = await Promise.race([
-          (supabase as any)
-            .from('meetings')
-            .insert([meetingData]),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout ao salvar reunião após 20s')), 20000)
-          )
-        ]);
-
-        const insertTime = performance.now() - insertStart;
-        console.error(`⏱️ [SUBMIT] Insert levou ${insertTime.toFixed(2)}ms`);
-      } catch (insertError: any) {
-        const insertTime = performance.now() - insertStart;
-        console.error(`❌ [SUBMIT] TIMEOUT no INSERT após ${insertTime.toFixed(2)}ms`);
-        console.error('❌ [SUBMIT] Detalhes do timeout:', insertError?.message);
-        throw insertError;
-      }
+      const insertTime = performance.now() - insertStart;
+      console.error(`⏱️ [SUBMIT] Insert levou ${insertTime.toFixed(2)}ms`);
 
       if (result.error) {
         console.error('❌ [SUBMIT] Erro ao salvar reunião:', result.error);
+        console.error('❌ [SUBMIT] Code:', result.error.code);
         console.error('❌ [SUBMIT] Detalhes do erro:', JSON.stringify(result.error, null, 2));
+        
+        // Se for erro de unicidade (horário já ocupado), mostrar mensagem específica
+        if (result.error.code === '23505' || result.error.message?.includes('duplicate') || result.error.message?.includes('idx_meetings_date_time_active')) {
+          console.error('⚠️ [SUBMIT] Horário já ocupado por outro usuário!');
+          alert('Desculpe, este horário acabou de ser reservado por outro usuário. Por favor, escolha outro horário disponível.');
+          setIsSubmitting(false);
+          // Voltar para a seleção de horário
+          setCurrentStep(questions.findIndex(q => q.type === 'time'));
+          return;
+        }
+        
         throw result.error;
       }
 
