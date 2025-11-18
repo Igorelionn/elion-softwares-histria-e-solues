@@ -118,17 +118,22 @@ export default function SolicitarReuniaoPage() {
   // Executar verificação inicial apenas uma vez
   useEffect(() => {
     console.log('🚀 Componente montado - iniciando verificação');
+    console.log('🗑️ Limpando cache anterior');
+    
+    // RESETAR CACHE ao montar (importante para múltiplas visitas)
+    isAdminCache.current = null;
+    hasCheckedSavedData.current = false;
     
     let isMounted = true; // Flag para prevenir updates após unmount
     
-    // TIMEOUT DE SEGURANÇA: Se após 5 segundos ainda estiver carregando, forçar parada
+    // TIMEOUT DE SEGURANÇA: Se após 3 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 5s');
+        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 3s');
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 5000);
+    }, 3000); // Reduzido de 5s para 3s
     
     // Executar verificação
     const runCheck = async () => {
@@ -149,6 +154,7 @@ export default function SolicitarReuniaoPage() {
     return () => {
       isMounted = false;
       clearTimeout(safetyTimeout);
+      console.log('🧹 Componente desmontado');
     };
   }, []); // Executa apenas na montagem
   
@@ -227,27 +233,42 @@ export default function SolicitarReuniaoPage() {
   };
 
   const checkExistingMeeting = async (userId: string) => {
+    const startTime = performance.now();
     try {
-      console.log('🔍 Verificando reuniões existentes para usuário:', userId);
+      console.log('🔍 [START] Verificando reuniões para usuário:', userId);
       
       // Verificar cache primeiro
       let isAdmin = isAdminCache.current;
       
       if (isAdmin === null) {
-        console.log('📥 Cache vazio - consultando banco de dados');
-        // Verificar se o usuário é admin
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', userId)
-          .single() as { data: { role: string } | null; error: any };
+        console.log('📥 Cache vazio - consultando BD');
+        const queryStart = performance.now();
+        
+        try {
+          // Verificar se o usuário é admin com timeout explícito
+          const { data: userProfile, error: profileError } = await Promise.race([
+            supabase
+              .from('users')
+              .select('role')
+              .eq('id', userId)
+              .single(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Query timeout após 2s')), 2000)
+            )
+          ]) as { data: { role: string } | null; error: any };
 
-        if (profileError) {
-          console.error('⚠️ Erro ao verificar perfil do usuário:', profileError);
-          // Continuar mesmo com erro - assumir que não é admin
+          const queryTime = performance.now() - queryStart;
+          console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+
+          if (profileError) {
+            console.error('⚠️ Erro ao verificar perfil:', profileError);
+            isAdmin = false;
+          } else {
+            isAdmin = userProfile?.role === 'admin';
+          }
+        } catch (timeoutError) {
+          console.error('❌ TIMEOUT na query users:', timeoutError);
           isAdmin = false;
-        } else {
-          isAdmin = userProfile?.role === 'admin';
         }
         
         // Armazenar no cache
@@ -269,12 +290,32 @@ export default function SolicitarReuniaoPage() {
 
       // Para usuários comuns, verificar se já tem reunião
       console.log('🔎 Verificando reuniões pendentes/confirmadas...');
-      const { data, error } = await (supabase as any)
-        .from('meetings')
-        .select('id, status')
-        .eq('user_id', userId)
-        .in('status', ['pending', 'confirmed'])
-        .limit(1);
+      const meetingsQueryStart = performance.now();
+      
+      let data, error;
+      try {
+        const result = await Promise.race([
+          (supabase as any)
+            .from('meetings')
+            .select('id, status')
+            .eq('user_id', userId)
+            .in('status', ['pending', 'confirmed'])
+            .limit(1),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query meetings timeout após 2s')), 2000)
+          )
+        ]);
+        data = result.data;
+        error = result.error;
+        
+        const meetingsQueryTime = performance.now() - meetingsQueryStart;
+        console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
+      } catch (timeoutError) {
+        console.error('❌ TIMEOUT na query meetings:', timeoutError);
+        // Em caso de timeout, assumir que não há reuniões e permitir continuar
+        data = null;
+        error = null;
+      }
 
       if (error) {
         console.error('⚠️ Erro ao verificar reunião existente:', error);
@@ -284,6 +325,8 @@ export default function SolicitarReuniaoPage() {
         console.log('⏭️ Permitindo continuar apesar do erro');
         setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
+        const totalTime = performance.now() - startTime;
+        console.log(`⏱️ [END] Verificação completa em ${totalTime.toFixed(2)}ms`);
         return;
       }
 
@@ -307,6 +350,8 @@ export default function SolicitarReuniaoPage() {
       // O backend validará na hora de inserir
       setHasExistingMeeting(false);
     } finally {
+      const totalTime = performance.now() - startTime;
+      console.log(`⏱️ [END] Verificação total em ${totalTime.toFixed(2)}ms`);
       console.log('🏁 Finalizando verificação de reuniões');
       setIsCheckingMeeting(false);
     }
