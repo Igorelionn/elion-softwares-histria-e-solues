@@ -115,7 +115,20 @@ export default function SolicitarReuniaoPage() {
   const hasCheckedSavedData = useRef(false);
 
   useEffect(() => {
-    checkUser();
+    console.log('🚀 Componente montado - iniciando verificação');
+    
+    // TIMEOUT DE SEGURANÇA: Se após 5 segundos ainda estiver carregando, forçar parada
+    const safetyTimeout = setTimeout(() => {
+      console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 5s');
+      setIsCheckingMeeting(false);
+      setHasExistingMeeting(false);
+    }, 5000);
+    
+    // Executar verificação
+    checkUser().finally(() => {
+      // Limpar timeout se a verificação terminar antes
+      clearTimeout(safetyTimeout);
+    });
     
     // Verificar se há dados de reunião salvos no localStorage (após Google OAuth)
     const checkSavedMeetingData = async () => {
@@ -176,8 +189,11 @@ export default function SolicitarReuniaoPage() {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [pendingSubmit, userId]);
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout); // Limpar timeout ao desmontar
+    };
+  }, []); // Array vazio = executa apenas uma vez na montagem
 
   const checkUser = async () => {
     try {
