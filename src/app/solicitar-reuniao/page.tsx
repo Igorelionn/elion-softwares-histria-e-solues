@@ -983,6 +983,29 @@ export default function SolicitarReuniaoPage() {
 
                 {currentQuestion.type === "time" && (
                   <div className="space-y-6">
+                    {/* Texto informativo e botão para trocar data - NO TOPO */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      className="space-y-4"
+                    >
+                      {/* Texto informativo */}
+                      <p className="text-center text-white/40 text-xs leading-relaxed">
+                        Nenhum desses horários se encaixam na sua agenda?<br />
+                        <span className="text-white/60">Troque o dia e encontre novos horários disponíveis</span>
+                      </p>
+
+                      <button
+                        onClick={handleBack}
+                        className="w-full px-4 py-3 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        Trocar data
+                      </button>
+                    </motion.div>
+
+                    {/* Opções de horário */}
                     <motion.div
                       className="grid gap-3"
                       initial="hidden"
@@ -990,7 +1013,8 @@ export default function SolicitarReuniaoPage() {
                       variants={{
                         visible: {
                           transition: {
-                            staggerChildren: 0.08
+                            staggerChildren: 0.08,
+                            delayChildren: 0.2
                           }
                         }
                       }}
@@ -1022,28 +1046,6 @@ export default function SolicitarReuniaoPage() {
                           )}
                         </motion.button>
                       ))}
-                    </motion.div>
-
-                    {/* Botão para trocar data */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.4 }}
-                      className="space-y-4"
-                    >
-                      <button
-                        onClick={handleBack}
-                        className="w-full px-4 py-3 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        Trocar data
-                      </button>
-
-                      {/* Texto informativo */}
-                      <p className="text-center text-white/40 text-xs leading-relaxed">
-                        Nenhum desses horários se encaixam na sua agenda?<br />
-                        <span className="text-white/60">Troque o dia e encontre novos horários disponíveis</span>
-                      </p>
                     </motion.div>
                   </div>
                 )}
