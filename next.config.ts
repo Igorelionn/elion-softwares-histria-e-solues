@@ -66,6 +66,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://vitals.vercel-insights.com",
               "media-src 'self' https://*.blob.vercel-storage.com",
               "frame-src 'self' https://accounts.google.com",
+              "worker-src 'self' blob:",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

@@ -506,28 +506,34 @@ export default function SolicitarReuniaoPage() {
   };
 
   const submitMeeting = async (userIdToUse: string) => {
-    console.log('🚀 [SUBMIT] Iniciando envio da reunião');
+    const timestamp = new Date().toISOString();
+    console.error(`🚀 [${timestamp}] [SUBMIT] Iniciando envio da reunião para user: ${userIdToUse}`);
     setIsSubmitting(true);
     setPendingSubmit(false);
 
     try {
       // Validar dados obrigatórios
+      console.error('🔍 [SUBMIT] Validando dados obrigatórios...');
       if (!answers[8] || !answers[9]) {
         console.error('❌ [SUBMIT] Dados incompletos:', { data: answers[8], horario: answers[9] });
         alert('Por favor, preencha a data e o horário da reunião.');
         setIsSubmitting(false);
         return;
       }
+      console.error('✅ [SUBMIT] Validação OK - Data e horário presentes');
 
       // Formatar data para o formato correto
       const meetingDate = answers[8] as string;
-      console.log('📅 [SUBMIT] Data selecionada:', meetingDate);
+      console.error('📅 [SUBMIT] Data selecionada:', meetingDate);
       const [year, month, day] = meetingDate.split('-').map(Number);
       const formattedDate = new Date(year, month - 1, day).toISOString();
+      console.error('📅 [SUBMIT] Data formatada:', formattedDate);
 
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
-      console.log('🔍 [SUBMIT] Verificando reuniões duplicadas...');
+      console.error('🔍 [SUBMIT] Verificando reuniões duplicadas...');
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+      const checkStart = performance.now();
       const { data: recentMeetings, error: checkError } = await (supabase as any)
         .from('meetings')
         .select('id, email, meeting_date')
@@ -535,19 +541,22 @@ export default function SolicitarReuniaoPage() {
         .eq('email', answers[2] as string)
         .eq('meeting_date', formattedDate)
         .gte('created_at', fiveMinutesAgo);
+      const checkTime = performance.now() - checkStart;
+      console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
 
       if (checkError) {
-        console.warn('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
+        console.error('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
         // Silenciar erro de RLS - é esperado para usuários não autenticados
       } else if (recentMeetings && recentMeetings.length > 0) {
-        console.log('✅ [SUBMIT] Reunião duplicada encontrada, redirecionando...');
+        console.error('✅ [SUBMIT] Reunião duplicada encontrada, redirecionando...');
         setIsSubmitting(false); // IMPORTANTE: Resetar antes de redirecionar
         router.push("/solicitar-reuniao/confirmado");
         return;
       }
+      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada');
 
       // Preparar dados para salvar
-      console.log('📝 [SUBMIT] Preparando dados...');
+      console.error('📝 [SUBMIT] Preparando dados...');
       const meetingData = {
         user_id: userIdToUse,
         full_name: answers[1] as string,
@@ -564,32 +573,41 @@ export default function SolicitarReuniaoPage() {
         status: 'pending',
         created_at: new Date().toISOString()
       };
+      console.error('📝 [SUBMIT] Dados preparados:', JSON.stringify(meetingData, null, 2));
 
-      console.log('💾 [SUBMIT] Salvando no banco de dados...');
+      console.error('💾 [SUBMIT] Salvando no banco de dados...');
       // Salvar no banco de dados com timeout
-      const { error } = await Promise.race([
+      const insertStart = performance.now();
+      const result: any = await Promise.race([
         (supabase as any)
           .from('meetings')
           .insert([meetingData]),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout ao salvar reunião')), 10000)
+          setTimeout(() => reject(new Error('Timeout ao salvar reunião após 10s')), 10000)
         )
       ]);
+      const insertTime = performance.now() - insertStart;
+      console.error(`⏱️ [SUBMIT] Insert levou ${insertTime.toFixed(2)}ms`);
 
-      if (error) {
-        console.error('❌ [SUBMIT] Erro ao salvar reunião:', error);
-        throw error;
+      if (result.error) {
+        console.error('❌ [SUBMIT] Erro ao salvar reunião:', result.error);
+        console.error('❌ [SUBMIT] Detalhes do erro:', JSON.stringify(result.error, null, 2));
+        throw result.error;
       }
 
-      console.log('✅ [SUBMIT] Reunião salva com sucesso!');
+      console.error('✅ [SUBMIT] Reunião salva com sucesso!');
+      console.error('🔄 [SUBMIT] Redirecionando para página de confirmação...');
       // Redirecionar para página de confirmação
       router.push("/solicitar-reuniao/confirmado");
     } catch (error: any) {
       console.error('❌ [SUBMIT] Erro crítico:', error);
+      console.error('❌ [SUBMIT] Stack trace:', error?.stack);
       const errorMessage = error?.message || 'Erro desconhecido';
-      alert(`Erro ao agendar reunião: ${errorMessage}\nPor favor, tente novamente.`);
+      const errorDetails = error?.details || error?.hint || '';
+      alert(`Erro ao agendar reunião: ${errorMessage}\n${errorDetails}\n\nPor favor, tente novamente.`);
     } finally {
-      console.log('🏁 [SUBMIT] Finalizando envio');
+      const finalTimestamp = new Date().toISOString();
+      console.error(`🏁 [${finalTimestamp}] [SUBMIT] Finalizando envio`);
       setIsSubmitting(false);
     }
   };
@@ -605,17 +623,25 @@ export default function SolicitarReuniaoPage() {
       };
 
   const handleSubmit = async () => {
-    console.log('🎯 [HANDLE_SUBMIT] Botão Confirmar clicado');
+    const timestamp = new Date().toISOString();
+    console.error(`🎯 [${timestamp}] [HANDLE_SUBMIT] Botão Confirmar clicado`);
+    console.error('📊 [HANDLE_SUBMIT] Estado atual:', {
+      isSubmitting,
+      userId: userId ? 'presente' : 'ausente',
+      hasAnswers: Object.keys(answers).length,
+      date: answers[8],
+      time: answers[9]
+    });
 
     // Prevenir múltiplos cliques
     if (isSubmitting) {
-      console.warn('⚠️ [HANDLE_SUBMIT] Já está enviando, ignorando...');
+      console.error('⚠️ [HANDLE_SUBMIT] Já está enviando, ignorando...');
       return;
     }
 
     // Verificar se o usuário está logado
     if (!userId) {
-      console.log('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
+      console.error('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
       // Não está logado - abrir dialog de autenticação
       setPendingSubmit(true);
       setAuthDialogTab("signup");
@@ -623,20 +649,31 @@ export default function SolicitarReuniaoPage() {
       return;
     }
 
-    console.log('✅ [HANDLE_SUBMIT] Usuário logado, iniciando submissão');
+    console.error('✅ [HANDLE_SUBMIT] Usuário logado, iniciando submissão');
+    console.error(`👤 [HANDLE_SUBMIT] User ID: ${userId}`);
     // Está logado - submeter diretamente
 
     // Timeout de segurança: Se após 15 segundos ainda estiver enviando, resetar
+    const startTime = performance.now();
     const safetyTimeout = setTimeout(() => {
-      console.error('⏰ [HANDLE_SUBMIT] TIMEOUT DE SEGURANÇA: Resetando isSubmitting');
+      const elapsedTime = performance.now() - startTime;
+      console.error(`⏰ [HANDLE_SUBMIT] TIMEOUT DE SEGURANÇA após ${elapsedTime.toFixed(2)}ms`);
+      console.error('⏰ [HANDLE_SUBMIT] Resetando isSubmitting');
       setIsSubmitting(false);
       alert('A requisição está demorando muito. Por favor, verifique sua conexão e tente novamente.');
     }, 15000);
 
     try {
+      console.error('🔄 [HANDLE_SUBMIT] Chamando submitMeeting...');
       await submitMeeting(userId);
+      const totalTime = performance.now() - startTime;
+      console.error(`⏱️ [HANDLE_SUBMIT] Submissão completa em ${totalTime.toFixed(2)}ms`);
+    } catch (error) {
+      console.error('❌ [HANDLE_SUBMIT] Erro durante submissão:', error);
     } finally {
       clearTimeout(safetyTimeout);
+      const finalTimestamp = new Date().toISOString();
+      console.error(`🏁 [${finalTimestamp}] [HANDLE_SUBMIT] Finalizando`);
     }
   };
 
