@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 interface GlassCalendarInputProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
+  selectedTime?: string | null;
+  onTimeSelect?: (time: string) => void;
   placeholder?: string;
   className?: string;
   variant?: "dark" | "light";
@@ -21,6 +23,8 @@ interface GlassCalendarInputProps {
 export function GlassCalendarInput({
   selectedDate,
   onDateSelect,
+  selectedTime = null,
+  onTimeSelect,
   placeholder = "DD/MM/AAAA",
   className,
   variant = "dark",
@@ -32,13 +36,25 @@ export function GlassCalendarInput({
 
   React.useEffect(() => {
     if (selectedDate) {
-      setInputValue(format(selectedDate, "dd/MM/yyyy"));
+      const dateStr = format(selectedDate, "dd/MM/yyyy");
+      setInputValue(selectedTime ? `${dateStr} às ${selectedTime}` : dateStr);
     }
-  }, [selectedDate]);
+  }, [selectedDate, selectedTime]);
 
   const handleDateSelect = (date: Date) => {
     onDateSelect(date);
-    setIsOpen(false);
+    // Só fecha se não houver seleção de horário ou se já tiver selecionado um horário
+    if (!onTimeSelect || selectedTime) {
+      setIsOpen(false);
+    }
+  };
+
+  const handleTimeSelect = (time: string) => {
+    if (onTimeSelect) {
+      onTimeSelect(time);
+      // Fecha o calendário após selecionar o horário
+      setIsOpen(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,6 +246,8 @@ export function GlassCalendarInput({
               <GlassCalendar
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
+                selectedTime={selectedTime}
+                onTimeSelect={handleTimeSelect}
                 variant={variant}
                 size={size}
               />

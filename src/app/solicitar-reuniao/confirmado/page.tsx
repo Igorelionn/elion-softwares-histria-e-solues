@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { BeamsBackground } from "@/components/ui/beams-background";
 import confetti from "canvas-confetti";
 
 export default function ConfirmadoPage() {
@@ -37,12 +38,10 @@ export default function ConfirmadoPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-      {/* Background gradiente simples (sem BeamsBackground pesado) */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black" />
-
-      {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
-      <motion.div
+    <BeamsBackground intensity="medium" className="bg-black">
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
+        {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
+        <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
@@ -152,6 +151,7 @@ export default function ConfirmadoPage() {
           </Button>
         </motion.div>
       </motion.div>
-    </div>
+      </div>
+    </BeamsBackground>
   );
 }
