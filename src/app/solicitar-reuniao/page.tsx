@@ -480,32 +480,32 @@ export default function SolicitarReuniaoPage() {
   const fetchAvailableTimeSlots = async (dateString: string) => {
     console.error('🕐 [TIME_SLOTS] Buscando horários disponíveis para:', dateString);
     setIsLoadingTimeSlots(true);
-    
+
     const startTime = performance.now();
-    
+
     try {
       // Converter string yyyy-MM-dd para TIMESTAMPTZ
       const [year, month, day] = dateString.split('-').map(Number);
       const selectedDate = new Date(year, month - 1, day);
       const formattedDate = selectedDate.toISOString();
-      
+
       console.error('🕐 [TIME_SLOTS] Data formatada:', formattedDate);
       console.error('🕐 [TIME_SLOTS] Chamando RPC get_available_time_slots...');
-      
+
       // Chamar função com timeout de 5s
       const result = await Promise.race([
         (supabase as any).rpc('get_available_time_slots', {
           p_meeting_date: formattedDate,
           p_all_slots: ["09:00", "11:00", "14:00", "16:00", "18:00"]
         }),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout ao buscar horários após 5s')), 5000)
         )
       ]) as any;
-      
+
       const queryTime = performance.now() - startTime;
       console.error(`⏱️ [TIME_SLOTS] Query levou ${queryTime.toFixed(2)}ms`);
-      
+
       if (result.error) {
         console.error('❌ [TIME_SLOTS] Erro ao buscar horários:', result.error);
         console.error('❌ [TIME_SLOTS] Detalhes:', JSON.stringify(result.error, null, 2));
@@ -513,24 +513,24 @@ export default function SolicitarReuniaoPage() {
         setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
       } else {
         console.error('✅ [TIME_SLOTS] Horários recebidos:', result.data);
-        
+
         if (!result.data || !Array.isArray(result.data)) {
           console.error('❌ [TIME_SLOTS] Dados inválidos recebidos');
           setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
           return;
         }
-        
+
         // Filtrar apenas horários disponíveis
         const available = result.data
           .filter((slot: any) => slot.is_available === true)
           .map((slot: any) => slot.time_slot);
-        
+
         console.error('✅ [TIME_SLOTS] Horários disponíveis:', available);
-        
+
         if (available.length === 0) {
           console.error('⚠️ [TIME_SLOTS] Nenhum horário disponível para esta data!');
         }
-        
+
         // Sempre mostrar pelo menos todos os horários se não conseguir filtrar
         setAvailableTimeSlots(available.length > 0 ? available : ["09:00", "11:00", "14:00", "16:00", "18:00"]);
       }

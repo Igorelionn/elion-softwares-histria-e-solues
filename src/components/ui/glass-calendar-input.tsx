@@ -246,8 +246,6 @@ export function GlassCalendarInput({
               <GlassCalendar
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
-                selectedTime={selectedTime}
-                onTimeSelect={handleTimeSelect}
                 variant={variant}
                 size={size}
               />
