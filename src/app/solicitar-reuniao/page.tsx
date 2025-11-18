@@ -113,74 +113,81 @@ export default function SolicitarReuniaoPage() {
   const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("signup");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const hasCheckedSavedData = useRef(false);
+  const isAdminCache = useRef<boolean | null>(null); // Cache do status de admin
 
+  // Executar verificação inicial apenas uma vez
   useEffect(() => {
     console.log('🚀 Componente montado - iniciando verificação');
     
+    let isMounted = true; // Flag para prevenir updates após unmount
+    
     // TIMEOUT DE SEGURANÇA: Se após 5 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
-      console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 5s');
-      setIsCheckingMeeting(false);
-      setHasExistingMeeting(false);
+      if (isMounted) {
+        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 5s');
+        setIsCheckingMeeting(false);
+        setHasExistingMeeting(false);
+      }
     }, 5000);
     
     // Executar verificação
-    checkUser().finally(() => {
-      // Limpar timeout se a verificação terminar antes
-      clearTimeout(safetyTimeout);
-    });
-    
-    // Verificar se há dados de reunião salvos no localStorage (após Google OAuth)
-    const checkSavedMeetingData = async () => {
-      if (hasCheckedSavedData.current) return;
-      
-      const savedData = localStorage.getItem('pending_meeting_data');
-      if (savedData && userId) {
-        // Marcar como verificado IMEDIATAMENTE
-        hasCheckedSavedData.current = true;
-        
-        // REMOVER DO LOCALSTORAGE IMEDIATAMENTE para evitar reprocessamento
-        localStorage.removeItem('pending_meeting_data');
-        
-        try {
-          const meetingData = JSON.parse(savedData);
-          
-          // Verificar se os dados são válidos e recentes (máximo 10 minutos)
-          const now = Date.now();
-          const savedTime = meetingData.timestamp || 0;
-          const tenMinutes = 10 * 60 * 1000;
-          
-          if (now - savedTime > tenMinutes) {
-                        return;
-          }
-          
-          // Restaurar dados do formulário
-          setAnswers(meetingData.answers);
-          setSelectedCountry(meetingData.selectedCountry);
-          setOtherDescription(meetingData.otherDescription);
-          
-          // Pequeno delay para garantir que os estados foram atualizados
-          setTimeout(async () => {
-            // Submeter reunião automaticamente
-            await submitMeeting(userId);
-          }, 500);
-        } catch (error) {
-          console.error('Erro ao processar reunião salva:', error);
+    const runCheck = async () => {
+      try {
+        await checkUser();
+      } catch (error) {
+        console.error('❌ Erro na verificação inicial:', error);
+        if (isMounted) {
+          setIsCheckingMeeting(false);
         }
+      } finally {
+        clearTimeout(safetyTimeout);
       }
     };
     
-    if (userId && !hasCheckedSavedData.current) {
-      checkSavedMeetingData();
-    }
+    runCheck();
     
-    // Listen for auth changes
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimeout);
+    };
+  }, []); // Executa apenas na montagem
+  
+  // Listener separado para mudanças de autenticação
+  useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event);
+      
       if (event === 'SIGNED_IN' && session?.user) {
         setUserId(session.user.id);
         setIsAuthDialogOpen(false);
+        
+        // Verificar dados salvos após login
+        const savedData = localStorage.getItem('pending_meeting_data');
+        if (savedData && !hasCheckedSavedData.current) {
+          hasCheckedSavedData.current = true;
+          localStorage.removeItem('pending_meeting_data');
+          
+          try {
+            const meetingData = JSON.parse(savedData);
+            const now = Date.now();
+            const savedTime = meetingData.timestamp || 0;
+            const tenMinutes = 10 * 60 * 1000;
+            
+            if (now - savedTime <= tenMinutes) {
+              setAnswers(meetingData.answers);
+              setSelectedCountry(meetingData.selectedCountry);
+              setOtherDescription(meetingData.otherDescription);
+              
+              setTimeout(async () => {
+                await submitMeeting(session.user.id);
+              }, 500);
+            }
+          } catch (error) {
+            console.error('Erro ao processar reunião salva:', error);
+          }
+        }
         
         // Se tem submit pendente, executar agora
         if (pendingSubmit) {
@@ -191,9 +198,8 @@ export default function SolicitarReuniaoPage() {
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(safetyTimeout); // Limpar timeout ao desmontar
     };
-  }, []); // Array vazio = executa apenas uma vez na montagem
+  }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
 
   const checkUser = async () => {
     try {
@@ -224,21 +230,33 @@ export default function SolicitarReuniaoPage() {
     try {
       console.log('🔍 Verificando reuniões existentes para usuário:', userId);
       
-      // Verificar se o usuário é admin
-      const { data: userProfile, error: profileError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .single() as { data: { role: string } | null; error: any };
+      // Verificar cache primeiro
+      let isAdmin = isAdminCache.current;
+      
+      if (isAdmin === null) {
+        console.log('📥 Cache vazio - consultando banco de dados');
+        // Verificar se o usuário é admin
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single() as { data: { role: string } | null; error: any };
 
-      if (profileError) {
-        console.error('⚠️ Erro ao verificar perfil do usuário:', profileError);
-        // Continuar mesmo com erro - assumir que não é admin
-        // Se o erro for de RLS, significa que o usuário não tem permissão
-        // Nesse caso, tratamos como usuário comum (não admin)
+        if (profileError) {
+          console.error('⚠️ Erro ao verificar perfil do usuário:', profileError);
+          // Continuar mesmo com erro - assumir que não é admin
+          isAdmin = false;
+        } else {
+          isAdmin = userProfile?.role === 'admin';
+        }
+        
+        // Armazenar no cache
+        isAdminCache.current = isAdmin;
+        console.log('💾 Cache atualizado - isAdmin:', isAdmin);
+      } else {
+        console.log('⚡ Usando cache - isAdmin:', isAdmin);
       }
-
-      const isAdmin = userProfile?.role === 'admin';
+      
       console.log('👤 Usuário é admin?', isAdmin);
       
       // Se for admin, permitir agendar múltiplas reuniões
