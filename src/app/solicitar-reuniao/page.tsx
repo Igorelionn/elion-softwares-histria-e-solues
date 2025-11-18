@@ -93,7 +93,7 @@ const questions: Question[] = [
   },
   {
     id: 9,
-    question: "Qual horário prefere para a reunião?",
+    question: "Selecione um horário para a reunião",
     type: "time",
     options: [
       "09:00",
@@ -982,46 +982,70 @@ export default function SolicitarReuniaoPage() {
                 )}
 
                 {currentQuestion.type === "time" && (
-                  <motion.div
-                    className="grid gap-3"
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      visible: {
-                        transition: {
-                          staggerChildren: 0.08
-                        }
-                      }
-                    }}
-                  >
-                    {currentQuestion.options?.map((time) => (
-                      <motion.button
-                        key={time}
-                        variants={{
-                          hidden: { opacity: 0, y: 20 },
-                          visible: {
-                            opacity: 1,
-                            y: 0,
-                            transition: {
-                              duration: 0.5,
-                              ease: [0.25, 0.1, 0.25, 1]
-                            }
+                  <div className="space-y-6">
+                    <motion.div
+                      className="grid gap-3"
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        visible: {
+                          transition: {
+                            staggerChildren: 0.08
                           }
-                        }}
-                        onClick={() => handleAnswerChange(time)}
-                        className={`text-left px-6 py-4 rounded-lg border transition-all text-base cursor-pointer flex items-center justify-between ${
-                          answers[currentQuestion.id] === time
-                            ? "bg-white/10 text-white border-white/40"
-                            : "bg-transparent text-white/80 border-white/20 hover:border-white/50 hover:text-white"
-                        }`}
+                        }
+                      }}
+                    >
+                      {currentQuestion.options?.map((time) => (
+                        <motion.button
+                          key={time}
+                          variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: {
+                              opacity: 1,
+                              y: 0,
+                              transition: {
+                                duration: 0.5,
+                                ease: [0.25, 0.1, 0.25, 1]
+                              }
+                            }
+                          }}
+                          onClick={() => handleAnswerChange(time)}
+                          className={`text-left px-6 py-4 rounded-lg border transition-all text-base cursor-pointer flex items-center justify-between ${
+                            answers[currentQuestion.id] === time
+                              ? "bg-white/10 text-white border-white/40"
+                              : "bg-transparent text-white/80 border-white/20 hover:border-white/50 hover:text-white"
+                          }`}
+                        >
+                          <span className="font-medium">{time}</span>
+                          {answers[currentQuestion.id] === time && (
+                            <Check className="h-5 w-5 text-white" />
+                          )}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+
+                    {/* Botão para trocar data */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="space-y-4"
+                    >
+                      <button
+                        onClick={handleBack}
+                        className="w-full px-4 py-3 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <span className="font-medium">{time}</span>
-                        {answers[currentQuestion.id] === time && (
-                          <Check className="h-5 w-5 text-white" />
-                        )}
-                      </motion.button>
-                    ))}
-                  </motion.div>
+                        <Calendar className="h-4 w-4" />
+                        Trocar data
+                      </button>
+
+                      {/* Texto informativo */}
+                      <p className="text-center text-white/40 text-xs leading-relaxed">
+                        Nenhum desses horários se encaixam na sua agenda?<br />
+                        <span className="text-white/60">Troque o dia e encontre novos horários disponíveis</span>
+                      </p>
+                    </motion.div>
+                  </div>
                 )}
 
                 {currentQuestion.type === "select" && (
