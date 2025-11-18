@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { AuthDialog } from "@/components/ui/auth-dialog";
 interface Question {
   id: number;
   question: string;
-  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date";
+  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox" | "date" | "time";
   options?: string[];
   placeholder?: string;
 }
@@ -91,6 +91,18 @@ const questions: Question[] = [
     type: "date",
     placeholder: "Selecione uma data",
   },
+  {
+    id: 9,
+    question: "Qual horário prefere para a reunião?",
+    type: "time",
+    options: [
+      "09:00",
+      "11:00",
+      "14:00",
+      "16:00",
+      "18:00",
+    ],
+  },
 ];
 
 export default function SolicitarReuniaoPage() {
@@ -119,13 +131,13 @@ export default function SolicitarReuniaoPage() {
   useEffect(() => {
     console.log('🚀 Componente montado - iniciando verificação');
     console.log('🗑️ Limpando cache anterior');
-    
+
     // RESETAR CACHE ao montar (importante para múltiplas visitas)
     isAdminCache.current = null;
     hasCheckedSavedData.current = false;
-    
+
     let isMounted = true; // Flag para prevenir updates após unmount
-    
+
     // TIMEOUT DE SEGURANÇA: Se após 3 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
@@ -134,7 +146,7 @@ export default function SolicitarReuniaoPage() {
         setHasExistingMeeting(false);
       }
     }, 3000); // Reduzido de 5s para 3s
-    
+
     // Executar verificação
     const runCheck = async () => {
       try {
@@ -148,41 +160,69 @@ export default function SolicitarReuniaoPage() {
         clearTimeout(safetyTimeout);
       }
     };
-    
+
     runCheck();
-    
+
     return () => {
       isMounted = false;
       clearTimeout(safetyTimeout);
       console.log('🧹 Componente desmontado');
     };
   }, []); // Executa apenas na montagem
-  
-  // Listener separado para mudanças de autenticação (SIMPLES - SEM LÓGICA COMPLEXA)
+
+  // Listener separado para mudanças de autenticação
   useEffect(() => {
-    console.log('🔐 Registrando listener de auth');
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth event:', event, 'User:', session?.user?.email);
-      
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event);
+
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('✅ Usuário autenticado:', session.user.id);
         setUserId(session.user.id);
         setIsAuthDialogOpen(false);
+
+        // Verificar dados salvos após login
+        const savedData = localStorage.getItem('pending_meeting_data');
+        if (savedData && !hasCheckedSavedData.current) {
+          hasCheckedSavedData.current = true;
+          localStorage.removeItem('pending_meeting_data');
+
+          try {
+            const meetingData = JSON.parse(savedData);
+            const now = Date.now();
+            const savedTime = meetingData.timestamp || 0;
+            const tenMinutes = 10 * 60 * 1000;
+
+            if (now - savedTime <= tenMinutes) {
+              setAnswers(meetingData.answers);
+              setSelectedCountry(meetingData.selectedCountry);
+              setOtherDescription(meetingData.otherDescription);
+
+              setTimeout(async () => {
+                await submitMeeting(session.user.id);
+              }, 500);
+            }
+          } catch (error) {
+            console.error('Erro ao processar reunião salva:', error);
+          }
+        }
+
+        // Se tem submit pendente, executar agora
+        if (pendingSubmit) {
+          await submitMeeting(session.user.id);
+        }
       }
     });
 
     return () => {
-      console.log('🔐 Removendo listener de auth');
       subscription.unsubscribe();
     };
-  }, []); // SEM DEPENDÊNCIAS - executar apenas uma vez
+  }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
 
   const checkUser = async () => {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
-      
+
       if (error) {
         console.error('Erro ao verificar sessão:', error);
         setIsCheckingMeeting(false);
@@ -208,14 +248,14 @@ export default function SolicitarReuniaoPage() {
     const startTime = performance.now();
     try {
       console.log('🔍 [START] Verificando reuniões para usuário:', userId);
-      
+
       // Verificar cache primeiro
       let isAdmin = isAdminCache.current;
-      
+
       if (isAdmin === null) {
         console.log('📥 Cache vazio - consultando BD');
         const queryStart = performance.now();
-        
+
         try {
           // Verificar se o usuário é admin com timeout explícito
           const { data: userProfile, error: profileError } = await Promise.race([
@@ -224,7 +264,7 @@ export default function SolicitarReuniaoPage() {
               .select('role')
               .eq('id', userId)
               .single(),
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Query timeout após 2s')), 2000)
             )
           ]) as { data: { role: string } | null; error: any };
@@ -242,16 +282,16 @@ export default function SolicitarReuniaoPage() {
           console.error('❌ TIMEOUT na query users:', timeoutError);
           isAdmin = false;
         }
-        
+
         // Armazenar no cache
         isAdminCache.current = isAdmin;
         console.log('💾 Cache atualizado - isAdmin:', isAdmin);
       } else {
         console.log('⚡ Usando cache - isAdmin:', isAdmin);
       }
-      
+
       console.log('👤 Usuário é admin?', isAdmin);
-      
+
       // Se for admin, permitir agendar múltiplas reuniões
       if (isAdmin) {
         console.log('✅ Admin detectado - permitindo agendamento');
@@ -263,7 +303,7 @@ export default function SolicitarReuniaoPage() {
       // Para usuários comuns, verificar se já tem reunião
       console.log('🔎 Verificando reuniões pendentes/confirmadas...');
       const meetingsQueryStart = performance.now();
-      
+
       let data, error;
       try {
         const result = await Promise.race([
@@ -273,13 +313,13 @@ export default function SolicitarReuniaoPage() {
             .eq('user_id', userId)
             .in('status', ['pending', 'confirmed'])
             .limit(1),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Query meetings timeout após 2s')), 2000)
           )
         ]);
         data = result.data;
         error = result.error;
-        
+
         const meetingsQueryTime = performance.now() - meetingsQueryStart;
         console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
       } catch (timeoutError) {
@@ -401,12 +441,12 @@ export default function SolicitarReuniaoPage() {
       setIsReviewStep(false);
       return;
     }
-    
+
     // Se está voltando manualmente, cancela o modo de edição da revisão
     if (isEditingFromReview) {
       setIsEditingFromReview(false);
     }
-    
+
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
       const previousAnswer = answers[questions[currentStep - 1].id];
@@ -460,7 +500,7 @@ export default function SolicitarReuniaoPage() {
     const newSelected = selectedOptions.includes(option)
       ? selectedOptions.filter((item) => item !== option)
       : [...selectedOptions, option];
-    
+
     setSelectedOptions(newSelected);
     setAnswers({ ...answers, [currentQuestion.id]: newSelected });
   };
@@ -468,7 +508,7 @@ export default function SolicitarReuniaoPage() {
   const submitMeeting = async (userIdToUse: string) => {
     setIsSubmitting(true);
     setPendingSubmit(false);
-    
+
     try {
       // Formatar data para o formato correto
       const meetingDate = answers[8] as string;
@@ -498,13 +538,14 @@ export default function SolicitarReuniaoPage() {
         full_name: answers[1] as string,
         email: answers[2] as string,
         phone: `${selectedCountry.dial_code} ${answers[3] as string}`,
-        project_type: answers[4] === "Outro" 
-          ? `Outro: ${otherDescription[4]}` 
+        project_type: answers[4] === "Outro"
+          ? `Outro: ${otherDescription[4]}`
           : answers[4] as string,
         project_description: answers[5] as string,
         timeline: answers[6] as string,
         budget: answers[7] as string,
         meeting_date: formattedDate,
+        meeting_time: answers[9] as string, // Horário da reunião
         status: 'pending',
         created_at: new Date().toISOString()
       };
@@ -548,7 +589,7 @@ export default function SolicitarReuniaoPage() {
       setIsAuthDialogOpen(true);
       return;
     }
-    
+
     // Está logado - submeter diretamente
     await submitMeeting(userId);
   };
@@ -558,27 +599,27 @@ export default function SolicitarReuniaoPage() {
     if (currentQuestion.type === "checkbox") {
       return selectedOptions.length > 0;
     }
-    
+
     // Validação especial para textarea (mínimo 250 caracteres)
     if (currentQuestion.type === "textarea") {
       return answer && answer.toString().trim().length >= 250;
     }
-    
+
     // Validação especial para "Outro" - precisa ter descrição
     if (currentQuestion.type === "select" && answer === "Outro") {
       const description = otherDescription[currentQuestion.id];
       return description && description.trim().length >= 10;
     }
-    
+
     return answer && answer.toString().trim() !== "";
   };
 
   const formatAnswerForReview = (questionId: number): string => {
     const answer = answers[questionId];
     const question = questions.find(q => q.id === questionId);
-    
+
     if (!answer || !question) return "";
-    
+
     // Formatar data
     if (question.type === "date" && typeof answer === "string") {
       try {
@@ -589,22 +630,22 @@ export default function SolicitarReuniaoPage() {
         return answer as string;
       }
     }
-    
+
     // Formatar telefone
     if (question.type === "phone" && typeof answer === "string") {
       return `${selectedCountry.dial_code} ${answer}`;
     }
-    
+
     // Formatar array (checkbox)
     if (Array.isArray(answer)) {
       return answer.join(", ");
     }
-    
+
     // Formatar "Outro" com descrição
     if (answer === "Outro" && otherDescription[questionId]) {
       return `Outro: ${otherDescription[questionId]}`;
     }
-    
+
     return answer as string;
   };
 
@@ -663,7 +704,7 @@ export default function SolicitarReuniaoPage() {
         redirectTo={`${window.location.origin}/solicitar-reuniao`}
         onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
       />
-      
+
       <div className="min-h-screen bg-black flex flex-col">
         {/* Header com botão voltar */}
         <div className="absolute top-8 left-8 z-50">
@@ -696,7 +737,7 @@ export default function SolicitarReuniaoPage() {
 
       {/* Conteúdo Principal */}
       <div className="flex-1 flex items-center justify-center px-6 pt-24 pb-12">
-        <motion.div 
+        <motion.div
           className="w-full"
           animate={{ maxWidth: isReviewStep ? '80rem' : '36rem' }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -712,7 +753,7 @@ export default function SolicitarReuniaoPage() {
                 className="space-y-6 pt-8"
               >
                 {/* Título da Revisão */}
-                <motion.div 
+                <motion.div
                   className="text-center space-y-2 mb-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -744,14 +785,14 @@ export default function SolicitarReuniaoPage() {
                       const answer = formatAnswerForReview(question.id);
                       // Campos que devem ocupar toda a largura (questão 5 - projeto)
                       const isFullWidth = question.id === 5;
-                      
+
                         return (
                           <motion.div
                             key={question.id}
                             variants={{
                               hidden: { opacity: 0, y: 20 },
-                              visible: { 
-                                opacity: 1, 
+                              visible: {
+                                opacity: 1,
                                 y: 0,
                                 transition: {
                                   duration: 0.5,
@@ -784,7 +825,7 @@ export default function SolicitarReuniaoPage() {
                 </motion.div>
 
                 {/* Botões de Navegação */}
-                <motion.div 
+                <motion.div
                   className="flex gap-3 pt-6 items-center"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -824,7 +865,7 @@ export default function SolicitarReuniaoPage() {
                 className="space-y-6"
               >
                 {/* Pergunta */}
-                <motion.h1 
+                <motion.h1
                   className="text-2xl md:text-3xl font-medium text-white"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -834,7 +875,7 @@ export default function SolicitarReuniaoPage() {
                 </motion.h1>
 
               {/* Campo de Resposta */}
-              <motion.div 
+              <motion.div
                 className="space-y-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -940,9 +981,52 @@ export default function SolicitarReuniaoPage() {
                   />
                 )}
 
+                {currentQuestion.type === "time" && (
+                  <motion.div
+                    className="grid gap-3"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.08
+                        }
+                      }
+                    }}
+                  >
+                    {currentQuestion.options?.map((time) => (
+                      <motion.button
+                        key={time}
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          visible: {
+                            opacity: 1,
+                            y: 0,
+                            transition: {
+                              duration: 0.5,
+                              ease: [0.25, 0.1, 0.25, 1]
+                            }
+                          }
+                        }}
+                        onClick={() => handleAnswerChange(time)}
+                        className={`text-left px-6 py-4 rounded-lg border transition-all text-base cursor-pointer flex items-center justify-between ${
+                          answers[currentQuestion.id] === time
+                            ? "bg-white/10 text-white border-white/40"
+                            : "bg-transparent text-white/80 border-white/20 hover:border-white/50 hover:text-white"
+                        }`}
+                      >
+                        <span className="font-medium">{time}</span>
+                        {answers[currentQuestion.id] === time && (
+                          <Check className="h-5 w-5 text-white" />
+                        )}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+
                 {currentQuestion.type === "select" && (
                   <div className="space-y-4">
-                    <motion.div 
+                    <motion.div
                       className="grid gap-2"
                       initial="hidden"
                       animate="visible"
@@ -959,8 +1043,8 @@ export default function SolicitarReuniaoPage() {
                           key={option}
                           variants={{
                             hidden: { opacity: 0, y: 20 },
-                            visible: { 
-                              opacity: 1, 
+                            visible: {
+                              opacity: 1,
                               y: 0,
                               transition: {
                                 duration: 0.5,
@@ -979,7 +1063,7 @@ export default function SolicitarReuniaoPage() {
                         </motion.button>
                       ))}
                     </motion.div>
-                    
+
                     {/* Campo de descrição para "Outro" */}
                     {answers[currentQuestion.id] === "Outro" && (
                       <motion.div
@@ -994,9 +1078,9 @@ export default function SolicitarReuniaoPage() {
                             placeholder="Descreva seu projeto..."
                             value={otherDescription[currentQuestion.id] || ""}
                             onChange={(e) => {
-                              setOtherDescription({ 
-                                ...otherDescription, 
-                                [currentQuestion.id]: e.target.value 
+                              setOtherDescription({
+                                ...otherDescription,
+                                [currentQuestion.id]: e.target.value
                               });
                               setValidationError("");
                             }}
@@ -1010,7 +1094,7 @@ export default function SolicitarReuniaoPage() {
                         </div>
                       </motion.div>
                     )}
-                    
+
                     {validationError && currentQuestion.id === 4 && (
                       <p className="text-red-400 text-sm">{validationError}</p>
                     )}
@@ -1018,7 +1102,7 @@ export default function SolicitarReuniaoPage() {
                 )}
 
                 {currentQuestion.type === "checkbox" && (
-                  <motion.div 
+                  <motion.div
                     className="grid gap-2"
                     initial="hidden"
                     animate="visible"
@@ -1035,8 +1119,8 @@ export default function SolicitarReuniaoPage() {
                         key={option}
                         variants={{
                           hidden: { opacity: 0, y: 20 },
-                          visible: { 
-                            opacity: 1, 
+                          visible: {
+                            opacity: 1,
                             y: 0,
                             transition: {
                               duration: 0.5,
@@ -1070,7 +1154,7 @@ export default function SolicitarReuniaoPage() {
               </motion.div>
 
               {/* Botões de Navegação */}
-               <motion.div 
+               <motion.div
                  className="space-y-4 pt-12"
                  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
