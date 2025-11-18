@@ -17,48 +17,21 @@ export default function ConfirmadoPage() {
     // Limpar qualquer dado pendente do localStorage
     localStorage.removeItem('pending_meeting_data');
 
-    // Dispara o confetti quando a página carregar - cores prata e branca
+    // Dispara UM ÚNICO confetti quando a página carregar - cores prata e branca
     const timer = setTimeout(() => {
       const colors = ['#C0C0C0', '#FFFFFF', '#E8E8E8', '#D3D3D3', '#F5F5F5']; // Prata e branco
 
-      const defaults = {
-        startVelocity: 30,
-        spread: 360,
-        ticks: 60,
-        zIndex: 99999,
+      // UM ÚNICO efeito de confetti - explosão central
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { x: 0.5, y: 0.6 },
         colors: colors,
-      };
-
-      const randomInRange = (min: number, max: number) =>
-        Math.random() * (max - min) + min;
-
-      // Efeito de fogos de artifício com cores prata e branca
-      const duration = 3 * 1000; // 3 segundos
-      const animationEnd = Date.now() + duration;
-
-      const interval = window.setInterval(() => {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-
-        // Explosão do lado esquerdo
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        });
-
-        // Explosão do lado direito
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        startVelocity: 45,
+        gravity: 1,
+        ticks: 200,
+        zIndex: 99999,
       });
-      }, 250);
     }, 500);
 
     return () => clearTimeout(timer);
