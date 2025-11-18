@@ -532,13 +532,13 @@ export default function SolicitarReuniaoPage() {
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
       console.error('🔍 [SUBMIT] Verificando reuniões duplicadas...');
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
+
       const checkStart = performance.now();
-      
+
       // Timeout agressivo de 3s para verificação de duplicatas (não é crítico)
       let recentMeetings: any[] | null = null;
       let checkError: any = null;
-      
+
       try {
         const result = await Promise.race([
           (supabase as any)
@@ -548,14 +548,14 @@ export default function SolicitarReuniaoPage() {
             .eq('email', answers[2] as string)
             .eq('meeting_date', formattedDate)
             .gte('created_at', fiveMinutesAgo),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Timeout verificação duplicatas após 3s')), 3000)
           )
         ]) as any;
-        
+
         recentMeetings = result.data;
         checkError = result.error;
-        
+
         const checkTime = performance.now() - checkStart;
         console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
       } catch (timeoutError: any) {
@@ -597,18 +597,35 @@ export default function SolicitarReuniaoPage() {
       console.error('📝 [SUBMIT] Dados preparados:', JSON.stringify(meetingData, null, 2));
 
       console.error('💾 [SUBMIT] Salvando no banco de dados...');
-      // Salvar no banco de dados com timeout
+      console.error('💾 [SUBMIT] Dados a inserir:', {
+        user_id: meetingData.user_id,
+        email: meetingData.email,
+        meeting_date: meetingData.meeting_date,
+        meeting_time: meetingData.meeting_time
+      });
+
+      // Salvar no banco de dados com timeout de 20s (aumentado de 10s)
       const insertStart = performance.now();
-      const result: any = await Promise.race([
-        (supabase as any)
-          .from('meetings')
-          .insert([meetingData]),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout ao salvar reunião após 10s')), 10000)
-        )
-      ]);
-      const insertTime = performance.now() - insertStart;
-      console.error(`⏱️ [SUBMIT] Insert levou ${insertTime.toFixed(2)}ms`);
+      let result: any;
+
+      try {
+        result = await Promise.race([
+          (supabase as any)
+            .from('meetings')
+            .insert([meetingData]),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout ao salvar reunião após 20s')), 20000)
+          )
+        ]);
+
+        const insertTime = performance.now() - insertStart;
+        console.error(`⏱️ [SUBMIT] Insert levou ${insertTime.toFixed(2)}ms`);
+      } catch (insertError: any) {
+        const insertTime = performance.now() - insertStart;
+        console.error(`❌ [SUBMIT] TIMEOUT no INSERT após ${insertTime.toFixed(2)}ms`);
+        console.error('❌ [SUBMIT] Detalhes do timeout:', insertError?.message);
+        throw insertError;
+      }
 
       if (result.error) {
         console.error('❌ [SUBMIT] Erro ao salvar reunião:', result.error);
@@ -674,7 +691,8 @@ export default function SolicitarReuniaoPage() {
     console.error(`👤 [HANDLE_SUBMIT] User ID: ${userId}`);
     // Está logado - submeter diretamente
 
-    // Timeout de segurança: Se após 15 segundos ainda estiver enviando, resetar
+    // Timeout de segurança: Se após 30 segundos ainda estiver enviando, resetar
+    // (aumentado de 15s para 30s para acomodar timeout de duplicatas 3s + insert 20s + overhead)
     const startTime = performance.now();
     const safetyTimeout = setTimeout(() => {
       const elapsedTime = performance.now() - startTime;
@@ -682,7 +700,7 @@ export default function SolicitarReuniaoPage() {
       console.error('⏰ [HANDLE_SUBMIT] Resetando isSubmitting');
       setIsSubmitting(false);
       alert('A requisição está demorando muito. Por favor, verifique sua conexão e tente novamente.');
-    }, 15000);
+    }, 30000);
 
     try {
       console.error('🔄 [HANDLE_SUBMIT] Chamando submitMeeting...');
