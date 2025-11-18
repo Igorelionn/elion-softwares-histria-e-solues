@@ -38,8 +38,15 @@ export default function ConfirmadoPage() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-      {/* Background gradiente simples (sem BeamsBackground pesado) */}
+      {/* Background com gradiente animado suave */}
       <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black" />
+      
+      {/* Efeito de luz suave animado - CSS puro, sem JS */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-0 -left-1/4 w-96 h-96 bg-zinc-700/20 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-0 -right-1/4 w-96 h-96 bg-zinc-600/20 rounded-full blur-3xl animate-pulse-slower" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-700/10 rounded-full blur-3xl animate-pulse-slowest" />
+      </div>
 
       {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
       <motion.div
