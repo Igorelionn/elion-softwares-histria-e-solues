@@ -38,14 +38,103 @@ export default function ConfirmadoPage() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-      {/* Background com gradiente animado suave */}
+      {/* Background com efeito sutil animado - OTIMIZADO */}
       <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black" />
       
-      {/* Efeito de luz suave animado - CSS puro, sem JS */}
+      {/* Efeito de movimento sutil com SVG - LEVE */}
       <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 -left-1/4 w-96 h-96 bg-zinc-700/20 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-0 -right-1/4 w-96 h-96 bg-zinc-600/20 rounded-full blur-3xl animate-pulse-slower" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-700/10 rounded-full blur-3xl animate-pulse-slowest" />
+        <svg
+          className="absolute inset-0 w-full h-full"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: '#3f3f46', stopOpacity: 0.3 }}>
+                <animate
+                  attributeName="stop-opacity"
+                  values="0.3;0.5;0.3"
+                  dur="8s"
+                  repeatCount="indefinite"
+                />
+              </stop>
+              <stop offset="50%" style={{ stopColor: '#52525b', stopOpacity: 0.2 }}>
+                <animate
+                  attributeName="stop-opacity"
+                  values="0.2;0.4;0.2"
+                  dur="8s"
+                  repeatCount="indefinite"
+                />
+              </stop>
+              <stop offset="100%" style={{ stopColor: '#18181b', stopOpacity: 0.1 }}>
+                <animate
+                  attributeName="stop-opacity"
+                  values="0.1;0.3;0.1"
+                  dur="8s"
+                  repeatCount="indefinite"
+                />
+              </stop>
+            </linearGradient>
+            
+            <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style={{ stopColor: '#27272a', stopOpacity: 0.2 }}>
+                <animate
+                  attributeName="stop-opacity"
+                  values="0.2;0.4;0.2"
+                  dur="10s"
+                  repeatCount="indefinite"
+                />
+              </stop>
+              <stop offset="100%" style={{ stopColor: '#3f3f46', stopOpacity: 0.1 }}>
+                <animate
+                  attributeName="stop-opacity"
+                  values="0.1;0.3;0.1"
+                  dur="10s"
+                  repeatCount="indefinite"
+                />
+              </stop>
+            </linearGradient>
+          </defs>
+          
+          {/* Círculos grandes com movimento sutil */}
+          <circle cx="20%" cy="30%" r="200" fill="url(#grad1)">
+            <animate
+              attributeName="cx"
+              values="20%;25%;20%"
+              dur="20s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="cy"
+              values="30%;35%;30%"
+              dur="15s"
+              repeatCount="indefinite"
+            />
+          </circle>
+          
+          <circle cx="80%" cy="70%" r="250" fill="url(#grad2)">
+            <animate
+              attributeName="cx"
+              values="80%;75%;80%"
+              dur="18s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="cy"
+              values="70%;65%;70%"
+              dur="22s"
+              repeatCount="indefinite"
+            />
+          </circle>
+          
+          <circle cx="50%" cy="50%" r="180" fill="url(#grad1)" opacity="0.5">
+            <animate
+              attributeName="r"
+              values="180;200;180"
+              dur="12s"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </svg>
       </div>
 
       {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
