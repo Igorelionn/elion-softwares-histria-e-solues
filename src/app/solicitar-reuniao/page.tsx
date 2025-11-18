@@ -532,17 +532,38 @@ export default function SolicitarReuniaoPage() {
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
       console.error('🔍 [SUBMIT] Verificando reuniões duplicadas...');
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
+      
       const checkStart = performance.now();
-      const { data: recentMeetings, error: checkError } = await (supabase as any)
-        .from('meetings')
-        .select('id, email, meeting_date')
-        .eq('user_id', userIdToUse)
-        .eq('email', answers[2] as string)
-        .eq('meeting_date', formattedDate)
-        .gte('created_at', fiveMinutesAgo);
-      const checkTime = performance.now() - checkStart;
-      console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
+      
+      // Timeout agressivo de 3s para verificação de duplicatas (não é crítico)
+      let recentMeetings: any[] | null = null;
+      let checkError: any = null;
+      
+      try {
+        const result = await Promise.race([
+          (supabase as any)
+            .from('meetings')
+            .select('id, email, meeting_date')
+            .eq('user_id', userIdToUse)
+            .eq('email', answers[2] as string)
+            .eq('meeting_date', formattedDate)
+            .gte('created_at', fiveMinutesAgo),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout verificação duplicatas após 3s')), 3000)
+          )
+        ]) as any;
+        
+        recentMeetings = result.data;
+        checkError = result.error;
+        
+        const checkTime = performance.now() - checkStart;
+        console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
+      } catch (timeoutError: any) {
+        const checkTime = performance.now() - checkStart;
+        console.error(`⏰ [SUBMIT] TIMEOUT na verificação de duplicatas após ${checkTime.toFixed(2)}ms`);
+        console.error('⚠️ [SUBMIT] Pulando verificação de duplicatas e continuando...');
+        // Continuar sem verificar duplicatas (não é crítico)
+      }
 
       if (checkError) {
         console.error('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
@@ -553,7 +574,7 @@ export default function SolicitarReuniaoPage() {
         router.push("/solicitar-reuniao/confirmado");
         return;
       }
-      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada');
+      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada (ou timeout - prosseguindo)');
 
       // Preparar dados para salvar
       console.error('📝 [SUBMIT] Preparando dados...');
