@@ -506,16 +506,27 @@ export default function SolicitarReuniaoPage() {
   };
 
   const submitMeeting = async (userIdToUse: string) => {
+    console.log('🚀 [SUBMIT] Iniciando envio da reunião');
     setIsSubmitting(true);
     setPendingSubmit(false);
 
     try {
+      // Validar dados obrigatórios
+      if (!answers[8] || !answers[9]) {
+        console.error('❌ [SUBMIT] Dados incompletos:', { data: answers[8], horario: answers[9] });
+        alert('Por favor, preencha a data e o horário da reunião.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Formatar data para o formato correto
       const meetingDate = answers[8] as string;
+      console.log('📅 [SUBMIT] Data selecionada:', meetingDate);
       const [year, month, day] = meetingDate.split('-').map(Number);
       const formattedDate = new Date(year, month - 1, day).toISOString();
 
       // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
+      console.log('🔍 [SUBMIT] Verificando reuniões duplicadas...');
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: recentMeetings, error: checkError } = await (supabase as any)
         .from('meetings')
@@ -526,13 +537,17 @@ export default function SolicitarReuniaoPage() {
         .gte('created_at', fiveMinutesAgo);
 
       if (checkError) {
+        console.warn('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
         // Silenciar erro de RLS - é esperado para usuários não autenticados
       } else if (recentMeetings && recentMeetings.length > 0) {
-                router.push("/solicitar-reuniao/confirmado");
+        console.log('✅ [SUBMIT] Reunião duplicada encontrada, redirecionando...');
+        setIsSubmitting(false); // IMPORTANTE: Resetar antes de redirecionar
+        router.push("/solicitar-reuniao/confirmado");
         return;
       }
 
       // Preparar dados para salvar
+      console.log('📝 [SUBMIT] Preparando dados...');
       const meetingData = {
         user_id: userIdToUse,
         full_name: answers[1] as string,
@@ -550,22 +565,31 @@ export default function SolicitarReuniaoPage() {
         created_at: new Date().toISOString()
       };
 
-      // Salvar no banco de dados
-      const { error } = await (supabase as any)
-        .from('meetings')
-        .insert([meetingData]);
+      console.log('💾 [SUBMIT] Salvando no banco de dados...');
+      // Salvar no banco de dados com timeout
+      const { error } = await Promise.race([
+        (supabase as any)
+          .from('meetings')
+          .insert([meetingData]),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout ao salvar reunião')), 10000)
+        )
+      ]);
 
       if (error) {
-        console.error('Erro ao salvar reunião:', error);
+        console.error('❌ [SUBMIT] Erro ao salvar reunião:', error);
         throw error;
       }
 
-            // Redirecionar para página de confirmação
+      console.log('✅ [SUBMIT] Reunião salva com sucesso!');
+      // Redirecionar para página de confirmação
       router.push("/solicitar-reuniao/confirmado");
-    } catch (error) {
-      console.error('Erro:', error);
-      alert('Erro ao agendar reunião. Por favor, tente novamente.');
+    } catch (error: any) {
+      console.error('❌ [SUBMIT] Erro crítico:', error);
+      const errorMessage = error?.message || 'Erro desconhecido';
+      alert(`Erro ao agendar reunião: ${errorMessage}\nPor favor, tente novamente.`);
     } finally {
+      console.log('🏁 [SUBMIT] Finalizando envio');
       setIsSubmitting(false);
     }
   };
@@ -581,8 +605,17 @@ export default function SolicitarReuniaoPage() {
       };
 
   const handleSubmit = async () => {
+    console.log('🎯 [HANDLE_SUBMIT] Botão Confirmar clicado');
+
+    // Prevenir múltiplos cliques
+    if (isSubmitting) {
+      console.warn('⚠️ [HANDLE_SUBMIT] Já está enviando, ignorando...');
+      return;
+    }
+
     // Verificar se o usuário está logado
     if (!userId) {
+      console.log('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
       // Não está logado - abrir dialog de autenticação
       setPendingSubmit(true);
       setAuthDialogTab("signup");
@@ -590,8 +623,21 @@ export default function SolicitarReuniaoPage() {
       return;
     }
 
+    console.log('✅ [HANDLE_SUBMIT] Usuário logado, iniciando submissão');
     // Está logado - submeter diretamente
-    await submitMeeting(userId);
+
+    // Timeout de segurança: Se após 15 segundos ainda estiver enviando, resetar
+    const safetyTimeout = setTimeout(() => {
+      console.error('⏰ [HANDLE_SUBMIT] TIMEOUT DE SEGURANÇA: Resetando isSubmitting');
+      setIsSubmitting(false);
+      alert('A requisição está demorando muito. Por favor, verifique sua conexão e tente novamente.');
+    }, 15000);
+
+    try {
+      await submitMeeting(userId);
+    } finally {
+      clearTimeout(safetyTimeout);
+    }
   };
 
   const isAnswered = () => {
@@ -982,8 +1028,7 @@ export default function SolicitarReuniaoPage() {
                 )}
 
                 {currentQuestion.type === "time" && (
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-start">
-                    {/* Opções de horário */}
+                  <div className="space-y-6">
                     <motion.div
                       className="grid gap-3"
                       initial="hidden"
@@ -1025,12 +1070,12 @@ export default function SolicitarReuniaoPage() {
                       ))}
                     </motion.div>
 
-                    {/* Botão trocar data e texto informativo (lado direito) */}
+                    {/* Botão para trocar data */}
                     <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.4 }}
-                      className="space-y-4 lg:w-64 lg:sticky lg:top-4"
+                      className="space-y-4"
                     >
                       <button
                         onClick={handleBack}
@@ -1041,10 +1086,10 @@ export default function SolicitarReuniaoPage() {
                       </button>
 
                       {/* Texto informativo */}
-                      <div className="text-center lg:text-left text-white/40 text-xs leading-relaxed space-y-1">
-                        <p>Nenhum desses horários se encaixam na sua agenda?</p>
-                        <p className="text-white/60">Troque o dia e encontre novos horários disponíveis</p>
-                      </div>
+                      <p className="text-center text-white/40 text-xs leading-relaxed">
+                        Nenhum desses horários se encaixam na sua agenda?<br />
+                        <span className="text-white/60">Troque o dia e encontre novos horários disponíveis</span>
+                      </p>
                     </motion.div>
                   </div>
                 )}
