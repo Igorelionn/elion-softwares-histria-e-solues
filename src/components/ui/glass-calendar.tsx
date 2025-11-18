@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 interface GlassCalendarProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
+  selectedTime?: string | null;
+  onTimeSelect?: (time: string) => void;
   className?: string;
   variant?: "dark" | "light";
   size?: "normal" | "large";
@@ -30,6 +32,8 @@ interface GlassCalendarProps {
 export function GlassCalendar({
   selectedDate,
   onDateSelect,
+  selectedTime = null,
+  onTimeSelect,
   className,
   variant = "dark",
   size = "normal",
@@ -62,6 +66,9 @@ export function GlassCalendar({
   };
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  // Horários disponíveis para agendamento
+  const availableTimes = ["09:00", "11:00", "14:00", "16:00", "18:00"];
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -270,6 +277,46 @@ export function GlassCalendar({
             <span>Hoje</span>
           </div>
         </div>
+
+        {/* Seleção de Horários */}
+        {selectedDate && onTimeSelect && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 sm:mt-5"
+          >
+            <div className={cn(
+              "mb-2 text-center text-xs sm:text-sm font-medium",
+              variant === "dark" ? "text-white/80" : "text-gray-700"
+            )}>
+              Selecione um horário
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {availableTimes.map((time) => (
+                <motion.button
+                  key={time}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onTimeSelect(time)}
+                  className={cn(
+                    "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all duration-200",
+                    "text-xs sm:text-sm",
+                    selectedTime === time
+                      ? variant === "dark"
+                        ? "bg-white text-black shadow-lg shadow-white/20"
+                        : "bg-black text-white shadow-lg shadow-black/20"
+                      : variant === "dark"
+                      ? "bg-white/10 text-white hover:bg-white/20"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                >
+                  {time}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
