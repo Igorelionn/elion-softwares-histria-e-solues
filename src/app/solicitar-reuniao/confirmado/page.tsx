@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { EtheralShadow } from "@/components/ui/etheral-shadow";
 import confetti from "canvas-confetti";
 
 export default function ConfirmadoPage() {
@@ -39,15 +38,8 @@ export default function ConfirmadoPage() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-      {/* Etheral Shadow Background */}
-      <div className="absolute inset-0">
-        <EtheralShadow
-          color="rgba(80, 80, 80, 0.8)"
-          animation={{ scale: 100, speed: 90 }}
-          noise={{ opacity: 0.8, scale: 1.2 }}
-          sizing="fill"
-        />
-      </div>
+      {/* Background gradiente simples (sem BeamsBackground pesado) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black" />
 
       {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
       <motion.div

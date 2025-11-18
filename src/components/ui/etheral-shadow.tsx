@@ -31,7 +31,6 @@ interface ShadowOverlayProps {
     noise?: NoiseConfig;
     style?: CSSProperties;
     className?: string;
-    children?: React.ReactNode;
 }
 
 function mapRange(
@@ -61,8 +60,7 @@ export function EtheralShadow({
     animation,
     noise,
     style,
-    className,
-    children
+    className
 }: ShadowOverlayProps) {
     const id = useInstanceId();
     const animationEnabled = animation && animation.scale > 0;
@@ -171,17 +169,6 @@ export function EtheralShadow({
                 />
             </div>
 
-            {children && (
-                <div
-                    style={{
-                        position: "relative",
-                        zIndex: 10
-                    }}
-                >
-                    {children}
-                </div>
-            )}
-
             {noise && noise.opacity > 0 && (
                 <div
                     style={{
@@ -197,3 +184,4 @@ export function EtheralShadow({
         </div>
     );
 }
+
