@@ -206,6 +206,8 @@ export default function SolicitarReuniaoPage() {
 
   const checkExistingMeeting = async (userId: string) => {
     try {
+      console.log('🔍 Verificando reuniões existentes para usuário:', userId);
+      
       // Verificar se o usuário é admin
       const { data: userProfile, error: profileError } = await supabase
         .from('users')
@@ -214,20 +216,25 @@ export default function SolicitarReuniaoPage() {
         .single() as { data: { role: string } | null; error: any };
 
       if (profileError) {
-        console.error('Erro ao verificar perfil do usuário:', profileError);
+        console.error('⚠️ Erro ao verificar perfil do usuário:', profileError);
         // Continuar mesmo com erro - assumir que não é admin
+        // Se o erro for de RLS, significa que o usuário não tem permissão
+        // Nesse caso, tratamos como usuário comum (não admin)
       }
 
       const isAdmin = userProfile?.role === 'admin';
+      console.log('👤 Usuário é admin?', isAdmin);
       
       // Se for admin, permitir agendar múltiplas reuniões
       if (isAdmin) {
+        console.log('✅ Admin detectado - permitindo agendamento');
         setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
         return;
       }
 
       // Para usuários comuns, verificar se já tem reunião
+      console.log('🔎 Verificando reuniões pendentes/confirmadas...');
       const { data, error } = await (supabase as any)
         .from('meetings')
         .select('id, status')
@@ -236,14 +243,20 @@ export default function SolicitarReuniaoPage() {
         .limit(1);
 
       if (error) {
-        console.error('Erro ao verificar reunião existente:', error);
-        // Mesmo com erro, permitir continuar (usuário pode não ter permissão de leitura)
+        console.error('⚠️ Erro ao verificar reunião existente:', error);
+        // IMPORTANTE: Se houver erro de RLS ou qualquer outro erro,
+        // permitir que o usuário continue e tente agendar.
+        // O erro real será tratado na tentativa de inserção.
+        console.log('⏭️ Permitindo continuar apesar do erro');
         setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
         return;
       }
 
+      console.log('📊 Reuniões encontradas:', data?.length || 0);
+
       if (data && data.length > 0) {
+        console.log('🚫 Usuário já tem reunião agendada');
         setHasExistingMeeting(true);
         // Redirecionar para página de reuniões agendadas após 2 segundos
         setTimeout(() => {
@@ -251,12 +264,16 @@ export default function SolicitarReuniaoPage() {
         }, 2000);
       } else {
         // Não tem reunião - pode agendar
+        console.log('✅ Usuário pode agendar nova reunião');
         setHasExistingMeeting(false);
       }
     } catch (error) {
-      console.error('Erro ao verificar reuniões:', error);
+      console.error('❌ Erro crítico ao verificar reuniões:', error);
+      // Em caso de erro crítico, permitir continuar
+      // O backend validará na hora de inserir
       setHasExistingMeeting(false);
     } finally {
+      console.log('🏁 Finalizando verificação de reuniões');
       setIsCheckingMeeting(false);
     }
   };
