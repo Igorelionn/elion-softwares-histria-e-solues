@@ -982,7 +982,8 @@ export default function SolicitarReuniaoPage() {
                 )}
 
                 {currentQuestion.type === "time" && (
-                  <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-start">
+                    {/* Opções de horário */}
                     <motion.div
                       className="grid gap-3"
                       initial="hidden"
@@ -1024,26 +1025,26 @@ export default function SolicitarReuniaoPage() {
                       ))}
                     </motion.div>
 
-                    {/* Botão para trocar data e texto informativo lado a lado */}
+                    {/* Botão trocar data e texto informativo (lado direito) */}
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: 0.4 }}
-                      className="flex flex-col md:flex-row items-center gap-4 md:gap-6"
+                      className="space-y-4 lg:w-64 lg:sticky lg:top-4"
                     >
                       <button
                         onClick={handleBack}
-                        className="w-full md:w-auto px-6 py-3 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap flex-shrink-0"
+                        className="w-full px-4 py-3 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Calendar className="h-4 w-4" />
                         Trocar data
                       </button>
 
                       {/* Texto informativo */}
-                      <p className="text-center md:text-left text-white/40 text-xs leading-relaxed flex-1">
-                        Nenhum desses horários se encaixam na sua agenda?{" "}
-                        <span className="text-white/60">Troque o dia e encontre novos horários disponíveis</span>
-                      </p>
+                      <div className="text-center lg:text-left text-white/40 text-xs leading-relaxed space-y-1">
+                        <p>Nenhum desses horários se encaixam na sua agenda?</p>
+                        <p className="text-white/60">Troque o dia e encontre novos horários disponíveis</p>
+                      </div>
                     </motion.div>
                   </div>
                 )}
