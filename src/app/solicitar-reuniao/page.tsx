@@ -125,6 +125,10 @@ export default function SolicitarReuniaoPage() {
   const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("signup");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const hasCheckedSavedData = useRef(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([
+    "09:00", "11:00", "14:00", "16:00", "18:00"
+  ]);
+  const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(false);
   const isAdminCache = useRef<boolean | null>(null); // Cache do status de admin
 
   // Executar verificação inicial apenas uma vez
@@ -470,6 +474,54 @@ export default function SolicitarReuniaoPage() {
 
   const capitalizeFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  // Função para buscar horários disponíveis
+  const fetchAvailableTimeSlots = async (dateString: string) => {
+    console.log('🕐 [TIME_SLOTS] Buscando horários disponíveis para:', dateString);
+    setIsLoadingTimeSlots(true);
+
+    try {
+      // Converter string yyyy-MM-dd para TIMESTAMPTZ
+      const [year, month, day] = dateString.split('-').map(Number);
+      const selectedDate = new Date(year, month - 1, day);
+      const formattedDate = selectedDate.toISOString();
+
+      console.log('🕐 [TIME_SLOTS] Data formatada:', formattedDate);
+
+      // Chamar função do banco que retorna horários disponíveis
+      const { data, error } = await (supabase as any)
+        .rpc('get_available_time_slots', {
+          p_meeting_date: formattedDate,
+          p_all_slots: ["09:00", "11:00", "14:00", "16:00", "18:00"]
+        });
+
+      if (error) {
+        console.error('❌ [TIME_SLOTS] Erro ao buscar horários:', error);
+        // Em caso de erro, mostrar todos os horários
+        setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
+      } else {
+        console.log('✅ [TIME_SLOTS] Horários recebidos:', data);
+        // Filtrar apenas horários disponíveis
+        const available = data
+          .filter((slot: any) => slot.is_available)
+          .map((slot: any) => slot.time_slot);
+
+        console.log('✅ [TIME_SLOTS] Horários disponíveis:', available);
+
+        if (available.length === 0) {
+          console.warn('⚠️ [TIME_SLOTS] Nenhum horário disponível para esta data!');
+        }
+
+        setAvailableTimeSlots(available.length > 0 ? available : ["09:00", "11:00", "14:00", "16:00", "18:00"]);
+      }
+    } catch (error) {
+      console.error('❌ [TIME_SLOTS] Erro crítico:', error);
+      // Em caso de erro, mostrar todos os horários
+      setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
+    } finally {
+      setIsLoadingTimeSlots(false);
+    }
   };
 
   const handleAnswerChange = (value: string) => {
@@ -1097,7 +1149,12 @@ export default function SolicitarReuniaoPage() {
                           })()
                         : null
                     }
-                    onDateSelect={(date) => handleAnswerChange(format(date, "yyyy-MM-dd"))}
+                    onDateSelect={(date) => {
+                      const formatted = format(date, "yyyy-MM-dd");
+                      handleAnswerChange(formatted);
+                      // Buscar horários disponíveis para a data selecionada
+                      fetchAvailableTimeSlots(formatted);
+                    }}
                     placeholder="DD/MM/AAAA"
                     size="large"
                   />
@@ -1105,6 +1162,25 @@ export default function SolicitarReuniaoPage() {
 
                 {currentQuestion.type === "time" && (
                   <div className="space-y-6">
+                    {isLoadingTimeSlots ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                        <span className="ml-3 text-white/70">Verificando disponibilidade...</span>
+                      </div>
+                    ) : availableTimeSlots.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-white/70 mb-4">
+                          Não há horários disponíveis para esta data.
+                        </p>
+                        <button
+                          onClick={handleBack}
+                          className="px-4 py-2 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm flex items-center justify-center gap-2 mx-auto cursor-pointer"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          Escolher outra data
+                        </button>
+                      </div>
+                    ) : (
                     <motion.div
                       className="grid gap-3"
                       initial="hidden"
@@ -1117,7 +1193,7 @@ export default function SolicitarReuniaoPage() {
                         }
                       }}
                     >
-                      {currentQuestion.options?.map((time) => (
+                      {availableTimeSlots.map((time) => (
                         <motion.button
                           key={time}
                           variants={{
@@ -1145,6 +1221,7 @@ export default function SolicitarReuniaoPage() {
                         </motion.button>
                       ))}
                     </motion.div>
+                    )}
 
                     {/* Botão para trocar data */}
                     <motion.div
