@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -158,54 +158,26 @@ export default function SolicitarReuniaoPage() {
     };
   }, []); // Executa apenas na montagem
   
-  // Listener separado para mudanças de autenticação
+  // Listener separado para mudanças de autenticação (SIMPLES - SEM LÓGICA COMPLEXA)
   useEffect(() => {
+    console.log('🔐 Registrando listener de auth');
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 Auth event:', event, 'User:', session?.user?.email);
       
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('✅ Usuário autenticado:', session.user.id);
         setUserId(session.user.id);
         setIsAuthDialogOpen(false);
-        
-        // Verificar dados salvos após login
-        const savedData = localStorage.getItem('pending_meeting_data');
-        if (savedData && !hasCheckedSavedData.current) {
-          hasCheckedSavedData.current = true;
-          localStorage.removeItem('pending_meeting_data');
-          
-          try {
-            const meetingData = JSON.parse(savedData);
-            const now = Date.now();
-            const savedTime = meetingData.timestamp || 0;
-            const tenMinutes = 10 * 60 * 1000;
-            
-            if (now - savedTime <= tenMinutes) {
-              setAnswers(meetingData.answers);
-              setSelectedCountry(meetingData.selectedCountry);
-              setOtherDescription(meetingData.otherDescription);
-              
-              setTimeout(async () => {
-                await submitMeeting(session.user.id);
-              }, 500);
-            }
-          } catch (error) {
-            console.error('Erro ao processar reunião salva:', error);
-          }
-        }
-        
-        // Se tem submit pendente, executar agora
-        if (pendingSubmit) {
-          await submitMeeting(session.user.id);
-        }
       }
     });
 
     return () => {
+      console.log('🔐 Removendo listener de auth');
       subscription.unsubscribe();
     };
-  }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
+  }, []); // SEM DEPENDÊNCIAS - executar apenas uma vez
 
   const checkUser = async () => {
     try {
