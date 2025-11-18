@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { BeamsBackground } from "@/components/ui/beams-background";
+import { EtheralShadow } from "@/components/ui/etheral-shadow";
 import confetti from "canvas-confetti";
 
 export default function ConfirmadoPage() {
@@ -38,10 +38,19 @@ export default function ConfirmadoPage() {
   }, []);
 
   return (
-    <BeamsBackground intensity="medium" className="bg-black">
-      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-        {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
-        <motion.div
+    <div className="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
+      {/* Etheral Shadow Background */}
+      <div className="absolute inset-0">
+        <EtheralShadow
+          color="rgba(80, 80, 80, 0.8)"
+          animation={{ scale: 100, speed: 90 }}
+          noise={{ opacity: 0.8, scale: 1.2 }}
+          sizing="fill"
+        />
+      </div>
+
+      {/* Ícone de Verificado - Posição Fixa no Topo - COM ANIMAÇÕES ORIGINAIS */}
+      <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
@@ -151,7 +160,6 @@ export default function ConfirmadoPage() {
           </Button>
         </motion.div>
       </motion.div>
-      </div>
-    </BeamsBackground>
+    </div>
   );
 }

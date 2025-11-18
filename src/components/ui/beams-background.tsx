@@ -47,7 +47,7 @@ export function BeamsBackground({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const beamsRef = useRef<Beam[]>([]);
     const animationFrameRef = useRef<number>(0);
-    const MINIMUM_BEAMS = 8; // Reduzido de 20 para 8 para melhor performance
+    const MINIMUM_BEAMS = 20;
 
     const opacityMap = {
         subtle: 0.7,
@@ -70,7 +70,7 @@ export function BeamsBackground({
             canvas.style.height = `${window.innerHeight}px`;
             ctx.scale(dpr, dpr);
 
-            const totalBeams = MINIMUM_BEAMS; // Sem multiplicador para manter leve
+            const totalBeams = MINIMUM_BEAMS * 1.5;
             beamsRef.current = Array.from({ length: totalBeams }, () =>
                 createBeam(canvas.width, canvas.height)
             );
@@ -136,7 +136,7 @@ export function BeamsBackground({
             if (!canvas || !ctx) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.filter = "blur(20px)"; // Reduzido de 35px para 20px para melhor performance
+            ctx.filter = "blur(35px)";
 
             const totalBeams = beamsRef.current.length;
             beamsRef.current.forEach((beam, index) => {
@@ -173,7 +173,7 @@ export function BeamsBackground({
             <canvas
                 ref={canvasRef}
                 className="absolute inset-0"
-                style={{ filter: "blur(8px)" }}
+                style={{ filter: "blur(15px)" }}
             />
 
             <motion.div
@@ -187,7 +187,7 @@ export function BeamsBackground({
                     repeat: Number.POSITIVE_INFINITY,
                 }}
                 style={{
-                    backdropFilter: "blur(20px)", // Reduzido de 50px para 20px
+                    backdropFilter: "blur(50px)",
                 }}
             />
 
