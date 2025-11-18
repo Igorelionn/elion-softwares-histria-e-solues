@@ -215,13 +215,14 @@ export default function SolicitarReuniaoPage() {
 
       if (profileError) {
         console.error('Erro ao verificar perfil do usuário:', profileError);
+        // Continuar mesmo com erro - assumir que não é admin
       }
 
       const isAdmin = userProfile?.role === 'admin';
       
       // Se for admin, permitir agendar múltiplas reuniões
       if (isAdmin) {
-                setHasExistingMeeting(false);
+        setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
         return;
       }
@@ -236,6 +237,8 @@ export default function SolicitarReuniaoPage() {
 
       if (error) {
         console.error('Erro ao verificar reunião existente:', error);
+        // Mesmo com erro, permitir continuar (usuário pode não ter permissão de leitura)
+        setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
         return;
       }
@@ -252,6 +255,7 @@ export default function SolicitarReuniaoPage() {
       }
     } catch (error) {
       console.error('Erro ao verificar reuniões:', error);
+      setHasExistingMeeting(false);
     } finally {
       setIsCheckingMeeting(false);
     }
