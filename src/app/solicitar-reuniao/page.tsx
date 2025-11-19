@@ -149,7 +149,7 @@ export default function SolicitarReuniaoPage() {
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 10000); // Aumentado para 10s (queries diretas são rápidas, mas fallback necessário)
+    }, 10000); // Timeout de segurança como fallback extremo
 
     // Executar verificação
     const runCheck = async () => {
@@ -260,7 +260,7 @@ export default function SolicitarReuniaoPage() {
         console.log('📥 Cache vazio - consultando BD');
         const queryStart = performance.now();
 
-        // Query direta sem timeout artificial
+        // Query direta sem timeout artificial (Supabase gerencia)
         const { data: userProfile, error: profileError } = await (supabase as any)
           .from('users')
           .select('role')
@@ -298,7 +298,7 @@ export default function SolicitarReuniaoPage() {
       console.log('🔎 Verificando reuniões pendentes/confirmadas...');
       const meetingsQueryStart = performance.now();
 
-      // Query direta sem timeout artificial
+      // Query direta sem timeout artificial (Supabase gerencia)
       const { data, error } = await (supabase as any)
         .from('meetings')
         .select('id, status')
