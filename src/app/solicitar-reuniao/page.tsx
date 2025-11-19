@@ -142,14 +142,14 @@ export default function SolicitarReuniaoPage() {
 
     let isMounted = true; // Flag para prevenir updates após unmount
 
-    // TIMEOUT DE SEGURANÇA: Se após 3 segundos ainda estiver carregando, forçar parada
+    // TIMEOUT DE SEGURANÇA: Se após 10 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 3s');
+        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 10s');
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 3000); // Reduzido de 5s para 3s
+    }, 10000); // Aumentado para 10s (queries diretas são rápidas, mas fallback necessário)
 
     // Executar verificação
     const runCheck = async () => {
@@ -260,31 +260,21 @@ export default function SolicitarReuniaoPage() {
         console.log('📥 Cache vazio - consultando BD');
         const queryStart = performance.now();
 
-        try {
-          // Verificar se o usuário é admin com timeout explícito
-          const { data: userProfile, error: profileError } = await Promise.race([
-            supabase
-              .from('users')
-              .select('role')
-              .eq('id', userId)
-              .single(),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Query timeout após 2s')), 2000)
-            )
-          ]) as { data: { role: string } | null; error: any };
+        // Query direta sem timeout artificial
+        const { data: userProfile, error: profileError } = await (supabase as any)
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
 
-          const queryTime = performance.now() - queryStart;
-          console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+        const queryTime = performance.now() - queryStart;
+        console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
 
-          if (profileError) {
-            console.error('⚠️ Erro ao verificar perfil:', profileError);
-            isAdmin = false;
-          } else {
-            isAdmin = userProfile?.role === 'admin';
-          }
-        } catch (timeoutError) {
-          console.error('❌ TIMEOUT na query users:', timeoutError);
+        if (profileError) {
+          console.error('⚠️ Erro ao verificar perfil:', profileError);
           isAdmin = false;
+        } else {
+          isAdmin = userProfile?.role === 'admin';
         }
 
         // Armazenar no cache
@@ -308,30 +298,16 @@ export default function SolicitarReuniaoPage() {
       console.log('🔎 Verificando reuniões pendentes/confirmadas...');
       const meetingsQueryStart = performance.now();
 
-      let data, error;
-      try {
-        const result = await Promise.race([
-          (supabase as any)
-            .from('meetings')
-            .select('id, status')
-            .eq('user_id', userId)
-            .in('status', ['pending', 'confirmed'])
-            .limit(1),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Query meetings timeout após 2s')), 2000)
-          )
-        ]);
-        data = result.data;
-        error = result.error;
+      // Query direta sem timeout artificial
+      const { data, error } = await (supabase as any)
+        .from('meetings')
+        .select('id, status')
+        .eq('user_id', userId)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1);
 
-        const meetingsQueryTime = performance.now() - meetingsQueryStart;
-        console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
-      } catch (timeoutError) {
-        console.error('❌ TIMEOUT na query meetings:', timeoutError);
-        // Em caso de timeout, assumir que não há reuniões e permitir continuar
-        data = null;
-        error = null;
-      }
+      const meetingsQueryTime = performance.now() - meetingsQueryStart;
+      console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
 
       if (error) {
         console.error('⚠️ Erro ao verificar reunião existente:', error);
@@ -514,11 +490,11 @@ export default function SolicitarReuniaoPage() {
 
       // Todos os horários possíveis
       const allSlots = ["09:00", "11:00", "14:00", "16:00", "18:00"];
-      
+
       // Extrair horários ocupados
       const occupied = occupiedSlots?.map((m: any) => m.meeting_time) || [];
       console.error('🔒 [TIME_SLOTS] Horários ocupados:', occupied);
-      
+
       // Filtrar horários disponíveis
       const available = allSlots.filter(slot => !occupied.includes(slot));
       console.error('✅ [TIME_SLOTS] Horários disponíveis:', available);
