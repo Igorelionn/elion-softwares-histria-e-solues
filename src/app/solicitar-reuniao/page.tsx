@@ -490,50 +490,44 @@ export default function SolicitarReuniaoPage() {
       const formattedDate = selectedDate.toISOString();
 
       console.error('🕐 [TIME_SLOTS] Data formatada:', formattedDate);
-      console.error('🕐 [TIME_SLOTS] Chamando RPC get_available_time_slots...');
+      console.error('🕐 [TIME_SLOTS] Buscando reuniões ocupadas via query direta...');
 
-      // Chamar função com timeout de 5s
-      const result = await Promise.race([
-        (supabase as any).rpc('get_available_time_slots', {
-          p_meeting_date: formattedDate,
-          p_all_slots: ["09:00", "11:00", "14:00", "16:00", "18:00"]
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout ao buscar horários após 5s')), 5000)
-        )
-      ]) as any;
+      // Query direta na tabela meetings (mais estável que RPC)
+      const { data: occupiedSlots, error } = await (supabase as any)
+        .from('meetings')
+        .select('meeting_time')
+        .eq('meeting_date', formattedDate)
+        .in('status', ['pending', 'confirmed']);
 
       const queryTime = performance.now() - startTime;
       console.error(`⏱️ [TIME_SLOTS] Query levou ${queryTime.toFixed(2)}ms`);
 
-      if (result.error) {
-        console.error('❌ [TIME_SLOTS] Erro ao buscar horários:', result.error);
-        console.error('❌ [TIME_SLOTS] Detalhes:', JSON.stringify(result.error, null, 2));
+      if (error) {
+        console.error('❌ [TIME_SLOTS] Erro ao buscar horários:', error);
+        console.error('❌ [TIME_SLOTS] Detalhes:', JSON.stringify(error, null, 2));
         // Em caso de erro, mostrar todos os horários
         setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
-      } else {
-        console.error('✅ [TIME_SLOTS] Horários recebidos:', result.data);
-
-        if (!result.data || !Array.isArray(result.data)) {
-          console.error('❌ [TIME_SLOTS] Dados inválidos recebidos');
-          setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
-          return;
-        }
-
-        // Filtrar apenas horários disponíveis
-        const available = result.data
-          .filter((slot: any) => slot.is_available === true)
-          .map((slot: any) => slot.time_slot);
-
-        console.error('✅ [TIME_SLOTS] Horários disponíveis:', available);
-
-        if (available.length === 0) {
-          console.error('⚠️ [TIME_SLOTS] Nenhum horário disponível para esta data!');
-        }
-
-        // Sempre mostrar pelo menos todos os horários se não conseguir filtrar
-        setAvailableTimeSlots(available.length > 0 ? available : ["09:00", "11:00", "14:00", "16:00", "18:00"]);
+        return;
       }
+
+      console.error('✅ [TIME_SLOTS] Horários ocupados recebidos:', occupiedSlots);
+
+      // Todos os horários possíveis
+      const allSlots = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+      
+      // Extrair horários ocupados
+      const occupied = occupiedSlots?.map((m: any) => m.meeting_time) || [];
+      console.error('🔒 [TIME_SLOTS] Horários ocupados:', occupied);
+      
+      // Filtrar horários disponíveis
+      const available = allSlots.filter(slot => !occupied.includes(slot));
+      console.error('✅ [TIME_SLOTS] Horários disponíveis:', available);
+
+      if (available.length === 0) {
+        console.error('⚠️ [TIME_SLOTS] Nenhum horário disponível para esta data!');
+      }
+
+      setAvailableTimeSlots(available);
     } catch (error: any) {
       const queryTime = performance.now() - startTime;
       console.error(`❌ [TIME_SLOTS] Erro após ${queryTime.toFixed(2)}ms:`, error);
@@ -682,7 +676,7 @@ export default function SolicitarReuniaoPage() {
 
       // Salvar no banco de dados SEM timeout artificial (deixar Supabase gerenciar)
       const insertStart = performance.now();
-      
+
       const result = await (supabase as any)
         .from('meetings')
         .insert([meetingData]);
@@ -694,7 +688,7 @@ export default function SolicitarReuniaoPage() {
         console.error('❌ [SUBMIT] Erro ao salvar reunião:', result.error);
         console.error('❌ [SUBMIT] Code:', result.error.code);
         console.error('❌ [SUBMIT] Detalhes do erro:', JSON.stringify(result.error, null, 2));
-        
+
         // Se for erro de unicidade (horário já ocupado), mostrar mensagem específica
         if (result.error.code === '23505' || result.error.message?.includes('duplicate') || result.error.message?.includes('idx_meetings_date_time_active')) {
           console.error('⚠️ [SUBMIT] Horário já ocupado por outro usuário!');
@@ -704,7 +698,7 @@ export default function SolicitarReuniaoPage() {
           setCurrentStep(questions.findIndex(q => q.type === 'time'));
           return;
         }
-        
+
         throw result.error;
       }
 
