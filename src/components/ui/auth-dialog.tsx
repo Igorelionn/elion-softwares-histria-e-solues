@@ -336,7 +336,7 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-[320px] sm:max-w-[420px] max-h-[88vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-[320px] sm:max-w-[500px] md:max-w-[550px] max-h-[88vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}

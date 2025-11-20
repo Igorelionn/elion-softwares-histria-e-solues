@@ -122,7 +122,7 @@ export default function SolicitarReuniaoPage() {
   const [hasExistingMeeting, setHasExistingMeeting] = useState(false);
   const [isCheckingMeeting, setIsCheckingMeeting] = useState(true);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-  const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("signup");
+  const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("login");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const hasCheckedSavedData = useRef(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([
@@ -759,7 +759,7 @@ export default function SolicitarReuniaoPage() {
       console.error('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
       // Não está logado - abrir dialog de autenticação
       setPendingSubmit(true);
-      setAuthDialogTab("signup");
+      setAuthDialogTab("login");
       setIsAuthDialogOpen(true);
       return;
     }
