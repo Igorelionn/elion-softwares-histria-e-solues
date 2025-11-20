@@ -363,6 +363,8 @@ export default function SolicitarReuniaoPage() {
         setTimeout(() => {
           router.push('/reunioes-agendadas');
         }, 2000);
+        // Lançar erro para interromper o fluxo de autenticação
+        throw new Error('USER_HAS_MEETING');
       } else {
         // Não tem reunião - pode agendar
         console.log('✅ Usuário pode agendar nova reunião');
@@ -378,6 +380,45 @@ export default function SolicitarReuniaoPage() {
       console.log(`⏱️ [END] Verificação total em ${totalTime.toFixed(2)}ms`);
       console.log('🏁 Finalizando verificação de reuniões');
       setIsCheckingMeeting(false);
+    }
+  };
+
+  // Callback executado após login/cadastro bem-sucedido
+  const handleAuthSuccess = async (userId: string) => {
+    console.log('🔐 [AUTH_SUCCESS] Usuário autenticado:', userId);
+
+    try {
+      // Verificar se usuário pode agendar reunião
+      await checkExistingMeeting(userId);
+
+      // Se chegou aqui sem redirecionar, significa que pode continuar
+      console.log('✅ [AUTH_SUCCESS] Usuário pode continuar no formulário');
+
+      // Restaurar dados salvos se houver
+      const savedData = localStorage.getItem('pending_meeting_data');
+      if (savedData && !hasCheckedSavedData.current) {
+        hasCheckedSavedData.current = true;
+        localStorage.removeItem('pending_meeting_data');
+
+        try {
+          const meetingData = JSON.parse(savedData);
+          const now = Date.now();
+          const savedAt = meetingData.timestamp || 0;
+          const hoursPassed = (now - savedAt) / (1000 * 60 * 60);
+
+          if (hoursPassed < 24) {
+            console.log('📦 Restaurando dados salvos do formulário');
+            setAnswers(meetingData.answers || {});
+            setCurrentStep(meetingData.currentStep || 0);
+          }
+        } catch (e) {
+          console.error('Erro ao restaurar dados:', e);
+        }
+      }
+    } catch (error) {
+      console.error('❌ [AUTH_SUCCESS] Erro na verificação:', error);
+      // Se houver erro, o checkExistingMeeting já lidou com o redirecionamento
+      throw error; // Propagar para o AuthDialog não fechar
     }
   };
 
@@ -902,6 +943,7 @@ export default function SolicitarReuniaoPage() {
         preventRedirect={true}
         redirectTo={`${window.location.origin}/solicitar-reuniao`}
         onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
+        onAuthSuccess={handleAuthSuccess}
       />
 
       <div className="min-h-screen bg-black flex flex-col">

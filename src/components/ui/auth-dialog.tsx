@@ -17,6 +17,7 @@ interface AuthDialogProps {
   preventRedirect?: boolean
   redirectTo?: string
   onBeforeGoogleLogin?: () => void
+  onAuthSuccess?: (userId: string) => Promise<void>
 }
 
 export function AuthDialog({
@@ -25,7 +26,8 @@ export function AuthDialog({
   defaultTab = "login",
   preventRedirect = false,
   redirectTo,
-  onBeforeGoogleLogin
+  onBeforeGoogleLogin,
+  onAuthSuccess
 }: AuthDialogProps) {
   const [activeTab, setActiveTab] = useState<"login" | "signup" | "reset">("login")
   const [showPassword, setShowPassword] = useState(false)
@@ -159,6 +161,18 @@ export function AuthDialog({
 
       setSuccess("Login realizado com sucesso!")
 
+      // Se há callback de sucesso, executá-lo
+      if (onAuthSuccess && data.user) {
+        try {
+          await onAuthSuccess(data.user.id)
+        } catch (callbackError: any) {
+          console.error('Erro no callback onAuthSuccess:', callbackError)
+          // Se o callback falhar (ex: usuário já tem reunião), não fechar o dialog
+          // O callback deve lidar com o redirecionamento
+          return
+        }
+      }
+
       if (!preventRedirect) {
         setTimeout(() => {
           handleClose()
@@ -235,11 +249,28 @@ export function AuthDialog({
       setSignupPassword("")
       setSignupConfirmPassword("")
 
+      // Se há callback de sucesso e usuário está confirmado, executá-lo
+      if (onAuthSuccess && authData.user && !needsEmailConfirmation) {
+        try {
+          await onAuthSuccess(authData.user.id)
+        } catch (callbackError: any) {
+          console.error('Erro no callback onAuthSuccess:', callbackError)
+          // Se o callback falhar (ex: usuário já tem reunião), não fechar o dialog
+          return
+        }
+      }
+
       if (!preventRedirect) {
-        setTimeout(() => {
-          setActiveTab("login")
-          setSuccess("")
-        }, 2000)
+        if (needsEmailConfirmation) {
+          setTimeout(() => {
+            setActiveTab("login")
+            setSuccess("")
+          }, 2000)
+        } else {
+          setTimeout(() => {
+            handleClose()
+          }, 1500)
+        }
       } else {
         // Com preventRedirect, fecha mais rápido pois o pai vai lidar
         setTimeout(() => {
