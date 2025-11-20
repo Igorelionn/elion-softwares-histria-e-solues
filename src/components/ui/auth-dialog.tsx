@@ -27,7 +27,7 @@ export function AuthDialog({
   redirectTo,
   onBeforeGoogleLogin
 }: AuthDialogProps) {
-  const [activeTab, setActiveTab] = useState<"login" | "signup" | "reset">(defaultTab)
+  const [activeTab, setActiveTab] = useState<"login" | "signup" | "reset">("login")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -46,10 +46,12 @@ export function AuthDialog({
   // Reset password form state
   const [resetEmail, setResetEmail] = useState("")
 
-  // Update tab when defaultTab changes
-  useState(() => {
-    setActiveTab(defaultTab)
-  })
+  // Update tab when defaultTab or isOpen changes
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultTab)
+    }
+  }, [defaultTab, isOpen])
 
   // Prevent body scroll when dialog is open
   useEffect(() => {
@@ -334,7 +336,7 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-[340px] sm:max-w-md max-h-[90vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-[320px] sm:max-w-[420px] max-h-[88vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -348,26 +350,34 @@ export function AuthDialog({
               </button>
 
               {/* Content */}
-              <div className="p-6 sm:p-8 max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="text-center mb-6">
-                  <div className="flex justify-center mb-3">
+              <div className="p-4 sm:p-5 max-h-[88vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="text-center mb-3">
+                  <div className="flex justify-center mb-2">
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
-                      width={120}
-                      height={37}
-                      className="h-7 w-auto"
+                      width={140}
+                      height={43}
+                      className="h-5 sm:h-6 w-auto"
                       priority
                     />
                   </div>
                   {activeTab !== "reset" && (
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-600 text-xs">
                       Entre ou crie sua conta
                     </p>
                   )}
                 </div>
 
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full" defaultValue="login">
+                  {/* Abas de navegação */}
+                  {activeTab !== "reset" && (
+                    <TabsList className="grid w-full grid-cols-2 mb-3">
+                      <TabsTrigger value="login" className="text-xs sm:text-sm">Entrar</TabsTrigger>
+                      <TabsTrigger value="signup" className="text-xs sm:text-sm">Cadastrar</TabsTrigger>
+                    </TabsList>
+                  )}
+
                   {/* Mensagens de erro/sucesso */}
                   <AnimatePresence mode="wait">
                     {error && (
@@ -393,17 +403,17 @@ export function AuthDialog({
                   </AnimatePresence>
 
                   {/* Login Tab */}
-                  <TabsContent value="login" className="mt-4 space-y-4">
+                  <TabsContent value="login" className="mt-2 space-y-2">
                     <motion.form
                       onSubmit={handleLogin}
-                      className="space-y-4"
+                      className="space-y-2"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
                     >
-                      <div className="space-y-2">
-                        <Label htmlFor="login-email" className="text-gray-600 text-sm font-normal">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="login-email" className="text-gray-700 text-xs sm:text-sm">
                           Email
                         </Label>
                         <div className="relative">
@@ -421,8 +431,8 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="login-password" className="text-gray-600 text-sm font-normal">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="login-password" className="text-gray-700 text-xs sm:text-sm">
                           Senha
                         </Label>
                         <div className="relative">
@@ -480,7 +490,7 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end pt-1">
                         <button
                           type="button"
                           onClick={() => {
@@ -488,7 +498,7 @@ export function AuthDialog({
                             setError("")
                             setSuccess("")
                           }}
-                          className="text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+                          className="text-xs sm:text-sm text-blue-800 hover:text-blue-900 transition-colors cursor-pointer"
                         >
                           Esqueceu sua senha?
                         </button>
@@ -496,7 +506,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-900 h-11 cursor-pointer text-sm font-medium transition-colors"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -546,31 +556,20 @@ export function AuthDialog({
                       </svg>
                       Entrar com Google
                     </Button>
-
-                    <p className="text-center text-sm text-gray-600 mt-6">
-                      Não tem uma conta?{" "}
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab("signup")}
-                        className="text-gray-900 font-medium hover:text-black cursor-pointer transition-colors"
-                      >
-                        Cadastre-se
-                      </button>
-                    </p>
                   </TabsContent>
 
                   {/* Signup Tab */}
-                  <TabsContent value="signup" className="mt-4 space-y-4">
+                  <TabsContent value="signup" className="mt-2 space-y-2">
                     <motion.form
                       onSubmit={handleSignup}
-                      className="space-y-4"
+                      className="space-y-2"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
                     >
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-name" className="text-gray-600 text-sm font-normal">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="signup-name" className="text-gray-700 text-xs sm:text-sm">
                           Nome completo
                         </Label>
                         <div className="relative">
@@ -588,8 +587,8 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-email" className="text-gray-600 text-sm font-normal">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="signup-email" className="text-gray-700 text-xs sm:text-sm">
                           Email
                         </Label>
                         <div className="relative">
@@ -607,8 +606,8 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-password" className="text-gray-600 text-sm font-normal">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="signup-password" className="text-gray-700 text-xs sm:text-sm">
                           Senha
                         </Label>
                         <div className="relative">
@@ -665,11 +664,11 @@ export function AuthDialog({
                             </AnimatePresence>
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500">Mínimo de 6 caracteres</p>
+                        <p className="text-[10px] sm:text-xs text-gray-500">Mínimo de 6 caracteres</p>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-confirm-password" className="text-gray-600 text-sm font-normal">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="signup-confirm-password" className="text-gray-700 text-xs sm:text-sm">
                           Confirmar senha
                         </Label>
                         <div className="relative">
@@ -689,7 +688,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-900 h-11 cursor-pointer text-sm font-medium transition-colors"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -740,26 +739,16 @@ export function AuthDialog({
                       Cadastrar com Google
                     </Button>
 
-                    <p className="text-xs text-gray-500 text-center mt-4">
+                    <p className="text-[10px] sm:text-xs text-gray-500 text-center mt-3 sm:mt-4 leading-relaxed">
                       Ao criar uma conta, você concorda com nossos{" "}
-                      <a href="/termos-de-servico" target="_blank" className="text-gray-700 hover:text-gray-900 underline cursor-pointer">
-                        Termos
+                      <a href="/termos-de-servico" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
+                        Termos de Serviço
                       </a>{" "}
                       e{" "}
-                      <a href="/politica-de-privacidade" target="_blank" className="text-gray-700 hover:text-gray-900 underline cursor-pointer">
-                        Política
+                      <a href="/politica-de-privacidade" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
+                        Política de Privacidade
                       </a>
-                    </p>
-
-                    <p className="text-center text-sm text-gray-600 mt-6">
-                      Já tem uma conta?{" "}
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab("login")}
-                        className="text-gray-900 font-medium hover:text-black cursor-pointer transition-colors"
-                      >
-                        Entrar
-                      </button>
+                      .
                     </p>
                   </TabsContent>
 
