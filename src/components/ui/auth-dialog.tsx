@@ -562,7 +562,7 @@ export function AuthDialog({
                       <button
                         type="button"
                         onClick={() => setActiveTab("signup")}
-                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors hover:cursor-pointer"
                       >
                         Cadastre-se
                       </button>
@@ -767,7 +767,7 @@ export function AuthDialog({
                       <button
                         type="button"
                         onClick={() => setActiveTab("login")}
-                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors hover:cursor-pointer"
                       >
                         Entrar
                       </button>
