@@ -556,6 +556,17 @@ export function AuthDialog({
                       </svg>
                       Entrar com Google
                     </Button>
+
+                    <p className="text-center text-xs sm:text-sm text-gray-600 mt-4 sm:mt-6">
+                      Ainda não tem uma conta?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("signup")}
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                      >
+                        Cadastre-se
+                      </button>
+                    </p>
                   </TabsContent>
 
                   {/* Signup Tab */}
@@ -749,6 +760,17 @@ export function AuthDialog({
                         Política de Privacidade
                       </a>
                       .
+                    </p>
+
+                    <p className="text-center text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4">
+                      Já tem uma conta?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("login")}
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                      >
+                        Entrar
+                      </button>
                     </p>
                   </TabsContent>
 
