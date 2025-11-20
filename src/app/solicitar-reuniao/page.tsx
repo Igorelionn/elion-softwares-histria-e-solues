@@ -252,39 +252,48 @@ export default function SolicitarReuniaoPage() {
     const startTime = performance.now();
     try {
       console.log('🔍 [START] Verificando reuniões para usuário:', userId);
-      console.log('🔄 Forçando refresh da sessão para evitar stale connections...');
 
-      // Forçar refresh da sessão para obter conexão fresca
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('⚠️ Erro ao refresh da sessão:', sessionError);
-      } else {
-        console.log('✅ Sessão refreshed com sucesso');
-      }
-
-      // Verificar cache primeiro
+      // Verificar cache primeiro (não precisa query se já sabemos)
       let isAdmin = isAdminCache.current;
 
       if (isAdmin === null) {
-        console.log('📥 Cache vazio - consultando BD com sessão fresh');
+        console.log('📥 Cache vazio - consultando via RPC direto');
         const queryStart = performance.now();
 
-        // Query direta com sessão refreshed
-        const { data: userProfile, error: profileError } = await (supabase as any)
-          .from('users')
-          .select('role')
-          .eq('id', userId)
-          .single();
+        // Usar RPC que verifica role via JWT (não faz query adicional)
+        try {
+          const { data: rpcData, error: rpcError } = await (supabase as any)
+            .rpc('check_user_is_admin', { user_id: userId });
 
-        const queryTime = performance.now() - queryStart;
-        console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+          const queryTime = performance.now() - queryStart;
+          console.log(`⏱️ RPC check_user_is_admin levou ${queryTime.toFixed(2)}ms`);
 
-        if (profileError) {
-          console.error('⚠️ Erro ao verificar perfil:', profileError);
+          if (rpcError) {
+            console.error('⚠️ Erro no RPC, tentando query direta:', rpcError);
+            
+            // Fallback: query direta sem single (retorna array)
+            const fallbackStart = performance.now();
+            const { data: userData, error: userError } = await (supabase as any)
+              .from('users')
+              .select('role')
+              .eq('id', userId)
+              .limit(1);
+
+            const fallbackTime = performance.now() - fallbackStart;
+            console.log(`⏱️ Query fallback users levou ${fallbackTime.toFixed(2)}ms`);
+
+            if (userError || !userData || userData.length === 0) {
+              console.error('⚠️ Erro fallback, assumindo não-admin:', userError);
+              isAdmin = false;
+            } else {
+              isAdmin = userData[0]?.role === 'admin';
+            }
+          } else {
+            isAdmin = rpcData === true;
+          }
+        } catch (err) {
+          console.error('❌ Erro crítico ao verificar admin:', err);
           isAdmin = false;
-        } else {
-          isAdmin = userProfile?.role === 'admin';
         }
 
         // Armazenar no cache
@@ -305,10 +314,10 @@ export default function SolicitarReuniaoPage() {
       }
 
       // Para usuários comuns, verificar se já tem reunião
-      console.log('🔎 Verificando reuniões pendentes/confirmadas...');
+      console.log('🔎 Verificando reuniões pendentes/confirmadas via query direta...');
       const meetingsQueryStart = performance.now();
 
-      // Query direta com sessão refreshed
+      // Query meetings sem .single() para evitar erro
       const { data, error } = await (supabase as any)
         .from('meetings')
         .select('id, status')
