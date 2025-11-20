@@ -373,8 +373,8 @@ export function AuthDialog({
                   {/* Abas de navegação */}
                   {activeTab !== "reset" && (
                     <TabsList className="grid w-full grid-cols-2 mb-3">
-                      <TabsTrigger value="login" className="text-xs sm:text-sm">Entrar</TabsTrigger>
-                      <TabsTrigger value="signup" className="text-xs sm:text-sm">Cadastrar</TabsTrigger>
+                      <TabsTrigger value="login" className="text-xs sm:text-sm cursor-pointer">Entrar</TabsTrigger>
+                      <TabsTrigger value="signup" className="text-xs sm:text-sm cursor-pointer">Cadastrar</TabsTrigger>
                     </TabsList>
                   )}
 
@@ -562,7 +562,7 @@ export function AuthDialog({
                       <button
                         type="button"
                         onClick={() => setActiveTab("signup")}
-                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors hover:cursor-pointer"
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
                       >
                         Cadastre-se
                       </button>
@@ -767,7 +767,7 @@ export function AuthDialog({
                       <button
                         type="button"
                         onClick={() => setActiveTab("login")}
-                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors hover:cursor-pointer"
+                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
                       >
                         Entrar
                       </button>
