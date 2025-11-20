@@ -336,7 +336,11 @@ export function AuthDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-[320px] sm:max-w-[500px] md:max-w-[550px] max-h-[88vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
+              className={`relative w-full max-h-[88vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden ${
+                activeTab === "reset" 
+                  ? "max-w-[340px] sm:max-w-[520px] md:max-w-[580px]" 
+                  : "max-w-[320px] sm:max-w-[500px] md:max-w-[550px]"
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -358,7 +362,7 @@ export function AuthDialog({
                       alt="Elion Softwares"
                       width={140}
                       height={43}
-                      className="h-5 sm:h-6 w-auto"
+                      className={activeTab === "reset" ? "h-4 sm:h-5 w-auto" : "h-5 sm:h-6 w-auto"}
                       priority
                     />
                   </div>
