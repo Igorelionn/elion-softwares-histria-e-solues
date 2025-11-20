@@ -324,7 +324,7 @@ export function AuthDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-white/25 backdrop-blur-[2px] z-50"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50"
           />
 
           {/* Dialog */}
@@ -333,8 +333,8 @@ export function AuthDialog({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-[340px] sm:max-w-md max-h-[90vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
+              transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+              className="relative w-full max-w-[340px] sm:max-w-md max-h-[90vh] bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/5"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -414,7 +414,7 @@ export function AuthDialog({
                             placeholder="seu@email.com"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 bg-gray-50/50 border-gray-200 focus:border-gray-400 text-gray-900 placeholder:text-gray-400 cursor-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm transition-colors rounded-xl"
                             required
                             disabled={isLoading}
                           />
@@ -433,7 +433,7 @@ export function AuthDialog({
                             placeholder="Sua senha"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 pr-10 bg-gray-50/50 border-gray-200 focus:border-gray-400 text-gray-900 placeholder:text-gray-400 cursor-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm transition-colors rounded-xl"
                             required
                             disabled={isLoading}
                           />
@@ -496,7 +496,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base"
+                        className="w-full bg-black text-white hover:bg-black/80 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -784,11 +784,11 @@ export function AuthDialog({
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="resetEmail" className="text-gray-700 font-medium">
+                        <Label htmlFor="resetEmail" className="text-gray-700 font-medium text-xs sm:text-sm">
                           Email
                         </Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
                             id="resetEmail"
                             type="email"
@@ -796,14 +796,14 @@ export function AuthDialog({
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             required
-                            className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            className="pl-10 h-10 sm:h-11 bg-gray-50/50 border-gray-200 focus:border-gray-400 text-gray-900 placeholder:text-gray-400 cursor-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 shadow-none text-sm transition-colors rounded-xl"
                           />
                         </div>
                       </div>
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
+                        className="w-full bg-black text-white hover:bg-black/80 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                         disabled={isLoading}
                       >
                         {isLoading ? (
