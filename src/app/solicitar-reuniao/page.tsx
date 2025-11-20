@@ -13,7 +13,6 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { AuthDialog } from "@/components/ui/auth-dialog";
-import { robustQuery, checkIsAdmin } from "@/lib/supabase-query-utils";
 
 interface Question {
   id: number;
@@ -134,44 +133,35 @@ export default function SolicitarReuniaoPage() {
 
   // Executar verificação inicial apenas uma vez
   useEffect(() => {
-    console.log('🚀 [INIT] Componente montado - iniciando verificação');
-    console.log('🗑️ [INIT] Limpando cache anterior');
+    console.log('🚀 Componente montado - iniciando verificação');
+    console.log('🗑️ Limpando cache anterior');
 
     // RESETAR CACHE ao montar (importante para múltiplas visitas)
     isAdminCache.current = null;
     hasCheckedSavedData.current = false;
 
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
-    const startTime = performance.now();
+    let isMounted = true; // Flag para prevenir updates após unmount
 
-    // Timeout global de 10s para toda a verificação inicial
-    // Com retry robusto, não devemos precisar de mais que isso
-    timeoutId = setTimeout(() => {
+    // TIMEOUT DE SEGURANÇA: Se após 15 segundos ainda estiver carregando, forçar parada
+    const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        const duration = performance.now() - startTime;
-        console.warn(`⏰ [INIT] Timeout de 10s atingido (${duration.toFixed(2)}ms) - permitindo acesso ao formulário`);
+        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 15s');
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 10000);
+    }, 15000); // Timeout de segurança como fallback extremo
 
     // Executar verificação
     const runCheck = async () => {
       try {
         await checkUser();
-        const duration = performance.now() - startTime;
-        console.log(`✅ [INIT] Verificação completa em ${duration.toFixed(2)}ms`);
       } catch (error) {
-        const duration = performance.now() - startTime;
-        console.error(`❌ [INIT] Erro na verificação inicial (${duration.toFixed(2)}ms):`, error);
+        console.error('❌ Erro na verificação inicial:', error);
         if (isMounted) {
-          // Permitir acesso ao formulário mesmo com erro
           setIsCheckingMeeting(false);
-          setHasExistingMeeting(false);
         }
       } finally {
-        clearTimeout(timeoutId);
+        clearTimeout(safetyTimeout);
       }
     };
 
@@ -179,10 +169,10 @@ export default function SolicitarReuniaoPage() {
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
-      console.log('🧹 [INIT] Componente desmontado');
+      clearTimeout(safetyTimeout);
+      console.log('🧹 Componente desmontado');
     };
-  }, []);
+  }, []); // Executa apenas na montagem
 
   // Listener separado para mudanças de autenticação
   useEffect(() => {
@@ -267,22 +257,29 @@ export default function SolicitarReuniaoPage() {
       let isAdmin = isAdminCache.current;
 
       if (isAdmin === null) {
-        console.log('📥 Cache vazio - verificando admin...');
-        
-        // Obter sessão para verificação JWT
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // Usar função robusta que tenta JWT primeiro, depois banco
-        try {
-          isAdmin = await checkIsAdmin(userId, session, supabase);
-          // Armazenar no cache
-          isAdminCache.current = isAdmin;
-          console.log('💾 Cache atualizado - isAdmin:', isAdmin);
-        } catch (error) {
-          console.error('❌ Erro ao verificar admin, assumindo não-admin:', error);
+        console.log('📥 Cache vazio - consultando BD via query direta');
+        const queryStart = performance.now();
+
+        // Query direta sem timeout artificial (usa pool fresh do Supabase)
+        const { data: userProfile, error: profileError } = await (supabase as any)
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+        const queryTime = performance.now() - queryStart;
+        console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+
+        if (profileError) {
+          console.error('⚠️ Erro ao verificar perfil:', profileError);
           isAdmin = false;
-          isAdminCache.current = false;
+        } else {
+          isAdmin = userProfile?.role === 'admin';
         }
+
+        // Armazenar no cache
+        isAdminCache.current = isAdmin;
+        console.log('💾 Cache atualizado - isAdmin:', isAdmin);
       } else {
         console.log('⚡ Usando cache - isAdmin:', isAdmin);
       }
@@ -294,58 +291,55 @@ export default function SolicitarReuniaoPage() {
         console.log('✅ Admin detectado - permitindo agendamento');
         setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
+        return;
+      }
+
+      // Para usuários comuns, verificar se já tem reunião
+      console.log('🔎 Verificando reuniões pendentes/confirmadas via query direta...');
+      const meetingsQueryStart = performance.now();
+
+      // Query direta sem timeout artificial (usa pool fresh do Supabase)
+      const { data, error } = await (supabase as any)
+        .from('meetings')
+        .select('id, status')
+        .eq('user_id', userId)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1);
+
+      const meetingsQueryTime = performance.now() - meetingsQueryStart;
+      console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
+
+      if (error) {
+        console.error('⚠️ Erro ao verificar reunião existente:', error);
+        // IMPORTANTE: Se houver erro de RLS ou qualquer outro erro,
+        // permitir que o usuário continue e tente agendar.
+        // O erro real será tratado na tentativa de inserção.
+        console.log('⏭️ Permitindo continuar apesar do erro');
+        setHasExistingMeeting(false);
+        setIsCheckingMeeting(false);
         const totalTime = performance.now() - startTime;
         console.log(`⏱️ [END] Verificação completa em ${totalTime.toFixed(2)}ms`);
         return;
       }
 
-      // Para usuários comuns, verificar se já tem reunião com retry robusto
-      console.log('🔎 Verificando reuniões pendentes/confirmadas...');
-      
-      try {
-        const result = await robustQuery(
-          () =>
-            (supabase as any)
-              .from('meetings')
-              .select('id, status')
-              .eq('user_id', userId)
-              .in('status', ['pending', 'confirmed'])
-              .limit(1),
-          { maxRetries: 3, timeoutMs: 5000 }
-        );
+      console.log('📊 Reuniões encontradas:', data?.length || 0);
 
-        if (result.error) {
-          console.error('⚠️ Erro ao verificar reunião existente:', result.error);
-          // Permitir continuar - backend validará
-          setHasExistingMeeting(false);
-          setIsCheckingMeeting(false);
-          const totalTime = performance.now() - startTime;
-          console.log(`⏱️ [END] Verificação completa em ${totalTime.toFixed(2)}ms`);
-          return;
-        }
-
-        console.log('📊 Reuniões encontradas:', result.data?.length || 0);
-
-        if (result.data && result.data.length > 0) {
-          console.log('🚫 Usuário já tem reunião agendada');
-          setHasExistingMeeting(true);
-          // Redirecionar para página de reuniões agendadas após 2 segundos
-          setTimeout(() => {
-            router.push('/reunioes-agendadas');
-          }, 2000);
-        } else {
-          // Não tem reunião - pode agendar
-          console.log('✅ Usuário pode agendar nova reunião');
-          setHasExistingMeeting(false);
-        }
-      } catch (error) {
-        console.error('❌ Erro após retries ao verificar reuniões:', error);
-        // Permitir continuar mesmo após falha - backend validará
+      if (data && data.length > 0) {
+        console.log('🚫 Usuário já tem reunião agendada');
+        setHasExistingMeeting(true);
+        // Redirecionar para página de reuniões agendadas após 2 segundos
+        setTimeout(() => {
+          router.push('/reunioes-agendadas');
+        }, 2000);
+      } else {
+        // Não tem reunião - pode agendar
+        console.log('✅ Usuário pode agendar nova reunião');
         setHasExistingMeeting(false);
       }
     } catch (error) {
       console.error('❌ Erro crítico ao verificar reuniões:', error);
       // Em caso de erro crítico, permitir continuar
+      // O backend validará na hora de inserir
       setHasExistingMeeting(false);
     } finally {
       const totalTime = performance.now() - startTime;
@@ -602,38 +596,34 @@ export default function SolicitarReuniaoPage() {
       const formattedDate = new Date(year, month - 1, day).toISOString();
       console.error('📅 [SUBMIT] Data formatada:', formattedDate);
 
-      // Verificar duplicatas com retry robusto (janela reduzida para 2 minutos)
-      console.error('🔍 [SUBMIT] Verificando reuniões duplicadas...');
+      // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 2 minutos)
+      console.error('🔍 [SUBMIT] Verificando reuniões duplicadas via query direta...');
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
 
-      try {
-        const result = await robustQuery(
-          () =>
-            (supabase as any)
-              .from('meetings')
-              .select('id, email, meeting_date')
-              .eq('user_id', userIdToUse)
-              .eq('email', answers[2] as string)
-              .eq('meeting_date', formattedDate)
-              .gte('created_at', twoMinutesAgo),
-          { maxRetries: 2, timeoutMs: 4000 } // Menos retries pois não é crítico
-        );
+      const checkStart = performance.now();
 
-        if (result.error) {
-          console.error('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', result.error);
-          // Continuar mesmo com erro - não é crítico
-        } else if (result.data && result.data.length > 0) {
-          console.error('✅ [SUBMIT] Reunião duplicada encontrada, redirecionando...');
-          setIsSubmitting(false);
-          router.push("/solicitar-reuniao/confirmado");
-          return;
-        } else {
-          console.error('✅ [SUBMIT] Nenhuma duplicata encontrada');
-        }
-      } catch (error) {
-        console.error('⚠️ [SUBMIT] Falha na verificação de duplicatas após retries (continuando):', error);
-        // Continuar sem verificar duplicatas - backend validará unicidade do horário
+      // Query direta sem timeout artificial (usa pool fresh do Supabase)
+      const { data: recentMeetings, error: checkError } = await (supabase as any)
+        .from('meetings')
+        .select('id, email, meeting_date')
+        .eq('user_id', userIdToUse)
+        .eq('email', answers[2] as string)
+        .eq('meeting_date', formattedDate)
+        .gte('created_at', twoMinutesAgo);
+
+      const checkTime = performance.now() - checkStart;
+      console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
+
+      if (checkError) {
+        console.error('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
+        // Silenciar erro de RLS - é esperado para usuários não autenticados
+      } else if (recentMeetings && recentMeetings.length > 0) {
+        console.error('✅ [SUBMIT] Reunião duplicada encontrada, redirecionando...');
+        setIsSubmitting(false); // IMPORTANTE: Resetar antes de redirecionar
+        router.push("/solicitar-reuniao/confirmado");
+        return;
       }
+      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada');
 
       // Preparar dados para salvar
       console.error('📝 [SUBMIT] Preparando dados...');
