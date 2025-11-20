@@ -363,8 +363,6 @@ export default function SolicitarReuniaoPage() {
         setTimeout(() => {
           router.push('/reunioes-agendadas');
         }, 2000);
-        // Lançar erro para interromper o fluxo de autenticação
-        throw new Error('USER_HAS_MEETING');
       } else {
         // Não tem reunião - pode agendar
         console.log('✅ Usuário pode agendar nova reunião');
@@ -380,45 +378,6 @@ export default function SolicitarReuniaoPage() {
       console.log(`⏱️ [END] Verificação total em ${totalTime.toFixed(2)}ms`);
       console.log('🏁 Finalizando verificação de reuniões');
       setIsCheckingMeeting(false);
-    }
-  };
-
-  // Callback executado após login/cadastro bem-sucedido
-  const handleAuthSuccess = async (userId: string) => {
-    console.log('🔐 [AUTH_SUCCESS] Usuário autenticado:', userId);
-
-    try {
-      // Verificar se usuário pode agendar reunião
-      await checkExistingMeeting(userId);
-
-      // Se chegou aqui sem redirecionar, significa que pode continuar
-      console.log('✅ [AUTH_SUCCESS] Usuário pode continuar no formulário');
-
-      // Restaurar dados salvos se houver
-      const savedData = localStorage.getItem('pending_meeting_data');
-      if (savedData && !hasCheckedSavedData.current) {
-        hasCheckedSavedData.current = true;
-        localStorage.removeItem('pending_meeting_data');
-
-        try {
-          const meetingData = JSON.parse(savedData);
-          const now = Date.now();
-          const savedAt = meetingData.timestamp || 0;
-          const hoursPassed = (now - savedAt) / (1000 * 60 * 60);
-
-          if (hoursPassed < 24) {
-            console.log('📦 Restaurando dados salvos do formulário');
-            setAnswers(meetingData.answers || {});
-            setCurrentStep(meetingData.currentStep || 0);
-          }
-        } catch (e) {
-          console.error('Erro ao restaurar dados:', e);
-        }
-      }
-    } catch (error) {
-      console.error('❌ [AUTH_SUCCESS] Erro na verificação:', error);
-      // Se houver erro, o checkExistingMeeting já lidou com o redirecionamento
-      throw error; // Propagar para o AuthDialog não fechar
     }
   };
 
@@ -485,6 +444,27 @@ export default function SolicitarReuniaoPage() {
     } else {
       // Após a última pergunta, vai para revisão
       setIsReviewStep(true);
+    }
+  };
+
+  // Função para avançar ao pressionar Enter
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+
+      // Não avançar se o campo está vazio
+      const answer = answers[currentQuestion.id];
+      if (!answer || (typeof answer === 'string' && !answer.trim())) {
+        return;
+      }
+
+      // Não avançar em textarea (permite quebra de linha com Shift+Enter)
+      if (currentQuestion.type === 'textarea') {
+        return;
+      }
+
+      // Avançar para próxima pergunta
+      handleNext();
     }
   };
 
@@ -943,7 +923,6 @@ export default function SolicitarReuniaoPage() {
         preventRedirect={true}
         redirectTo={`${window.location.origin}/solicitar-reuniao`}
         onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
-        onAuthSuccess={handleAuthSuccess}
       />
 
       <div className="min-h-screen bg-black flex flex-col">
@@ -1128,6 +1107,7 @@ export default function SolicitarReuniaoPage() {
                       label={currentQuestion.placeholder || ""}
                       value={(answers[currentQuestion.id] as string) || ""}
                       onChange={(e) => handleAnswerChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       maxLength={100}
                       autoFocus
                     />
@@ -1144,6 +1124,7 @@ export default function SolicitarReuniaoPage() {
                       placeholder={currentQuestion.placeholder}
                       value={(answers[currentQuestion.id] as string) || ""}
                       onChange={(e) => handleAnswerChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       maxLength={100}
                       className="bg-transparent border-none rounded-none text-white text-base py-3 px-0 placeholder:text-white/30 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                       autoFocus
@@ -1175,6 +1156,7 @@ export default function SolicitarReuniaoPage() {
                         placeholder={selectedCountry.format || "(00) 00000-0000"}
                         value={(answers[currentQuestion.id] as string) || ""}
                         onChange={(e) => handleAnswerChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         maxLength={(selectedCountry.maxLength || 11) + (selectedCountry.format?.replace(/X/g, "").length || 4)}
                         className="flex-1 bg-transparent border-none text-white text-base py-3 px-2 placeholder:text-white/30 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                         autoFocus
