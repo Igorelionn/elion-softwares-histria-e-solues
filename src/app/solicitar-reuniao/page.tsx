@@ -11,6 +11,7 @@ import { GlassCalendarInput } from "@/components/ui/glass-calendar-input";
 import { CountrySelector, formatPhoneByCountry, countries, type Country } from "@/components/ui/country-selector";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { AuthDialog } from "@/components/ui/auth-dialog";
 
@@ -252,23 +253,46 @@ export default function SolicitarReuniaoPage() {
     const startTime = performance.now();
     try {
       console.log('🔍 [START] Verificando reuniões para usuário:', userId);
+      console.log('🆕 Criando fresh Supabase client para evitar stale connections...');
+
+      // Criar FRESH client Supabase (sem cache/pool persistido)
+      const freshSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: { 
+            persistSession: false,  // Não persistir sessão
+            autoRefreshToken: false // Não auto-refresh
+          },
+          global: {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+              'X-Request-ID': `check-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            }
+          }
+        }
+      );
+
+      console.log('✅ Fresh client criado com sucesso');
 
       // Verificar cache primeiro
       let isAdmin = isAdminCache.current;
 
       if (isAdmin === null) {
-        console.log('📥 Cache vazio - consultando BD via query direta');
+        console.log('📥 Cache vazio - consultando BD via FRESH CLIENT');
         const queryStart = performance.now();
 
-        // Query direta sem timeout artificial (usa pool fresh do Supabase)
-        const { data: userProfile, error: profileError } = await (supabase as any)
+        // Query usando FRESH CLIENT (sem stale connections)
+        const { data: userProfile, error: profileError } = await freshSupabase
           .from('users')
           .select('role')
           .eq('id', userId)
           .single();
 
         const queryTime = performance.now() - queryStart;
-        console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+        console.log(`⏱️ Query users (fresh) levou ${queryTime.toFixed(2)}ms`);
 
         if (profileError) {
           console.error('⚠️ Erro ao verificar perfil:', profileError);
@@ -295,11 +319,11 @@ export default function SolicitarReuniaoPage() {
       }
 
       // Para usuários comuns, verificar se já tem reunião
-      console.log('🔎 Verificando reuniões pendentes/confirmadas via query direta...');
+      console.log('🔎 Verificando reuniões pendentes/confirmadas via FRESH CLIENT...');
       const meetingsQueryStart = performance.now();
 
-      // Query direta sem timeout artificial (usa pool fresh do Supabase)
-      const { data, error } = await (supabase as any)
+      // Query usando FRESH CLIENT (sem stale connections)
+      const { data, error } = await freshSupabase
         .from('meetings')
         .select('id, status')
         .eq('user_id', userId)
@@ -307,7 +331,7 @@ export default function SolicitarReuniaoPage() {
         .limit(1);
 
       const meetingsQueryTime = performance.now() - meetingsQueryStart;
-      console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
+      console.log(`⏱️ Query meetings (fresh) levou ${meetingsQueryTime.toFixed(2)}ms`);
 
       if (error) {
         console.error('⚠️ Erro ao verificar reunião existente:', error);
