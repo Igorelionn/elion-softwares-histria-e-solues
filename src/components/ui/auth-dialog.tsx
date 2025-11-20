@@ -510,23 +510,23 @@ export function AuthDialog({
                       </Button>
                     </motion.form>
 
-                    <div className="relative my-4 sm:my-6">
+                    <div className="relative my-5 sm:my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-200"></div>
+                        <div className="w-full border-t border-gray-100"></div>
                       </div>
                       <div className="relative flex justify-center text-xs sm:text-sm">
-                        <span className="bg-white px-3 sm:px-4 text-gray-500">Ou continue com</span>
+                        <span className="text-gray-400 font-medium">Ou continue com</span>
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 sm:h-12 rounded-full cursor-pointer text-sm sm:text-base"
+                      className="w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 h-10 sm:h-12 rounded-xl cursor-pointer text-sm sm:text-base font-medium transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -703,23 +703,23 @@ export function AuthDialog({
                       </Button>
                     </motion.form>
 
-                    <div className="relative my-4 sm:my-6">
+                    <div className="relative my-5 sm:my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-200"></div>
+                        <div className="w-full border-t border-gray-100"></div>
                       </div>
                       <div className="relative flex justify-center text-xs sm:text-sm">
-                        <span className="bg-white px-3 sm:px-4 text-gray-500">Ou continue com</span>
+                        <span className="text-gray-400 font-medium">Ou continue com</span>
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 sm:h-12 rounded-full cursor-pointer text-sm sm:text-base"
+                      className="w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 h-10 sm:h-12 rounded-xl cursor-pointer text-sm sm:text-base font-medium transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
