@@ -142,14 +142,14 @@ export default function SolicitarReuniaoPage() {
 
     let isMounted = true; // Flag para prevenir updates após unmount
 
-    // TIMEOUT DE SEGURANÇA: Se após 15 segundos ainda estiver carregando, forçar parada
+    // TIMEOUT DE SEGURANÇA: Se após 8 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 15s');
+        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 8s');
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 15000); // Timeout de segurança como fallback extremo
+    }, 8000); // Timeout de segurança como fallback extremo
 
     // Executar verificação
     const runCheck = async () => {
@@ -260,33 +260,21 @@ export default function SolicitarReuniaoPage() {
         console.log('📥 Cache vazio - consultando BD');
         const queryStart = performance.now();
 
-        // Query com timeout de 3s para prevenir stale connections
-        try {
-          const result = await Promise.race([
-            (supabase as any)
-              .from('users')
-              .select('role')
-              .eq('id', userId)
-              .single(),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Timeout após 3s')), 3000)
-            )
-          ]);
+        // Query direta sem timeout artificial - deixar Supabase gerenciar
+        const { data: userProfile, error: profileError } = await (supabase as any)
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
 
-          const queryTime = performance.now() - queryStart;
-          console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+        const queryTime = performance.now() - queryStart;
+        console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
 
-          if (result.error) {
-            console.error('⚠️ Erro ao verificar perfil:', result.error);
-            isAdmin = false;
-          } else {
-            isAdmin = result.data?.role === 'admin';
-          }
-        } catch (timeoutError) {
-          const queryTime = performance.now() - queryStart;
-          console.error(`⏰ TIMEOUT na query users após ${queryTime.toFixed(2)}ms`);
-          console.error('⚠️ Assumindo usuário não-admin e continuando...');
+        if (profileError) {
+          console.error('⚠️ Erro ao verificar perfil:', profileError);
           isAdmin = false;
+        } else {
+          isAdmin = userProfile?.role === 'admin';
         }
 
         // Armazenar no cache
@@ -310,36 +298,16 @@ export default function SolicitarReuniaoPage() {
       console.log('🔎 Verificando reuniões pendentes/confirmadas...');
       const meetingsQueryStart = performance.now();
 
-      let data = null;
-      let error = null;
+      // Query direta sem timeout artificial - deixar Supabase gerenciar
+      const { data, error } = await (supabase as any)
+        .from('meetings')
+        .select('id, status')
+        .eq('user_id', userId)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1);
 
-      // Query com timeout de 3s para prevenir stale connections
-      try {
-        const result = await Promise.race([
-          (supabase as any)
-            .from('meetings')
-            .select('id, status')
-            .eq('user_id', userId)
-            .in('status', ['pending', 'confirmed'])
-            .limit(1),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout após 3s')), 3000)
-          )
-        ]);
-
-        const meetingsQueryTime = performance.now() - meetingsQueryStart;
-        console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
-
-        data = result.data;
-        error = result.error;
-      } catch (timeoutError) {
-        const meetingsQueryTime = performance.now() - meetingsQueryStart;
-        console.error(`⏰ TIMEOUT na query meetings após ${meetingsQueryTime.toFixed(2)}ms`);
-        console.error('⚠️ Assumindo sem reuniões e continuando...');
-        // Em caso de timeout, assumir que não há reuniões e permitir agendamento
-        data = null;
-        error = null;
-      }
+      const meetingsQueryTime = performance.now() - meetingsQueryStart;
+      console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
 
       if (error) {
         console.error('⚠️ Erro ao verificar reunião existente:', error);
@@ -634,35 +602,17 @@ export default function SolicitarReuniaoPage() {
 
       const checkStart = performance.now();
 
-      // Timeout agressivo de 3s para verificação de duplicatas (não é crítico)
-      let recentMeetings: any[] | null = null;
-      let checkError: any = null;
+      // Query direta sem timeout artificial
+      const { data: recentMeetings, error: checkError } = await (supabase as any)
+        .from('meetings')
+        .select('id, email, meeting_date')
+        .eq('user_id', userIdToUse)
+        .eq('email', answers[2] as string)
+        .eq('meeting_date', formattedDate)
+        .gte('created_at', fiveMinutesAgo);
 
-      try {
-        const result = await Promise.race([
-          (supabase as any)
-            .from('meetings')
-            .select('id, email, meeting_date')
-            .eq('user_id', userIdToUse)
-            .eq('email', answers[2] as string)
-            .eq('meeting_date', formattedDate)
-            .gte('created_at', fiveMinutesAgo),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout verificação duplicatas após 3s')), 3000)
-          )
-        ]) as any;
-
-        recentMeetings = result.data;
-        checkError = result.error;
-
-        const checkTime = performance.now() - checkStart;
-        console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
-      } catch (timeoutError: any) {
-        const checkTime = performance.now() - checkStart;
-        console.error(`⏰ [SUBMIT] TIMEOUT na verificação de duplicatas após ${checkTime.toFixed(2)}ms`);
-        console.error('⚠️ [SUBMIT] Pulando verificação de duplicatas e continuando...');
-        // Continuar sem verificar duplicatas (não é crítico)
-      }
+      const checkTime = performance.now() - checkStart;
+      console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
 
       if (checkError) {
         console.error('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
@@ -673,7 +623,7 @@ export default function SolicitarReuniaoPage() {
         router.push("/solicitar-reuniao/confirmado");
         return;
       }
-      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada (ou timeout - prosseguindo)');
+      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada');
 
       // Preparar dados para salvar
       console.error('📝 [SUBMIT] Preparando dados...');
