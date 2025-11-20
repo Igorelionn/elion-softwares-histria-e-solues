@@ -324,7 +324,7 @@ export function AuthDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-white/25 backdrop-blur-[2px] z-50"
           />
 
           {/* Dialog */}
@@ -333,8 +333,8 @@ export function AuthDialog({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-              className="relative w-full max-w-[340px] sm:max-w-md max-h-[90vh] bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/5"
+              transition={{ type: "spring", duration: 0.5 }}
+              className="relative w-full max-w-[340px] sm:max-w-md max-h-[90vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -348,21 +348,21 @@ export function AuthDialog({
               </button>
 
               {/* Content */}
-              <div className="p-4 sm:p-5 md:p-6 max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                <div className="text-center mb-4">
-                  <div className="flex justify-center mb-2">
+              <div className="p-6 sm:p-8 max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="text-center mb-6">
+                  <div className="flex justify-center mb-3">
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
                       width={120}
                       height={37}
-                      className="h-6 w-auto"
+                      className="h-7 w-auto"
                       priority
                     />
                   </div>
                   {activeTab !== "reset" && (
-                    <p className="text-gray-600 text-xs sm:text-sm">
-                      Entre ou crie sua conta para continuar
+                    <p className="text-gray-500 text-sm">
+                      Entre ou crie sua conta
                     </p>
                   )}
                 </div>
@@ -393,17 +393,17 @@ export function AuthDialog({
                   </AnimatePresence>
 
                   {/* Login Tab */}
-                  <TabsContent value="login" className="mt-2 space-y-2">
+                  <TabsContent value="login" className="mt-4 space-y-4">
                     <motion.form
                       onSubmit={handleLogin}
-                      className="space-y-2"
+                      className="space-y-4"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <div className="space-y-1.5">
-                        <Label htmlFor="login-email" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email" className="text-gray-600 text-sm font-normal">
                           Email
                         </Label>
                         <div className="relative">
@@ -414,15 +414,15 @@ export function AuthDialog({
                             placeholder="seu@email.com"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
-                            className="pl-10 bg-gray-50/50 border-gray-200 focus:border-gray-400 text-gray-900 placeholder:text-gray-400 cursor-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm transition-colors rounded-xl"
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
                             required
                             disabled={isLoading}
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="login-password" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password" className="text-gray-600 text-sm font-normal">
                           Senha
                         </Label>
                         <div className="relative">
@@ -433,7 +433,7 @@ export function AuthDialog({
                             placeholder="Sua senha"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            className="pl-10 pr-10 bg-gray-50/50 border-gray-200 focus:border-gray-400 text-gray-900 placeholder:text-gray-400 cursor-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm transition-colors rounded-xl"
+                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
                             required
                             disabled={isLoading}
                           />
@@ -480,7 +480,7 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end pt-1">
+                      <div className="flex items-center justify-end">
                         <button
                           type="button"
                           onClick={() => {
@@ -488,7 +488,7 @@ export function AuthDialog({
                             setError("")
                             setSuccess("")
                           }}
-                          className="text-xs sm:text-sm text-blue-800 hover:text-blue-900 transition-colors cursor-pointer"
+                          className="text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
                         >
                           Esqueceu sua senha?
                         </button>
@@ -496,7 +496,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-black/80 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                        className="w-full bg-black text-white hover:bg-gray-900 h-11 cursor-pointer text-sm font-medium transition-colors"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -510,23 +510,23 @@ export function AuthDialog({
                       </Button>
                     </motion.form>
 
-                    <div className="relative my-5 sm:my-6">
+                    <div className="relative my-4 sm:my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-100"></div>
+                        <div className="w-full border-t border-gray-200"></div>
                       </div>
                       <div className="relative flex justify-center text-xs sm:text-sm">
-                        <span className="text-gray-400 font-medium">Ou continue com</span>
+                        <span className="bg-white px-3 sm:px-4 text-gray-500">Ou continue com</span>
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 h-10 sm:h-12 rounded-xl cursor-pointer text-sm sm:text-base font-medium transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 sm:h-12 rounded-full cursor-pointer text-sm sm:text-base"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                     >
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -547,12 +547,12 @@ export function AuthDialog({
                       Entrar com Google
                     </Button>
 
-                    <p className="text-center text-xs sm:text-sm text-gray-600 mt-4 sm:mt-6">
-                      Ainda não tem uma conta?{" "}
+                    <p className="text-center text-sm text-gray-600 mt-6">
+                      Não tem uma conta?{" "}
                       <button
                         type="button"
                         onClick={() => setActiveTab("signup")}
-                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                        className="text-gray-900 font-medium hover:text-black cursor-pointer transition-colors"
                       >
                         Cadastre-se
                       </button>
@@ -560,17 +560,17 @@ export function AuthDialog({
                   </TabsContent>
 
                   {/* Signup Tab */}
-                  <TabsContent value="signup" className="mt-2 space-y-2">
+                  <TabsContent value="signup" className="mt-4 space-y-4">
                     <motion.form
                       onSubmit={handleSignup}
-                      className="space-y-2"
+                      className="space-y-4"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-name" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-name" className="text-gray-600 text-sm font-normal">
                           Nome completo
                         </Label>
                         <div className="relative">
@@ -588,8 +588,8 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-email" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email" className="text-gray-600 text-sm font-normal">
                           Email
                         </Label>
                         <div className="relative">
@@ -607,8 +607,8 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-password" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password" className="text-gray-600 text-sm font-normal">
                           Senha
                         </Label>
                         <div className="relative">
@@ -665,11 +665,11 @@ export function AuthDialog({
                             </AnimatePresence>
                           </button>
                         </div>
-                        <p className="text-[10px] sm:text-xs text-gray-500">Mínimo de 6 caracteres</p>
+                        <p className="text-xs text-gray-500">Mínimo de 6 caracteres</p>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-confirm-password" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-confirm-password" className="text-gray-600 text-sm font-normal">
                           Confirmar senha
                         </Label>
                         <div className="relative">
@@ -689,7 +689,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base"
+                        className="w-full bg-black text-white hover:bg-gray-900 h-11 cursor-pointer text-sm font-medium transition-colors"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -703,23 +703,23 @@ export function AuthDialog({
                       </Button>
                     </motion.form>
 
-                    <div className="relative my-5 sm:my-6">
+                    <div className="relative my-4 sm:my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-100"></div>
+                        <div className="w-full border-t border-gray-200"></div>
                       </div>
                       <div className="relative flex justify-center text-xs sm:text-sm">
-                        <span className="text-gray-400 font-medium">Ou continue com</span>
+                        <span className="bg-white px-3 sm:px-4 text-gray-500">Ou continue com</span>
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 h-10 sm:h-12 rounded-xl cursor-pointer text-sm sm:text-base font-medium transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
+                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 sm:h-12 rounded-full cursor-pointer text-sm sm:text-base"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                     >
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -740,24 +740,23 @@ export function AuthDialog({
                       Cadastrar com Google
                     </Button>
 
-                    <p className="text-[10px] sm:text-xs text-gray-500 text-center mt-3 sm:mt-4 leading-relaxed">
+                    <p className="text-xs text-gray-500 text-center mt-4">
                       Ao criar uma conta, você concorda com nossos{" "}
-                      <a href="/termos-de-servico" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
-                        Termos de Serviço
+                      <a href="/termos-de-servico" target="_blank" className="text-gray-700 hover:text-gray-900 underline cursor-pointer">
+                        Termos
                       </a>{" "}
                       e{" "}
-                      <a href="/politica-de-privacidade" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
-                        Política de Privacidade
+                      <a href="/politica-de-privacidade" target="_blank" className="text-gray-700 hover:text-gray-900 underline cursor-pointer">
+                        Política
                       </a>
-                      .
                     </p>
 
-                    <p className="text-center text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4">
+                    <p className="text-center text-sm text-gray-600 mt-6">
                       Já tem uma conta?{" "}
                       <button
                         type="button"
                         onClick={() => setActiveTab("login")}
-                        className="text-slate-700 font-semibold hover:text-slate-800 cursor-pointer transition-colors"
+                        className="text-gray-900 font-medium hover:text-black cursor-pointer transition-colors"
                       >
                         Entrar
                       </button>
@@ -784,11 +783,11 @@ export function AuthDialog({
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="resetEmail" className="text-gray-700 font-medium text-xs sm:text-sm">
+                        <Label htmlFor="resetEmail" className="text-gray-700 font-medium">
                           Email
                         </Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                           <Input
                             id="resetEmail"
                             type="email"
@@ -796,14 +795,14 @@ export function AuthDialog({
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             required
-                            className="pl-10 h-10 sm:h-11 bg-gray-50/50 border-gray-200 focus:border-gray-400 text-gray-900 placeholder:text-gray-400 cursor-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 shadow-none text-sm transition-colors rounded-xl"
+                            className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                           />
                         </div>
                       </div>
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-black/80 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
                         disabled={isLoading}
                       >
                         {isLoading ? (
