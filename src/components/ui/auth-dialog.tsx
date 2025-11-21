@@ -46,10 +46,12 @@ export function AuthDialog({
   // Reset password form state
   const [resetEmail, setResetEmail] = useState("")
 
-  // Update tab when defaultTab changes
-  useState(() => {
-    setActiveTab(defaultTab)
-  })
+  // Update tab when defaultTab changes or dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultTab)
+    }
+  }, [defaultTab, isOpen])
 
   // Prevent body scroll when dialog is open
   useEffect(() => {
