@@ -151,21 +151,47 @@ export default function SolicitarReuniaoPage() {
       }
     }, 15000); // Timeout de segurança como fallback extremo
 
-    // Executar verificação
-    const runCheck = async () => {
+    // Executar verificação SÍNCRONA do localStorage (sem await getSession)
+    const init = async () => {
       try {
-        await checkUser();
-      } catch (error) {
-        console.error('❌ Erro na verificação inicial:', error);
-        if (isMounted) {
+        console.log('📦 Verificando localStorage para sessão...');
+        
+        // Tentar obter userId do localStorage SEM chamar getSession()
+        const storageKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`;
+        const localSession = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+        
+        if (localSession) {
+          try {
+            const parsed = JSON.parse(localSession);
+            const userId = parsed?.user?.id;
+            
+            if (userId) {
+              console.log('✅ UserId encontrado no localStorage:', userId);
+              setUserId(userId);
+              // Chamar verificação de reunião existente
+              await checkExistingMeeting(userId);
+            } else {
+              console.log('⚠️ localStorage existe mas sem userId');
+              setIsCheckingMeeting(false);
+            }
+          } catch (parseError) {
+            console.error('❌ Erro ao fazer parse do localStorage:', parseError);
+            setIsCheckingMeeting(false);
+          }
+        } else {
+          // Sem sessão local = usuário não logado
+          console.log('👤 Sem sessão no localStorage - usuário não logado');
           setIsCheckingMeeting(false);
         }
+      } catch (error) {
+        console.error('❌ Erro na inicialização:', error);
+        setIsCheckingMeeting(false);
       } finally {
         clearTimeout(safetyTimeout);
       }
     };
 
-    runCheck();
+    init();
 
     return () => {
       isMounted = false;
@@ -223,30 +249,6 @@ export default function SolicitarReuniaoPage() {
     };
   }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
 
-  const checkUser = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error('Erro ao verificar sessão:', error);
-        setIsCheckingMeeting(false);
-        return;
-      }
-
-      if (session?.user) {
-        setUserId(session.user.id);
-        // Verificar se já tem reunião agendada
-        await checkExistingMeeting(session.user.id);
-      } else {
-        // Usuário não logado - permitir preencher formulário
-        setUserId(null);
-        setIsCheckingMeeting(false);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar usuário:', error);
-      setIsCheckingMeeting(false);
-    }
-  };
 
   const checkExistingMeeting = async (userId: string) => {
     const startTime = performance.now();
@@ -270,7 +272,7 @@ export default function SolicitarReuniaoPage() {
 
           if (rpcError) {
             console.error('⚠️ Erro no RPC, tentando query direta:', rpcError);
-            
+
             // Fallback: query direta sem single (retorna array)
             const fallbackStart = performance.now();
             const { data: userData, error: userError } = await (supabase as any)
