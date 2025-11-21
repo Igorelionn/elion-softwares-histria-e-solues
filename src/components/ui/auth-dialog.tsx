@@ -356,8 +356,8 @@ export function AuthDialog({
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
-                      width={120}
-                      height={37}
+                      width={150}
+                      height={46}
                       className="h-5 w-auto"
                       priority
                     />
