@@ -241,7 +241,7 @@ export default function SolicitarReuniaoPage() {
         // Usuário não logado - mostrar popup de login/cadastro
         setUserId(null);
         setIsCheckingMeeting(false);
-        setAuthDialogTab("signup");
+        setAuthDialogTab("login");
         setIsAuthDialogOpen(true);
       }
     } catch (error) {
@@ -761,7 +761,7 @@ export default function SolicitarReuniaoPage() {
       console.error('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
       // Não está logado - abrir dialog de autenticação
       setPendingSubmit(true);
-      setAuthDialogTab("signup");
+      setAuthDialogTab("login");
       setIsAuthDialogOpen(true);
       return;
     }
