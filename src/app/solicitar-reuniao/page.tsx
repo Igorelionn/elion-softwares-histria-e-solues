@@ -122,7 +122,7 @@ export default function SolicitarReuniaoPage() {
   const [hasExistingMeeting, setHasExistingMeeting] = useState(false);
   const [isCheckingMeeting, setIsCheckingMeeting] = useState(true);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-  const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("login");
+  const [authDialogTab, setAuthDialogTab] = useState<"login" | "signup">("signup");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const hasCheckedSavedData = useRef(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([
@@ -151,47 +151,21 @@ export default function SolicitarReuniaoPage() {
       }
     }, 15000); // Timeout de segurança como fallback extremo
 
-    // Executar verificação SÍNCRONA do localStorage (sem await getSession)
-    const init = async () => {
+    // Executar verificação
+    const runCheck = async () => {
       try {
-        console.log('📦 Verificando localStorage para sessão...');
-        
-        // Tentar obter userId do localStorage SEM chamar getSession()
-        const storageKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`;
-        const localSession = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
-        
-        if (localSession) {
-          try {
-            const parsed = JSON.parse(localSession);
-            const userId = parsed?.user?.id;
-            
-            if (userId) {
-              console.log('✅ UserId encontrado no localStorage:', userId);
-              setUserId(userId);
-              // Chamar verificação de reunião existente
-              await checkExistingMeeting(userId);
-            } else {
-              console.log('⚠️ localStorage existe mas sem userId');
-              setIsCheckingMeeting(false);
-            }
-          } catch (parseError) {
-            console.error('❌ Erro ao fazer parse do localStorage:', parseError);
-            setIsCheckingMeeting(false);
-          }
-        } else {
-          // Sem sessão local = usuário não logado
-          console.log('👤 Sem sessão no localStorage - usuário não logado');
+        await checkUser();
+      } catch (error) {
+        console.error('❌ Erro na verificação inicial:', error);
+        if (isMounted) {
           setIsCheckingMeeting(false);
         }
-      } catch (error) {
-        console.error('❌ Erro na inicialização:', error);
-        setIsCheckingMeeting(false);
       } finally {
         clearTimeout(safetyTimeout);
       }
     };
 
-    init();
+    runCheck();
 
     return () => {
       isMounted = false;
@@ -249,52 +223,69 @@ export default function SolicitarReuniaoPage() {
     };
   }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
 
+  const checkUser = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Erro ao verificar sessão:', error);
+        setIsCheckingMeeting(false);
+        return;
+      }
+
+      if (session?.user) {
+        setUserId(session.user.id);
+        // Verificar se já tem reunião agendada
+        await checkExistingMeeting(session.user.id);
+      } else {
+        // Usuário não logado - permitir preencher formulário
+        setUserId(null);
+        setIsCheckingMeeting(false);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar usuário:', error);
+      setIsCheckingMeeting(false);
+    }
+  };
 
   const checkExistingMeeting = async (userId: string) => {
     const startTime = performance.now();
     try {
       console.log('🔍 [START] Verificando reuniões para usuário:', userId);
 
-      // Verificar cache primeiro (não precisa query se já sabemos)
+      // Verificar cache primeiro
       let isAdmin = isAdminCache.current;
 
       if (isAdmin === null) {
-        console.log('📥 Cache vazio - consultando via RPC direto');
+        console.log('📥 Cache vazio - consultando BD');
         const queryStart = performance.now();
 
-        // Usar RPC que verifica role via JWT (não faz query adicional)
+        // Query com timeout de 3s para prevenir stale connections
         try {
-          const { data: rpcData, error: rpcError } = await (supabase as any)
-            .rpc('check_user_is_admin', { user_id: userId });
-
-          const queryTime = performance.now() - queryStart;
-          console.log(`⏱️ RPC check_user_is_admin levou ${queryTime.toFixed(2)}ms`);
-
-          if (rpcError) {
-            console.error('⚠️ Erro no RPC, tentando query direta:', rpcError);
-
-            // Fallback: query direta sem single (retorna array)
-            const fallbackStart = performance.now();
-            const { data: userData, error: userError } = await (supabase as any)
+          const result = await Promise.race([
+            (supabase as any)
               .from('users')
               .select('role')
               .eq('id', userId)
-              .limit(1);
+              .single(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout após 3s')), 3000)
+            )
+          ]);
 
-            const fallbackTime = performance.now() - fallbackStart;
-            console.log(`⏱️ Query fallback users levou ${fallbackTime.toFixed(2)}ms`);
+          const queryTime = performance.now() - queryStart;
+          console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
 
-            if (userError || !userData || userData.length === 0) {
-              console.error('⚠️ Erro fallback, assumindo não-admin:', userError);
-              isAdmin = false;
-            } else {
-              isAdmin = userData[0]?.role === 'admin';
-            }
+          if (result.error) {
+            console.error('⚠️ Erro ao verificar perfil:', result.error);
+            isAdmin = false;
           } else {
-            isAdmin = rpcData === true;
+            isAdmin = result.data?.role === 'admin';
           }
-        } catch (err) {
-          console.error('❌ Erro crítico ao verificar admin:', err);
+        } catch (timeoutError) {
+          const queryTime = performance.now() - queryStart;
+          console.error(`⏰ TIMEOUT na query users após ${queryTime.toFixed(2)}ms`);
+          console.error('⚠️ Assumindo usuário não-admin e continuando...');
           isAdmin = false;
         }
 
@@ -316,19 +307,39 @@ export default function SolicitarReuniaoPage() {
       }
 
       // Para usuários comuns, verificar se já tem reunião
-      console.log('🔎 Verificando reuniões pendentes/confirmadas via query direta...');
+      console.log('🔎 Verificando reuniões pendentes/confirmadas...');
       const meetingsQueryStart = performance.now();
 
-      // Query meetings sem .single() para evitar erro
-      const { data, error } = await (supabase as any)
-        .from('meetings')
-        .select('id, status')
-        .eq('user_id', userId)
-        .in('status', ['pending', 'confirmed'])
-        .limit(1);
+      let data = null;
+      let error = null;
 
-      const meetingsQueryTime = performance.now() - meetingsQueryStart;
-      console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
+      // Query com timeout de 3s para prevenir stale connections
+      try {
+        const result = await Promise.race([
+          (supabase as any)
+            .from('meetings')
+            .select('id, status')
+            .eq('user_id', userId)
+            .in('status', ['pending', 'confirmed'])
+            .limit(1),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout após 3s')), 3000)
+          )
+        ]);
+
+        const meetingsQueryTime = performance.now() - meetingsQueryStart;
+        console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
+
+        data = result.data;
+        error = result.error;
+      } catch (timeoutError) {
+        const meetingsQueryTime = performance.now() - meetingsQueryStart;
+        console.error(`⏰ TIMEOUT na query meetings após ${meetingsQueryTime.toFixed(2)}ms`);
+        console.error('⚠️ Assumindo sem reuniões e continuando...');
+        // Em caso de timeout, assumir que não há reuniões e permitir agendamento
+        data = null;
+        error = null;
+      }
 
       if (error) {
         console.error('⚠️ Erro ao verificar reunião existente:', error);
@@ -433,27 +444,6 @@ export default function SolicitarReuniaoPage() {
     } else {
       // Após a última pergunta, vai para revisão
       setIsReviewStep(true);
-    }
-  };
-
-  // Função para avançar ao pressionar Enter
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-
-      // Não avançar se o campo está vazio
-      const answer = answers[currentQuestion.id];
-      if (!answer || (typeof answer === 'string' && !answer.trim())) {
-        return;
-      }
-
-      // Não avançar em textarea (permite quebra de linha com Shift+Enter)
-      if (currentQuestion.type === 'textarea') {
-        return;
-      }
-
-      // Avançar para próxima pergunta
-      handleNext();
     }
   };
 
@@ -617,23 +607,41 @@ export default function SolicitarReuniaoPage() {
       const formattedDate = new Date(year, month - 1, day).toISOString();
       console.error('📅 [SUBMIT] Data formatada:', formattedDate);
 
-      // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 2 minutos)
-      console.error('🔍 [SUBMIT] Verificando reuniões duplicadas via query direta...');
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      // Verificar se já existe uma reunião muito recente com os mesmos dados (últimos 5 minutos)
+      console.error('🔍 [SUBMIT] Verificando reuniões duplicadas...');
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
       const checkStart = performance.now();
 
-      // Query direta sem timeout artificial (usa pool fresh do Supabase)
-      const { data: recentMeetings, error: checkError } = await (supabase as any)
-        .from('meetings')
-        .select('id, email, meeting_date')
-        .eq('user_id', userIdToUse)
-        .eq('email', answers[2] as string)
-        .eq('meeting_date', formattedDate)
-        .gte('created_at', twoMinutesAgo);
+      // Timeout agressivo de 3s para verificação de duplicatas (não é crítico)
+      let recentMeetings: any[] | null = null;
+      let checkError: any = null;
 
-      const checkTime = performance.now() - checkStart;
-      console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
+      try {
+        const result = await Promise.race([
+          (supabase as any)
+            .from('meetings')
+            .select('id, email, meeting_date')
+            .eq('user_id', userIdToUse)
+            .eq('email', answers[2] as string)
+            .eq('meeting_date', formattedDate)
+            .gte('created_at', fiveMinutesAgo),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout verificação duplicatas após 3s')), 3000)
+          )
+        ]) as any;
+
+        recentMeetings = result.data;
+        checkError = result.error;
+
+        const checkTime = performance.now() - checkStart;
+        console.error(`⏱️ [SUBMIT] Verificação de duplicatas levou ${checkTime.toFixed(2)}ms`);
+      } catch (timeoutError: any) {
+        const checkTime = performance.now() - checkStart;
+        console.error(`⏰ [SUBMIT] TIMEOUT na verificação de duplicatas após ${checkTime.toFixed(2)}ms`);
+        console.error('⚠️ [SUBMIT] Pulando verificação de duplicatas e continuando...');
+        // Continuar sem verificar duplicatas (não é crítico)
+      }
 
       if (checkError) {
         console.error('⚠️ [SUBMIT] Erro ao verificar duplicatas (ignorando):', checkError);
@@ -644,7 +652,7 @@ export default function SolicitarReuniaoPage() {
         router.push("/solicitar-reuniao/confirmado");
         return;
       }
-      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada');
+      console.error('✅ [SUBMIT] Nenhuma duplicata encontrada (ou timeout - prosseguindo)');
 
       // Preparar dados para salvar
       console.error('📝 [SUBMIT] Preparando dados...');
@@ -751,7 +759,7 @@ export default function SolicitarReuniaoPage() {
       console.error('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
       // Não está logado - abrir dialog de autenticação
       setPendingSubmit(true);
-      setAuthDialogTab("login");
+      setAuthDialogTab("signup");
       setIsAuthDialogOpen(true);
       return;
     }
@@ -1078,7 +1086,6 @@ export default function SolicitarReuniaoPage() {
                       label={currentQuestion.placeholder || ""}
                       value={(answers[currentQuestion.id] as string) || ""}
                       onChange={(e) => handleAnswerChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
                       maxLength={100}
                       autoFocus
                     />
@@ -1095,7 +1102,6 @@ export default function SolicitarReuniaoPage() {
                       placeholder={currentQuestion.placeholder}
                       value={(answers[currentQuestion.id] as string) || ""}
                       onChange={(e) => handleAnswerChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
                       maxLength={100}
                       className="bg-transparent border-none rounded-none text-white text-base py-3 px-0 placeholder:text-white/30 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                       autoFocus
@@ -1127,7 +1133,6 @@ export default function SolicitarReuniaoPage() {
                         placeholder={selectedCountry.format || "(00) 00000-0000"}
                         value={(answers[currentQuestion.id] as string) || ""}
                         onChange={(e) => handleAnswerChange(e.target.value)}
-                        onKeyDown={handleKeyDown}
                         maxLength={(selectedCountry.maxLength || 11) + (selectedCountry.format?.replace(/X/g, "").length || 4)}
                         className="flex-1 bg-transparent border-none text-white text-base py-3 px-2 placeholder:text-white/30 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                         autoFocus

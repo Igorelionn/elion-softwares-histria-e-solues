@@ -17,7 +17,6 @@ interface AuthDialogProps {
   preventRedirect?: boolean
   redirectTo?: string
   onBeforeGoogleLogin?: () => void
-  onAuthSuccess?: (userId: string) => Promise<void>
 }
 
 export function AuthDialog({
@@ -26,10 +25,9 @@ export function AuthDialog({
   defaultTab = "login",
   preventRedirect = false,
   redirectTo,
-  onBeforeGoogleLogin,
-  onAuthSuccess
+  onBeforeGoogleLogin
 }: AuthDialogProps) {
-  const [activeTab, setActiveTab] = useState<"login" | "signup" | "reset">("login")
+  const [activeTab, setActiveTab] = useState<"login" | "signup" | "reset">(defaultTab)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -48,12 +46,10 @@ export function AuthDialog({
   // Reset password form state
   const [resetEmail, setResetEmail] = useState("")
 
-  // Update tab when defaultTab or isOpen changes
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(defaultTab)
-    }
-  }, [defaultTab, isOpen])
+  // Update tab when defaultTab changes
+  useState(() => {
+    setActiveTab(defaultTab)
+  })
 
   // Prevent body scroll when dialog is open
   useEffect(() => {
@@ -161,18 +157,6 @@ export function AuthDialog({
 
       setSuccess("Login realizado com sucesso!")
 
-      // Se há callback de sucesso, executá-lo
-      if (onAuthSuccess && data.user) {
-        try {
-          await onAuthSuccess(data.user.id)
-        } catch (callbackError: any) {
-          console.error('Erro no callback onAuthSuccess:', callbackError)
-          // Se o callback falhar (ex: usuário já tem reunião), não fechar o dialog
-          // O callback deve lidar com o redirecionamento
-          return
-        }
-      }
-
       if (!preventRedirect) {
         setTimeout(() => {
           handleClose()
@@ -249,28 +233,11 @@ export function AuthDialog({
       setSignupPassword("")
       setSignupConfirmPassword("")
 
-      // Se há callback de sucesso e usuário está confirmado, executá-lo
-      if (onAuthSuccess && authData.user && !needsEmailConfirmation) {
-        try {
-          await onAuthSuccess(authData.user.id)
-        } catch (callbackError: any) {
-          console.error('Erro no callback onAuthSuccess:', callbackError)
-          // Se o callback falhar (ex: usuário já tem reunião), não fechar o dialog
-          return
-        }
-      }
-
       if (!preventRedirect) {
-        if (needsEmailConfirmation) {
-          setTimeout(() => {
-            setActiveTab("login")
-            setSuccess("")
-          }, 2000)
-        } else {
-          setTimeout(() => {
-            handleClose()
-          }, 1500)
-        }
+        setTimeout(() => {
+          setActiveTab("login")
+          setSuccess("")
+        }, 2000)
       } else {
         // Com preventRedirect, fecha mais rápido pois o pai vai lidar
         setTimeout(() => {
@@ -361,17 +328,13 @@ export function AuthDialog({
           />
 
           {/* Dialog */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className={`relative w-full max-h-[88vh] bg-white border-2 border-gray-300 rounded-2xl shadow-2xl overflow-hidden ${
-                activeTab === "reset" 
-                  ? "max-w-[340px] sm:max-w-[520px] md:max-w-[580px]" 
-                  : "max-w-[320px] sm:max-w-[500px] md:max-w-[550px]"
-              }`}
+              className="relative w-full max-w-[340px] sm:max-w-md max-h-[85vh] bg-white border border-gray-200 rounded-3xl shadow-xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -385,34 +348,26 @@ export function AuthDialog({
               </button>
 
               {/* Content */}
-              <div className="p-4 sm:p-5 max-h-[88vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+              <div className="p-3 sm:p-5 md:p-6 max-h-[85vh] overflow-y-auto scrollbar-hide">
                 <div className="text-center mb-3">
                   <div className="flex justify-center mb-2">
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
-                      width={140}
-                      height={43}
-                      className={activeTab === "reset" ? "h-4 sm:h-5 w-auto" : "h-5 sm:h-6 w-auto"}
+                      width={120}
+                      height={37}
+                      className="h-5 w-auto"
                       priority
                     />
                   </div>
                   {activeTab !== "reset" && (
-                    <p className="text-gray-600 text-xs">
-                      Entre ou crie sua conta
+                    <p className="text-gray-600 text-sm">
+                      Entre ou crie sua conta para continuar
                     </p>
                   )}
                 </div>
 
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full" defaultValue="login">
-                  {/* Abas de navegação */}
-                  {activeTab !== "reset" && (
-                    <TabsList className="grid w-full grid-cols-2 mb-3">
-                      <TabsTrigger value="login" className="text-xs sm:text-sm cursor-pointer">Entrar</TabsTrigger>
-                      <TabsTrigger value="signup" className="text-xs sm:text-sm cursor-pointer">Cadastrar</TabsTrigger>
-                    </TabsList>
-                  )}
-
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full">
                   {/* Mensagens de erro/sucesso */}
                   <AnimatePresence mode="wait">
                     {error && (
@@ -438,17 +393,17 @@ export function AuthDialog({
                   </AnimatePresence>
 
                   {/* Login Tab */}
-                  <TabsContent value="login" className="mt-2 space-y-2">
+                  <TabsContent value="login" className="mt-3 space-y-2.5">
                     <motion.form
                       onSubmit={handleLogin}
-                      className="space-y-2"
+                      className="space-y-2.5"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.4, ease: "easeInOut" }}
                     >
-                      <div className="space-y-1.5">
-                        <Label htmlFor="login-email" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email" className="text-gray-700">
                           Email
                         </Label>
                         <div className="relative">
@@ -459,15 +414,15 @@ export function AuthDialog({
                             placeholder="seu@email.com"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="login-password" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password" className="text-gray-700">
                           Senha
                         </Label>
                         <div className="relative">
@@ -478,7 +433,7 @@ export function AuthDialog({
                             placeholder="Sua senha"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
@@ -525,7 +480,7 @@ export function AuthDialog({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end pt-1">
+                      <div className="flex items-center justify-end">
                         <button
                           type="button"
                           onClick={() => {
@@ -533,7 +488,7 @@ export function AuthDialog({
                             setError("")
                             setSuccess("")
                           }}
-                          className="text-xs sm:text-sm text-blue-800 hover:text-blue-900 transition-colors cursor-pointer"
+                          className="text-sm text-blue-800 hover:text-blue-900 transition-colors cursor-pointer"
                         >
                           Esqueceu sua senha?
                         </button>
@@ -541,7 +496,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -555,23 +510,23 @@ export function AuthDialog({
                       </Button>
                     </motion.form>
 
-                    <div className="relative my-4 sm:my-6">
+                    <div className="relative my-8">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-200"></div>
                       </div>
-                      <div className="relative flex justify-center text-xs sm:text-sm">
-                        <span className="bg-white px-3 sm:px-4 text-gray-500">Ou continue com</span>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="bg-white px-4 text-gray-500">Ou continue com</span>
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 sm:h-12 rounded-full cursor-pointer text-sm sm:text-base"
+                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-12 rounded-full cursor-pointer"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -592,7 +547,7 @@ export function AuthDialog({
                       Entrar com Google
                     </Button>
 
-                    <p className="text-center text-xs sm:text-sm text-gray-600 mt-4 sm:mt-6">
+                    <p className="text-center text-sm text-gray-600 mt-6">
                       Ainda não tem uma conta?{" "}
                       <button
                         type="button"
@@ -605,17 +560,17 @@ export function AuthDialog({
                   </TabsContent>
 
                   {/* Signup Tab */}
-                  <TabsContent value="signup" className="mt-2 space-y-2">
+                  <TabsContent value="signup" className="mt-3 space-y-2.5">
                     <motion.form
                       onSubmit={handleSignup}
-                      className="space-y-2"
+                      className="space-y-2.5"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.4, ease: "easeInOut" }}
                     >
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-name" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-name" className="text-gray-700">
                           Nome completo
                         </Label>
                         <div className="relative">
@@ -626,15 +581,15 @@ export function AuthDialog({
                             placeholder="Seu nome completo"
                             value={signupName}
                             onChange={(e) => setSignupName(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-email" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email" className="text-gray-700">
                           Email
                         </Label>
                         <div className="relative">
@@ -645,15 +600,15 @@ export function AuthDialog({
                             placeholder="seu@email.com"
                             value={signupEmail}
                             onChange={(e) => setSignupEmail(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-password" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password" className="text-gray-700">
                           Senha
                         </Label>
                         <div className="relative">
@@ -664,7 +619,7 @@ export function AuthDialog({
                             placeholder="Crie uma senha"
                             value={signupPassword}
                             onChange={(e) => setSignupPassword(e.target.value)}
-                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 pr-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                             minLength={6}
@@ -684,7 +639,7 @@ export function AuthDialog({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="w-5 h-5 sm:w-6 sm:h-6"
+                                  className="w-6 h-6"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   xmlns="http://www.w3.org/2000/svg"
@@ -699,7 +654,7 @@ export function AuthDialog({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="w-5 h-5 sm:w-6 sm:h-6"
+                                  className="w-6 h-6"
                                   viewBox="0 0 24 24"
                                   xmlns="http://www.w3.org/2000/svg"
                                   fill="none"
@@ -710,11 +665,11 @@ export function AuthDialog({
                             </AnimatePresence>
                           </button>
                         </div>
-                        <p className="text-[10px] sm:text-xs text-gray-500">Mínimo de 6 caracteres</p>
+                        <p className="text-xs text-gray-500">Mínimo de 6 caracteres</p>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="signup-confirm-password" className="text-gray-700 text-xs sm:text-sm">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-confirm-password" className="text-gray-700">
                           Confirmar senha
                         </Label>
                         <div className="relative">
@@ -725,7 +680,7 @@ export function AuthDialog({
                             placeholder="Confirme sua senha"
                             value={signupConfirmPassword}
                             onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-10 sm:h-11 shadow-none text-sm"
+                            className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 cursor-text focus:border-black focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 h-11 shadow-none"
                             required
                             disabled={isLoading}
                           />
@@ -734,7 +689,7 @@ export function AuthDialog({
 
                       <Button
                         type="submit"
-                        className="w-full bg-black text-white hover:bg-gray-800 h-10 sm:h-12 cursor-pointer mt-3 text-sm sm:text-base"
+                        className="w-full bg-black text-white hover:bg-gray-800 h-12 cursor-pointer mt-4"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -748,23 +703,23 @@ export function AuthDialog({
                       </Button>
                     </motion.form>
 
-                    <div className="relative my-4 sm:my-6">
+                    <div className="relative my-8">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-200"></div>
                       </div>
-                      <div className="relative flex justify-center text-xs sm:text-sm">
-                        <span className="bg-white px-3 sm:px-4 text-gray-500">Ou continue com</span>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="bg-white px-4 text-gray-500">Ou continue com</span>
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 sm:h-12 rounded-full cursor-pointer text-sm sm:text-base"
+                      className="w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-12 rounded-full cursor-pointer"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -785,7 +740,7 @@ export function AuthDialog({
                       Cadastrar com Google
                     </Button>
 
-                    <p className="text-[10px] sm:text-xs text-gray-500 text-center mt-3 sm:mt-4 leading-relaxed">
+                    <p className="text-xs text-gray-500 text-center mt-6">
                       Ao criar uma conta, você concorda com nossos{" "}
                       <a href="/termos-de-servico" target="_blank" className="text-gray-700 hover:text-black underline cursor-pointer">
                         Termos de Serviço
@@ -797,7 +752,7 @@ export function AuthDialog({
                       .
                     </p>
 
-                    <p className="text-center text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4">
+                    <p className="text-center text-sm text-gray-600 mt-4">
                       Já tem uma conta?{" "}
                       <button
                         type="button"
