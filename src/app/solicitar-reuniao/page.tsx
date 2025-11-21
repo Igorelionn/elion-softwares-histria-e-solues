@@ -866,7 +866,7 @@ export default function SolicitarReuniaoPage() {
           }}
           defaultTab={authDialogTab}
           preventRedirect={true}
-          redirectTo={`${window.location.origin}/solicitar-reuniao`}
+          redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/solicitar-reuniao` : '/solicitar-reuniao'}
           onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
         />
         <motion.div
