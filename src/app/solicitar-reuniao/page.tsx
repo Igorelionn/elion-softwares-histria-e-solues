@@ -238,9 +238,11 @@ export default function SolicitarReuniaoPage() {
         // Verificar se já tem reunião agendada
         await checkExistingMeeting(session.user.id);
       } else {
-        // Usuário não logado - permitir preencher formulário
+        // Usuário não logado - mostrar popup de login/cadastro
         setUserId(null);
         setIsCheckingMeeting(false);
+        setAuthDialogTab("signup");
+        setIsAuthDialogOpen(true);
       }
     } catch (error) {
       console.error('Erro ao verificar usuário:', error);
@@ -849,9 +851,24 @@ export default function SolicitarReuniaoPage() {
   };
 
   // Mostrar tela de loading ou mensagem de reunião existente
-  if (isCheckingMeeting || hasExistingMeeting) {
+  if (isCheckingMeeting || hasExistingMeeting || (!userId && isAuthDialogOpen)) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
+        <AuthDialog
+          isOpen={isAuthDialogOpen}
+          onClose={() => {
+            setIsAuthDialogOpen(false);
+            setPendingSubmit(false);
+            // Se não estiver logado e fechar o dialog, redirecionar para home
+            if (!userId) {
+              router.push("/");
+            }
+          }}
+          defaultTab={authDialogTab}
+          preventRedirect={true}
+          redirectTo={`${window.location.origin}/solicitar-reuniao`}
+          onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
+        />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -884,6 +901,20 @@ export default function SolicitarReuniaoPage() {
                 />
               </div>
             </>
+          ) : !userId && isAuthDialogOpen ? (
+            <>
+              <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto">
+                <Calendar className="w-10 h-10 text-white" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl md:text-3xl font-medium text-white">
+                  Bem-vindo(a)!
+                </h1>
+                <p className="text-white/60">
+                  Faça login ou crie uma conta para agendar sua reunião
+                </p>
+              </div>
+            </>
           ) : null}
         </motion.div>
       </div>
@@ -892,18 +923,6 @@ export default function SolicitarReuniaoPage() {
 
   return (
     <>
-      <AuthDialog
-        isOpen={isAuthDialogOpen}
-        onClose={() => {
-          setIsAuthDialogOpen(false);
-          setPendingSubmit(false);
-        }}
-        defaultTab={authDialogTab}
-        preventRedirect={true}
-        redirectTo={`${window.location.origin}/solicitar-reuniao`}
-        onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
-      />
-
       <div className="min-h-screen bg-black flex flex-col">
         {/* Header com botão voltar */}
         <div className="absolute top-8 left-8 z-50">
