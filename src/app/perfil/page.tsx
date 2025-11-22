@@ -46,7 +46,7 @@ interface CachedProfile {
 // 🔄 ATUALIZAÇÃO EM BACKGROUND: DESABILITADA (evitar queries problemáticas na tabela users)
 const updateFromDatabaseInBackground = async (session: any) => {
     if (!session?.user?.id) return
-    
+
     // NÃO fazer query no banco para evitar timeout
     // A tabela users tem problemas de RLS que causam recursão infinita
     // Vamos trabalhar apenas com user_metadata
@@ -318,9 +318,9 @@ export default function PerfilPage() {
                 // 🔄 Query em BACKGROUND (não bloqueia, apenas atualiza dados)
                 // 🚀 OTIMIZAÇÃO RADICAL: Não fazer query na tabela users, trabalhar apenas com user_metadata
                 // A tabela users tem problemas de RLS que causam timeout. Vamos evitar totalmente.
-                
+
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ Usando APENAS user_metadata - evitando query problemática')
-                
+
                 // Criar "profile" a partir dos dados que já temos
                 const profile = {
                     id: session.user.id,
@@ -330,9 +330,9 @@ export default function PerfilPage() {
                     role: session.user.user_metadata?.role || 'user',
                     updated_at: new Date().toISOString()
                 }
-                
+
                 const profileError = null
-                
+
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ Profile montado do user_metadata (0ms - instant)')
 
                 // NÃO fazer query no banco para evitar timeout
