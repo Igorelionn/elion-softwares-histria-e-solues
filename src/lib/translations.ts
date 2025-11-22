@@ -37,8 +37,8 @@ export const translations = {
       paragraph4: 'Cada projeto é uma obra de engenharia digital, criteriosamente selecionada para assegurar o mais elevado padrão de qualidade e desenvolvida sob medida, refletindo nossa convicção de que tecnologia e propósito devem caminhar em harmonia absoluta.',
     },
     developments: {
-      title: 'Desenvolvimentos',
-      subtitle: 'que transformam ideias em realidade.',
+      title: 'Engenharia de Software Especializada',
+      subtitle: 'Soluções tecnológicas orientadas a resultados e excelência operacional.',
       auction: {
         title: 'Solução para administração de leilões',
         description: 'Software orquestrado a fim de proporcionar excelência administrativa em seus próximos leilões.',
@@ -297,7 +297,7 @@ export const translations = {
     },
     developments: {
       title: 'Developments',
-      subtitle: 'that transform ideas into reality.',
+      subtitle: 'digital architectures that materialize business objectives.',
       auction: {
         title: 'Auction management solution',
         description: 'Orchestrated software to provide administrative excellence in your next auctions.',
@@ -556,7 +556,7 @@ export const translations = {
     },
     developments: {
       title: 'Desarrollos',
-      subtitle: 'que transforman ideas en realidad.',
+      subtitle: 'arquitecturas digitales que materializan objetivos de negocio.',
       auction: {
         title: 'Solución para administración de subastas',
         description: 'Software orquestado para proporcionar excelencia administrativa en sus próximas subastas.',
@@ -814,7 +814,7 @@ export const translations = {
     },
     developments: {
       title: 'Développements',
-      subtitle: 'qui transforment les idées en réalité.',
+      subtitle: 'architectures numériques qui matérialisent les objectifs commerciaux.',
       auction: {
         title: 'Solution pour l\'administration des enchères',
         description: 'Logiciel orchestré pour fournir l\'excellence administrative dans vos prochaines enchères.',
@@ -1076,7 +1076,7 @@ export const translations = {
     },
     developments: {
       title: 'Entwicklungen',
-      subtitle: 'die Ideen in Realität verwandeln.',
+      subtitle: 'digitale Architekturen, die Geschäftsziele materialisieren.',
       auction: {
         title: 'Lösung für die Auktionsverwaltung',
         description: 'Orchestrierte Software zur Bereitstellung administrativer Exzellenz in Ihren nächsten Auktionen.',
@@ -1308,7 +1308,7 @@ export const translations = {
     },
     developments: {
       title: 'Sviluppi',
-      subtitle: 'che trasformano le idee in realtà.',
+      subtitle: 'architetture digitali che materializzano obiettivi di business.',
       auction: {
         title: 'Soluzione per l\'amministrazione delle aste',
         description: 'Software orchestrato per fornire eccellenza amministrativa nelle tue prossime aste.',
@@ -1540,7 +1540,7 @@ export const translations = {
     },
     developments: {
       title: '开发项目',
-      subtitle: '将想法变为现实。',
+      subtitle: '将业务目标具体化的数字架构。',
       auction: {
         title: '拍卖管理解决方案',
         description: '为您的下一次拍卖提供卓越行政管理的编排软件。',
@@ -1772,7 +1772,7 @@ export const translations = {
     },
     developments: {
       title: '開発',
-      subtitle: 'アイデアを現実に変える。',
+      subtitle: 'ビジネス目標を具現化するデジタルアーキテクチャ。',
       auction: {
         title: 'オークション管理ソリューション',
         description: '次のオークションで優れた管理を提供するためにオーケストレーションされたソフトウェア。',
