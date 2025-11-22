@@ -349,7 +349,7 @@ export default function PerfilPage() {
                 try {
                     // OTIMIZADO: Query com timeout de 2s
                     if (FORCE_LOGS) console.error('[PERFIL] 🔍 Executando query com timeout de 2s...')
-                    
+
                     const profilePromise = supabase
                         .from('users')
                         .select('id, full_name, company, avatar_url, role, updated_at')
@@ -372,7 +372,7 @@ export default function PerfilPage() {
                     } else {
                         // Estratégia 2: Query simplificada como fallback com timeout
                         if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentativa 2: Query simplificada (fallback) com timeout...')
-                        
+
                         const fallbackProfilePromise = supabase
                             .from('users')
                             .select('id, full_name, company, avatar_url')
@@ -424,7 +424,7 @@ export default function PerfilPage() {
 
                         try {
                             if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentando query novamente com timeout...')
-                            
+
                             const retryProfilePromise = supabase
                                 .from('users')
                                 .select('id, full_name, company, avatar_url, role, updated_at')

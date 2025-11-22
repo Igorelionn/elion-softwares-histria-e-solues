@@ -559,7 +559,7 @@ export default function SolicitarReuniaoPage() {
       setAvailableTimeSlots(available);
     } catch (error: any) {
       const queryTime = performance.now() - startTime;
-      
+
       if (error?.message?.includes('timeout')) {
         console.error(`⏱️ [TIME_SLOTS] Timeout após ${queryTime.toFixed(2)}ms - mostrando todos os horários`);
       } else {
@@ -567,7 +567,7 @@ export default function SolicitarReuniaoPage() {
         console.error('❌ [TIME_SLOTS] Mensagem:', error?.message);
         console.error('❌ [TIME_SLOTS] Stack:', error?.stack);
       }
-      
+
       // Em caso de erro ou timeout, mostrar todos os horários (estratégia fail-safe)
       setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
     } finally {

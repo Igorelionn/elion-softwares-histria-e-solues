@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic'
 import { HeroSection } from '@/components/ui/hero-section-1'
+import { SectionTransition } from '@/components/ui/section-transition'
 
 // Lazy load seções abaixo do fold para melhor performance
 const AboutSection = dynamic(() => import('@/components/ui/about-section').then(mod => ({ default: mod.AboutSection })), {
@@ -26,8 +27,10 @@ export default function Home() {
   return (
     <div className="relative min-h-screen">
       <HeroSection />
-      <AboutSection />
-      <DevelopmentsSection />
+      <SectionTransition>
+        <AboutSection />
+        <DevelopmentsSection />
+      </SectionTransition>
       <TestimonialsSection />
       <ScheduleSection />
       <Footer />
