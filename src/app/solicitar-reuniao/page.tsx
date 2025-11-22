@@ -231,20 +231,12 @@ export default function SolicitarReuniaoPage() {
     console.error('👤 [CHECK_USER] Iniciando verificação de usuário');
 
     try {
-      console.error('🔐 [CHECK_USER] Chamando supabase.auth.getSession() com timeout de 5s...');
+      // SOLUÇÃO OTIMIZADA: Usar helper que tenta localStorage primeiro, depois getUser()
+      console.error('🔐 [CHECK_USER] Usando getSessionOptimized...');
 
-      // TIMEOUT FORÇADO: getSession tem 5s para responder, senão abortamos
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('getSession timeout após 5s')), 5000)
-      );
-
-      const { data: { session }, error } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]);
-
-      console.error('✅ [CHECK_USER] getSession() retornou:', { hasSession: !!session, hasError: !!error });
+      // Importar a função otimizada
+      const { getSessionOptimized } = await import('@/lib/auth-helpers');
+      const { user, error } = await getSessionOptimized(2000);
 
       if (error) {
         console.error('❌ [CHECK_USER] Erro ao verificar sessão:', error);
@@ -252,11 +244,12 @@ export default function SolicitarReuniaoPage() {
         return;
       }
 
-      if (session?.user) {
-        console.error('✅ [CHECK_USER] Usuário logado, ID:', session.user.id);
-        setUserId(session.user.id);
+      // Processar resultado
+      if (user) {
+        console.error('✅ [CHECK_USER] Usuário logado, ID:', user.id);
+        setUserId(user.id);
         console.error('📞 [CHECK_USER] Chamando checkExistingMeeting...');
-        await checkExistingMeeting(session.user.id);
+        await checkExistingMeeting(user.id);
         console.error('✅ [CHECK_USER] checkExistingMeeting finalizado');
       } else {
         console.error('ℹ️ [CHECK_USER] Usuário não logado');
@@ -265,25 +258,6 @@ export default function SolicitarReuniaoPage() {
       }
     } catch (error: any) {
       console.error('❌ [CHECK_USER] Erro crítico:', error);
-
-      // Se foi timeout do getSession, tentar fallback
-      if (error?.message?.includes('getSession timeout')) {
-        console.error('⚠️ [CHECK_USER] getSession travou - usando fallback');
-
-        // Fallback: tentar getUserSession que é mais leve
-        try {
-          const user = (await supabase.auth.getUser()).data.user;
-          if (user) {
-            console.error('✅ [CHECK_USER] Fallback funcionou! User ID:', user.id);
-            setUserId(user.id);
-            await checkExistingMeeting(user.id);
-            return;
-          }
-        } catch (fallbackError) {
-          console.error('❌ [CHECK_USER] Fallback também falhou:', fallbackError);
-        }
-      }
-
       setIsCheckingMeeting(false);
     }
   };

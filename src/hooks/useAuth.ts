@@ -28,14 +28,14 @@ export function useAuth() {
       const { data: blacklistData, error: blacklistError } = await (supabase
         // @ts-ignore - is_user_in_blacklist RPC function exists in database
         .rpc('is_user_in_blacklist', { check_user_id: userId }) as unknown as Promise<{ data: { blacklisted: boolean } | null; error: any }>)
-      
+
       if (!blacklistError && blacklistData && blacklistData.blacklisted === true) {
         ')
         setIsBlocked(true)
-        
+
         // Deslogar IMEDIATAMENTE
         await supabase.auth.signOut()
-        
+
         // Redirecionar para home
         router.push('/')
         return true
@@ -45,14 +45,14 @@ export function useAuth() {
       const { data: existsData, error: existsError } = await (supabase
         // @ts-ignore - check_user_exists RPC function exists in database
         .rpc('check_user_exists', { user_id_param: userId }) as unknown as Promise<{ data: { deleted: boolean } | null; error: any }>)
-      
+
       if (!existsError && existsData && existsData.deleted === true) {
         ')
         setIsBlocked(true)
-        
+
         // Deslogar usuário deletado IMEDIATAMENTE
         await supabase.auth.signOut()
-        
+
         // Redirecionar para home
         router.push('/')
         return true
@@ -61,15 +61,15 @@ export function useAuth() {
       // 3. Verificar se o usuário está bloqueado
       const { data, error } = await (supabase
         // @ts-ignore - check_user_can_login RPC function exists in database
-        .rpc('check_user_can_login', { user_id_param: userId }) as unknown as Promise<{ 
-          data: { 
+        .rpc('check_user_can_login', { user_id_param: userId }) as unknown as Promise<{
+          data: {
             is_blocked: boolean
             blocked_reason?: string
             blocked_at?: string
           } | null
-          error: any 
+          error: any
         }>)
-      
+
       if (error) {
         console.error('Erro ao verificar bloqueio:', error)
         return false
@@ -85,15 +85,15 @@ export function useAuth() {
           blocked_by_email: null,
           blocked_by_name: null
         })
-        
+
         // Deslogar usuário bloqueado IMEDIATAMENTE
         await supabase.auth.signOut()
-        
+
         // Redirecionar para página de bloqueio
         router.push('/conta-bloqueada')
         return true
       }
-      
+
       setIsBlocked(false)
       return false
     } catch (err) {
@@ -103,21 +103,23 @@ export function useAuth() {
   }
 
   useEffect(() => {
-    // Verificar sessão inicial
+    // Verificar sessão inicial - OTIMIZADO
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
+        // Importar dinamicamente para evitar problemas de SSR
+        const { getSessionOptimized } = await import('@/lib/auth-helpers')
+        const { user, error: sessionError } = await getSessionOptimized(2000)
+
         if (sessionError) {
           console.error('Error getting session:', sessionError)
           setError(sessionError.message)
         }
-        
-        if (session?.user) {
+
+        if (user) {
           // Verificar se o usuário está bloqueado
-          const blocked = await checkUserBlock(session.user.id)
+          const blocked = await checkUserBlock(user.id)
           if (!blocked) {
-            setUser(session.user)
+            setUser(user)
           }
         } else {
           setUser(null)
@@ -135,7 +137,7 @@ export function useAuth() {
     // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-                
+
         if (session?.user) {
           // Verificar bloqueio ao trocar de estado
           const blocked = await checkUserBlock(session.user.id)
@@ -145,7 +147,7 @@ export function useAuth() {
         } else {
           setUser(null)
         }
-        
+
         setLoading(false)
       }
     )
@@ -157,13 +159,15 @@ export function useAuth() {
         if (window.location.pathname === '/admin') {
           return
         }
-        
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (session?.user) {
-          const blocked = await checkUserBlock(session.user.id)
+
+        // OTIMIZADO: Usar função otimizada
+        const { getSessionOptimized } = await import('@/lib/auth-helpers')
+        const { user } = await getSessionOptimized(2000)
+
+        if (user) {
+          const blocked = await checkUserBlock(user.id)
           if (!blocked) {
-            setUser(session.user)
+            setUser(user)
           }
         } else {
           setUser(null)
@@ -177,13 +181,15 @@ export function useAuth() {
       if (window.location.pathname === '/admin') {
         return
       }
-      
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        const blocked = await checkUserBlock(session.user.id)
+
+      // OTIMIZADO: Usar função otimizada
+      const { getSessionOptimized } = await import('@/lib/auth-helpers')
+      const { user } = await getSessionOptimized(2000)
+
+      if (user) {
+        const blocked = await checkUserBlock(user.id)
         if (!blocked) {
-          setUser(session.user)
+          setUser(user)
         }
       } else {
         setUser(null)

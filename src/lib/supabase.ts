@@ -16,27 +16,34 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     // Timeout de 8s para operações de auth (evita travamento)
     flowType: 'pkce',
     debug: false,
+    // Reduzir tempo de detecção de sessão
+    storageKey: `sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`,
   },
   global: {
     headers: {
       'x-client-info': 'elion-softwares-web',
+      // Adicionar keep-alive para evitar stale connections
+      'Connection': 'keep-alive',
     },
-    // Timeout global de 10s para todas as requisições REST
+    // Timeout global de 5s para todas as requisições REST (reduzido de 10s)
     fetch: async (url, options = {}) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      // Timeout reduzido para 5s - mais rápido para detectar problemas
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       try {
         const response = await fetch(url, {
           ...options,
           signal: controller.signal,
+          // Adicionar keep-alive nas requisições
+          keepalive: true,
         });
         clearTimeout(timeoutId);
         return response;
       } catch (error: any) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-          console.error('🚫 [SUPABASE] Request timeout após 10s:', url);
+          console.error('🚫 [SUPABASE] Request timeout após 5s:', url);
           throw new Error('Request timeout - a conexão demorou muito para responder');
         }
         throw error;
