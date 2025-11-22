@@ -113,6 +113,9 @@ ${t.developments.subtitle}`}
           className="w-full xl:flex-[1.35] xl:max-w-3xl order-first xl:order-last"
         >
           <VideoPlayer src="https://15b1vmaomz9x23vo.public.blob.vercel-storage.com/Sistema%20leil%C3%A3o.mp4" />
+          <p className="mt-4 text-xs md:text-sm text-white/60 text-center md:text-left px-2 leading-relaxed">
+            {t.developments.auction.videoDescription}
+          </p>
         </AnimatedGroup>
         
         {/* Checklist - segunda no mobile/iPad/iPad Pro, lado esquerdo no desktop */}
