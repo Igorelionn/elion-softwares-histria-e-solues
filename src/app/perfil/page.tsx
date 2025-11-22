@@ -348,10 +348,10 @@ export default function PerfilPage() {
                     if (FORCE_LOGS) console.error('[PERFIL] 🔍 Executando query com timeout de 3s...')
 
                     const queryPromise = supabase
-                        .from('users')
+                    .from('users')
                         .select('id, full_name, company, avatar_url, role, updated_at')
-                        .eq('id', session.user.id)
-                        .maybeSingle()
+                    .eq('id', session.user.id)
+                    .maybeSingle()
 
                     const timeoutPromise = new Promise<never>((_, reject) =>
                         setTimeout(() => reject(new Error('Query profile timeout após 3s')), 3000)
@@ -360,7 +360,7 @@ export default function PerfilPage() {
                     const result = await Promise.race([queryPromise, timeoutPromise])
 
                     if (result.data) {
-                        profile = result.data
+                    profile = result.data
                         profileError = null
                         if (FORCE_LOGS) console.error('[PERFIL] ✅ Query direta bem-sucedida')
                     } else {

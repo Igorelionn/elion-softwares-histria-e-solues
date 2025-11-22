@@ -682,17 +682,17 @@ export default function ReuniõesAgendadasPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                {(searchTerm || statusFilter !== 'all') && (
-                                    <button
-                                        onClick={() => {
-                                            setSearchTerm('')
-                                            setStatusFilter('all')
-                                        }}
-                                        className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition-colors font-medium"
-                                    >
-                                        Limpar filtros
-                                    </button>
-                                )}
+                            {(searchTerm || statusFilter !== 'all') && (
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('')
+                                        setStatusFilter('all')
+                                    }}
+                                    className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition-colors font-medium"
+                                >
+                                    Limpar filtros
+                                </button>
+                            )}
                                 {/* Toggle View Mode */}
                                 {statusFilter === 'confirmed' && (
                                     <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1">

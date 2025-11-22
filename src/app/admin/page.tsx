@@ -1651,160 +1651,431 @@ export default function AdminPage() {
           {/* Calendar Tab */}
           <AnimatePresence mode="wait">
             {activeTab === 'calendar' && (
-              <TabsContent value="calendar" className="space-y-4" forceMount>
+              <TabsContent value="calendar" className="space-y-6" forceMount>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="space-y-6"
                 >
+                  {/* Estatísticas do Mês */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Card className="border border-gray-200 bg-white">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Reuniões este mês</p>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {meetings.filter(m => 
+                                m.status === 'confirmed' && 
+                                isSameMonth(new Date(m.meeting_date), currentMonth)
+                              ).length}
+                            </p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
+                            <Calendar className="h-6 w-6 text-blue-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border border-gray-200 bg-white">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Pendentes</p>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {meetings.filter(m => 
+                                m.status === 'pending' && 
+                                isSameMonth(new Date(m.meeting_date), currentMonth)
+                              ).length}
+                            </p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-yellow-50 flex items-center justify-center">
+                            <Clock className="h-6 w-6 text-yellow-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border border-gray-200 bg-white">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Concluídas</p>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {meetings.filter(m => 
+                                m.status === 'completed' && 
+                                isSameMonth(new Date(m.meeting_date), currentMonth)
+                              ).length}
+                            </p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center">
+                            <CheckCircle className="h-6 w-6 text-green-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
                   <Card className="border border-gray-200 bg-white rounded-lg">
                     <CardHeader className="border-b border-gray-100 pb-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                           <CardTitle className="text-lg font-semibold text-gray-900">Calendário de Reuniões</CardTitle>
                           <CardDescription className="text-sm text-gray-500 mt-1">
-                            Visualize todas as reuniões confirmadas
+                            Visualize e gerencie todas as reuniões confirmadas
                           </CardDescription>
+                        </div>
+                        
+                        {/* Busca Rápida */}
+                        <div className="relative w-full sm:w-64">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Buscar reunião..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-9 h-9 text-sm"
+                          />
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-6">
                       {/* Cabeçalho do Calendário */}
-                      <div className="flex items-center justify-between mb-6">
-                        <button
-                          onClick={goToPreviousMonth}
-                          className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
-                          aria-label="Mês anterior"
-                        >
-                          <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
-                        </h2>
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
                           <button
-                            onClick={goToToday}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors"
+                            onClick={goToPreviousMonth}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900"
+                            aria-label="Mês anterior"
                           >
-                            Hoje
+                            <ChevronLeft className="w-5 h-5" />
                           </button>
+                          <h2 className="text-xl font-bold text-gray-900 min-w-[200px] text-center">
+                            {format(currentMonth, 'MMMM yyyy', { locale: ptBR }).charAt(0).toUpperCase() + format(currentMonth, 'MMMM yyyy', { locale: ptBR }).slice(1)}
+                          </h2>
                           <button
                             onClick={goToNextMonth}
-                            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900"
                             aria-label="Próximo mês"
                           >
                             <ChevronRight className="w-5 h-5" />
                           </button>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={goToToday}
+                            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                          >
+                            <Calendar className="w-4 h-4 inline mr-2" />
+                            Ir para Hoje
+                          </button>
+                          {searchTerm && (
+                            <button
+                              onClick={() => setSearchTerm('')}
+                              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                            >
+                              Limpar busca
+                            </button>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Dias da Semana */}
-                      <div className="grid grid-cols-7 text-center text-sm font-medium text-gray-500 mb-4">
-                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                          <div key={day} className="py-2">
-                            {day}
+                      {/* Verificar se há reuniões neste mês */}
+                      {meetings.filter(m => 
+                        m.status === 'confirmed' && 
+                        isSameMonth(new Date(m.meeting_date), currentMonth)
+                      ).length === 0 ? (
+                        <div className="py-16 text-center">
+                          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Calendar className="w-10 h-10 text-gray-400" />
                           </div>
-                        ))}
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            Nenhuma reunião confirmada neste mês
+                          </h3>
+                          <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                            Não há reuniões confirmadas agendadas para {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}.
+                          </p>
+                          <div className="flex items-center justify-center gap-3">
+                            <Button
+                              onClick={() => setActiveTab('meetings')}
+                              variant="outline"
+                              className="text-sm"
+                            >
+                              Ver todas as reuniões
+                            </Button>
+                            <Button
+                              onClick={goToToday}
+                              className="text-sm bg-gray-900 hover:bg-gray-800"
+                            >
+                              Ir para o mês atual
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Dias da Semana */}
+                          <div className="grid grid-cols-7 text-center text-xs font-semibold text-gray-600 mb-3">
+                            {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day) => (
+                              <div key={day} className="py-3">
+                                {day}
+                              </div>
+                            ))}
+                          </div>
+
+                      {/* Legenda */}
+                      <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+                        <span className="text-xs font-medium text-gray-500">Tipos de projeto:</span>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
+                          <span className="text-xs text-gray-600">Website</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-purple-500"></div>
+                          <span className="text-xs text-gray-600">E-commerce</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-green-500"></div>
+                          <span className="text-xs text-gray-600">App Mobile</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-orange-500"></div>
+                          <span className="text-xs text-gray-600">Sistema Web</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-pink-500"></div>
+                          <span className="text-xs text-gray-600">Consultoria</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-gray-500"></div>
+                          <span className="text-xs text-gray-600">Outro</span>
+                        </div>
                       </div>
 
                       {/* Grid do Calendário */}
-                      <div className="grid grid-cols-7 gap-1">
+                      <div className="grid grid-cols-7 gap-2">
                         {getDaysInMonth().map((day, index) => {
                           const dayMeetings = getMeetingsForDay(day.date)
                           const isToday = isSameDay(day.date, new Date())
                           const isSelected = selectedCalendarDate && isSameDay(day.date, selectedCalendarDate)
+                          
+                          const getProjectColor = (projectType: string) => {
+                            const type = projectType.toLowerCase()
+                            if (type.includes('website') || type.includes('site')) return 'bg-blue-500'
+                            if (type.includes('e-commerce') || type.includes('loja')) return 'bg-purple-500'
+                            if (type.includes('app') || type.includes('mobile')) return 'bg-green-500'
+                            if (type.includes('sistema') || type.includes('web')) return 'bg-orange-500'
+                            if (type.includes('consultoria')) return 'bg-pink-500'
+                            return 'bg-gray-500'
+                          }
 
                           return (
-                            <div
+                            <motion.div
                               key={index}
+                              whileHover={dayMeetings.length > 0 ? { scale: 1.02 } : {}}
+                              whileTap={dayMeetings.length > 0 ? { scale: 0.98 } : {}}
                               className={cn(
-                                'relative h-28 p-1.5 rounded-lg flex flex-col overflow-hidden',
-                                day.isCurrentMonth ? 'bg-gray-50' : 'bg-gray-25 text-gray-400',
-                                isToday && 'ring-2 ring-black',
-                                dayMeetings.length > 0 && 'cursor-pointer hover:bg-gray-100 transition-colors',
-                                isSelected && 'bg-blue-50 ring-2 ring-blue-400'
+                                'relative min-h-[100px] p-2 rounded-xl flex flex-col transition-all duration-200 border',
+                                day.isCurrentMonth 
+                                  ? 'bg-white border-gray-200' 
+                                  : 'bg-gray-50 border-gray-100 opacity-50',
+                                isToday && 'ring-2 ring-black border-black',
+                                dayMeetings.length > 0 && 'cursor-pointer hover:shadow-md hover:border-gray-300',
+                                isSelected && 'bg-blue-50 border-blue-400 ring-2 ring-blue-400 shadow-lg'
                               )}
                               onClick={() => dayMeetings.length > 0 && handleDayClick(day.date)}
                             >
-                              <span
-                                className={cn(
-                                  'text-xs font-medium self-end',
-                                  day.isCurrentMonth ? 'text-gray-800' : 'text-gray-400',
-                                  isToday && 'text-black'
+                              {/* Número do Dia */}
+                              <div className="flex items-center justify-between mb-2">
+                                <span
+                                  className={cn(
+                                    'text-sm font-semibold',
+                                    day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400',
+                                    isToday && 'w-7 h-7 bg-black text-white rounded-full flex items-center justify-center text-xs'
+                                  )}
+                                >
+                                  {format(day.date, 'd')}
+                                </span>
+                                {dayMeetings.length > 0 && (
+                                  <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                    {dayMeetings.length}
+                                  </span>
                                 )}
-                              >
-                                {format(day.date, 'd')}
-                              </span>
-                              <div className="flex-1 overflow-y-auto mt-1 space-y-0.5 scrollbar-hide">
-                                {dayMeetings.slice(0, 2).map((meeting) => (
+                              </div>
+
+                              {/* Reuniões */}
+                              <div className="flex-1 space-y-1 overflow-hidden">
+                                {dayMeetings.slice(0, 3).map((meeting) => (
                                   <div
                                     key={meeting.id}
-                                    className="bg-blue-200 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-sm truncate"
+                                    className={cn(
+                                      'text-[10px] font-medium text-white px-2 py-1 rounded-md truncate shadow-sm',
+                                      getProjectColor(meeting.project_type)
+                                    )}
+                                    title={`${meeting.project_type} - ${format(new Date(meeting.meeting_date), 'HH:mm')}`}
                                   >
-                                    {meeting.project_type}
+                                    {format(new Date(meeting.meeting_date), 'HH:mm')} • {meeting.project_type}
                                   </div>
                                 ))}
-                                {dayMeetings.length > 2 && (
-                                  <div className="text-[10px] text-gray-600 px-1.5 py-0.5">
-                                    +{dayMeetings.length - 2} mais
+                                {dayMeetings.length > 3 && (
+                                  <div className="text-[10px] text-gray-500 font-medium px-2 py-1">
+                                    +{dayMeetings.length - 3} mais
                                   </div>
                                 )}
                               </div>
-                            </div>
+                            </motion.div>
                           )
                         })}
                       </div>
 
-                      {/* Detalhes do Dia Selecionado */}
-                      {selectedCalendarDate && getMeetingsForDay(selectedCalendarDate).length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          className="mt-8 pt-6 border-t border-gray-200"
-                        >
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                            Reuniões em {format(selectedCalendarDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                          </h3>
-                          <div className="space-y-4">
-                            {getMeetingsForDay(selectedCalendarDate).map((meeting) => (
-                              <div key={meeting.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                                <div className="flex items-start justify-between gap-4 mb-3">
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-900 mb-1">{meeting.project_type}</p>
-                                    <p className="text-xs text-gray-600 flex items-center gap-1.5">
-                                      <Clock className="w-3 h-3" />
-                                      {format(new Date(meeting.meeting_date), 'HH:mm', { locale: ptBR })}
-                                    </p>
-                                  </div>
-                                  <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-700">
-                                    Confirmada
-                                  </span>
-                                </div>
-                                <div className="space-y-1.5 text-xs text-gray-600 mb-3">
-                                  <p className="flex items-center gap-1.5">
-                                    <Mail className="w-3 h-3" />
-                                    {meeting.email}
-                                  </p>
-                                  <p className="flex items-center gap-1.5">
-                                    <Phone className="w-3 h-3" />
-                                    {meeting.phone}
-                                  </p>
-                                </div>
-                                <p className="text-xs text-gray-600 mb-3">
-                                  {meeting.project_description}
+                      {/* Detalhes do Dia Selecionado - Melhorado */}
+                      <AnimatePresence>
+                        {selectedCalendarDate && getMeetingsForDay(selectedCalendarDate).length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="mt-8 pt-8 border-t-2 border-gray-200"
+                          >
+                            <div className="flex items-center justify-between mb-6">
+                              <div>
+                                <h3 className="text-xl font-bold text-gray-900">
+                                  {format(selectedCalendarDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {getMeetingsForDay(selectedCalendarDate).length} {getMeetingsForDay(selectedCalendarDate).length === 1 ? 'reunião' : 'reuniões'} agendada{getMeetingsForDay(selectedCalendarDate).length === 1 ? '' : 's'}
                                 </p>
-                                <div className="flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-gray-200">
-                                  <span>Prazo: {meeting.timeline}</span>
-                                  <span>•</span>
-                                  <span>Orçamento: {meeting.budget}</span>
-                                </div>
                               </div>
-                            ))}
-                          </div>
-                        </motion.div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedCalendarDate(null)}
+                                className="text-gray-500 hover:text-gray-900"
+                              >
+                                Fechar
+                              </Button>
+                            </div>
+
+                            <div className="grid gap-4">
+                              {getMeetingsForDay(selectedCalendarDate).map((meeting, idx) => {
+                                const getProjectColor = (projectType: string) => {
+                                  const type = projectType.toLowerCase()
+                                  if (type.includes('website') || type.includes('site')) return 'border-blue-500 bg-blue-50'
+                                  if (type.includes('e-commerce') || type.includes('loja')) return 'border-purple-500 bg-purple-50'
+                                  if (type.includes('app') || type.includes('mobile')) return 'border-green-500 bg-green-50'
+                                  if (type.includes('sistema') || type.includes('web')) return 'border-orange-500 bg-orange-50'
+                                  if (type.includes('consultoria')) return 'border-pink-500 bg-pink-50'
+                                  return 'border-gray-500 bg-gray-50'
+                                }
+
+                                return (
+                                  <motion.div
+                                    key={meeting.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className={cn(
+                                      'rounded-xl p-5 border-l-4 bg-white shadow-sm hover:shadow-md transition-all',
+                                      getProjectColor(meeting.project_type)
+                                    )}
+                                  >
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between gap-4 mb-4">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                          <h4 className="text-base font-semibold text-gray-900">
+                                            {meeting.project_type}
+                                          </h4>
+                                          <span className="inline-flex px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                                            Confirmada
+                                          </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 flex items-center gap-2">
+                                          <Clock className="w-4 h-4 text-gray-400" />
+                                          {format(new Date(meeting.meeting_date), "HH:mm 'h'", { locale: ptBR })}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Cliente */}
+                                    <div className="mb-4 pb-4 border-b border-gray-100">
+                                      <p className="text-sm font-medium text-gray-900 mb-2">
+                                        {meeting.users?.full_name || 'Cliente não identificado'}
+                                      </p>
+                                      <div className="space-y-1.5">
+                                        <p className="text-xs text-gray-600 flex items-center gap-2">
+                                          <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                          {meeting.email}
+                                        </p>
+                                        <p className="text-xs text-gray-600 flex items-center gap-2">
+                                          <Phone className="w-3.5 h-3.5 text-gray-400" />
+                                          {meeting.phone}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Descrição */}
+                                    <div className="mb-4">
+                                      <p className="text-sm text-gray-700 leading-relaxed">
+                                        {meeting.project_description}
+                                      </p>
+                                    </div>
+
+                                    {/* Detalhes do Projeto */}
+                                    <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-100">
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Prazo</p>
+                                        <p className="text-sm font-medium text-gray-900">{meeting.timeline}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Orçamento</p>
+                                        <p className="text-sm font-medium text-gray-900">{meeting.budget}</p>
+                                      </div>
+                                    </div>
+
+                                    {/* Ações Rápidas */}
+                                    <div className="flex flex-wrap gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => updateMeetingStatus(meeting.id, 'completed')}
+                                        className="text-xs h-8 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 hover:border-green-300"
+                                      >
+                                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                                        Marcar como Concluída
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => updateMeetingStatus(meeting.id, 'cancelled')}
+                                        className="text-xs h-8 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-300"
+                                      >
+                                        <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                                        Cancelar Reunião
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          setActiveTab('meetings')
+                                          setMeetingStatusFilter('confirmed')
+                                          setSearchTerm(meeting.id)
+                                        }}
+                                        className="text-xs h-8 text-gray-600 hover:text-gray-900"
+                                      >
+                                        Ver detalhes completos →
+                                      </Button>
+                                    </div>
+                                  </motion.div>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                        </>
                       )}
                     </CardContent>
                   </Card>
