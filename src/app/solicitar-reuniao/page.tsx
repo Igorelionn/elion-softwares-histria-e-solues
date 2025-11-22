@@ -229,21 +229,21 @@ export default function SolicitarReuniaoPage() {
 
   const checkUser = async () => {
     console.error('👤 [CHECK_USER] Iniciando verificação de usuário');
-    
+
     try {
       console.error('🔐 [CHECK_USER] Chamando supabase.auth.getSession() com timeout de 5s...');
-      
+
       // TIMEOUT FORÇADO: getSession tem 5s para responder, senão abortamos
       const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise<never>((_, reject) => 
+      const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('getSession timeout após 5s')), 5000)
       );
-      
+
       const { data: { session }, error } = await Promise.race([
         sessionPromise,
         timeoutPromise
       ]);
-      
+
       console.error('✅ [CHECK_USER] getSession() retornou:', { hasSession: !!session, hasError: !!error });
 
       if (error) {
@@ -265,11 +265,11 @@ export default function SolicitarReuniaoPage() {
       }
     } catch (error: any) {
       console.error('❌ [CHECK_USER] Erro crítico:', error);
-      
+
       // Se foi timeout do getSession, tentar fallback
       if (error?.message?.includes('getSession timeout')) {
         console.error('⚠️ [CHECK_USER] getSession travou - usando fallback');
-        
+
         // Fallback: tentar getUserSession que é mais leve
         try {
           const user = (await supabase.auth.getUser()).data.user;
@@ -283,7 +283,7 @@ export default function SolicitarReuniaoPage() {
           console.error('❌ [CHECK_USER] Fallback também falhou:', fallbackError);
         }
       }
-      
+
       setIsCheckingMeeting(false);
     }
   };

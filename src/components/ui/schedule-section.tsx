@@ -4,9 +4,13 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { Calendar, Clock, Target, CheckCircle2, Video, TrendingUp } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { useAuthCheck } from "@/hooks/useAuthCheck";
+import { AuthDialog } from "@/components/ui/auth-dialog";
 
 export const ScheduleSection = () => {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
+  const { checkAuth, isChecking } = useAuthCheck();
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = React.useState(false);
   
   const benefits = React.useMemo(() => [
     t.schedule.benefit1,
@@ -15,10 +19,19 @@ export const ScheduleSection = () => {
     t.schedule.benefit4,
   ], [t.schedule.benefit1, t.schedule.benefit2, t.schedule.benefit3, t.schedule.benefit4]);
 
-  const handleScheduleClick = React.useCallback(() => {
-    // Redireciona para a página de solicitação de reunião
-    window.location.href = "/solicitar-reuniao";
-  }, []);
+  const handleScheduleClick = React.useCallback(async () => {
+    // Verificar se usuário está logado
+    const isAuthenticated = await checkAuth();
+    
+    if (isAuthenticated) {
+      // Se logado, redireciona para o formulário
+      window.location.href = "/solicitar-reuniao";
+    } else {
+      // Se não logado, abrir popup de login
+      console.log('🔓 [SCHEDULE] Usuário não logado - abrindo popup de login');
+      setIsAuthDialogOpen(true);
+    }
+  }, [checkAuth]);
 
   return (
     <section className="relative bg-black pt-16 md:pt-20 lg:pt-24 pb-20 md:pb-28 lg:pb-32 overflow-hidden" style={{ position: 'relative' }}>
@@ -195,9 +208,10 @@ export const ScheduleSection = () => {
             {/* Botão de CTA */}
             <button
               onClick={handleScheduleClick}
-              className="w-full py-3 md:py-4 px-6 md:px-8 bg-black text-white text-sm md:text-base font-bold rounded-lg md:rounded-xl focus:outline-none hover:bg-white hover:text-black transition-colors duration-300 shadow-lg border border-white/20 cursor-pointer"
+              disabled={isChecking}
+              className="w-full py-3 md:py-4 px-6 md:px-8 bg-black text-white text-sm md:text-base font-bold rounded-lg md:rounded-xl focus:outline-none hover:bg-white hover:text-black transition-colors duration-300 shadow-lg border border-white/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t.schedule.ctaButton}
+              {isChecking ? 'Verificando...' : t.schedule.ctaButton}
             </button>
 
               <p className="text-center text-xs md:text-sm text-white/50">
@@ -206,6 +220,14 @@ export const ScheduleSection = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Auth Dialog - Popup de Login */}
+      <AuthDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setIsAuthDialogOpen(false)}
+        defaultTab="login"
+        redirectTo="/solicitar-reuniao"
+      />
     </section>
   );
 };

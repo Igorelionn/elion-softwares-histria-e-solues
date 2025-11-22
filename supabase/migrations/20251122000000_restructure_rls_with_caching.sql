@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS public.admin_check_cache (
 );
 
 -- Índice para limpeza automática de cache expirado
-CREATE INDEX IF NOT EXISTS idx_admin_cache_expires 
-ON public.admin_check_cache(expires_at) 
+CREATE INDEX IF NOT EXISTS idx_admin_cache_expires
+ON public.admin_check_cache(expires_at)
 WHERE expires_at < NOW();
 
 -- Função para verificar admin com cache (ULTRA RÁPIDA)
@@ -40,30 +40,30 @@ BEGIN
     WHERE user_id = user_id_param
       AND expires_at > NOW()
     LIMIT 1;
-    
+
     -- Se encontrou no cache, retornar imediatamente
     IF FOUND THEN
         RETURN cached_result;
     END IF;
-    
+
     -- Se não está no cache, fazer a query
     SELECT EXISTS (
-        SELECT 1 
-        FROM public.users 
-        WHERE id = user_id_param 
+        SELECT 1
+        FROM public.users
+        WHERE id = user_id_param
           AND role = 'admin'
         LIMIT 1
     ) INTO is_admin_result;
-    
+
     -- Armazenar no cache
     INSERT INTO public.admin_check_cache (user_id, is_admin)
     VALUES (user_id_param, is_admin_result)
-    ON CONFLICT (user_id) 
-    DO UPDATE SET 
+    ON CONFLICT (user_id)
+    DO UPDATE SET
         is_admin = EXCLUDED.is_admin,
         cached_at = NOW(),
         expires_at = NOW() + INTERVAL '5 minutes';
-    
+
     RETURN is_admin_result;
 END;
 $$;
@@ -109,7 +109,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -145,7 +145,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -153,7 +153,7 @@ USING (
 WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -167,7 +167,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -203,7 +203,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -232,7 +232,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -240,7 +240,7 @@ USING (
 WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -254,7 +254,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.users u
-        WHERE u.id = auth.uid() 
+        WHERE u.id = auth.uid()
           AND u.role = 'admin'
         LIMIT 1
     )
@@ -288,11 +288,11 @@ BEGIN
     IF (TG_OP = 'UPDATE' AND OLD.role IS DISTINCT FROM NEW.role) OR TG_OP = 'INSERT' THEN
         DELETE FROM public.admin_check_cache WHERE user_id = NEW.id;
     END IF;
-    
+
     IF TG_OP = 'DELETE' THEN
         DELETE FROM public.admin_check_cache WHERE user_id = OLD.id;
     END IF;
-    
+
     RETURN COALESCE(NEW, OLD);
 END;
 $$;
@@ -317,28 +317,28 @@ ANALYZE public.admin_check_cache;
 -- COMENTÁRIOS E DOCUMENTAÇÃO
 -- ============================================================================
 
-COMMENT ON TABLE public.admin_check_cache IS 
-'Cache de verificações de admin para evitar queries repetidas. 
+COMMENT ON TABLE public.admin_check_cache IS
+'Cache de verificações de admin para evitar queries repetidas.
 TTL de 5 minutos. Invalidado automaticamente quando role muda.';
 
-COMMENT ON FUNCTION public.check_user_is_admin_cached(UUID) IS 
-'Verifica se usuário é admin usando cache de 5 minutos. 
+COMMENT ON FUNCTION public.check_user_is_admin_cached(UUID) IS
+'Verifica se usuário é admin usando cache de 5 minutos.
 MUITO mais rápido que verificação direta.';
 
-COMMENT ON FUNCTION public.cleanup_admin_cache() IS 
-'Remove entradas expiradas do cache. 
+COMMENT ON FUNCTION public.cleanup_admin_cache() IS
+'Remove entradas expiradas do cache.
 Deve ser executado periodicamente (ex: cron job).';
 
-COMMENT ON POLICY "users_select_own_only" ON public.users IS 
+COMMENT ON POLICY "users_select_own_only" ON public.users IS
 'Usuários comuns veem apenas seu próprio perfil. Sem verificação de bloqueio para performance.';
 
-COMMENT ON POLICY "admins_select_all_direct" ON public.users IS 
+COMMENT ON POLICY "admins_select_all_direct" ON public.users IS
 'Admins veem todos os perfis. Usa EXISTS com subquery ao invés de função para melhor performance.';
 
-COMMENT ON POLICY "meetings_select_own_only" ON public.meetings IS 
+COMMENT ON POLICY "meetings_select_own_only" ON public.meetings IS
 'Usuários veem apenas suas reuniões. Política mais simples possível para máxima performance.';
 
-COMMENT ON POLICY "meetings_select_admin_direct" ON public.meetings IS 
+COMMENT ON POLICY "meetings_select_admin_direct" ON public.meetings IS
 'Admins veem todas as reuniões. Usa EXISTS direto ao invés de função.';
 
 -- ============================================================================

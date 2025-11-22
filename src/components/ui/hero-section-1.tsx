@@ -14,6 +14,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { authSession } from '@/lib/auth-session'
 import { useTranslation } from '@/contexts/LanguageContext'
 import { toast } from 'sonner'
+import { useAuthCheck } from '@/hooks/useAuthCheck'
 
 const transitionVariants = {
     item: {
@@ -157,6 +158,7 @@ export function HeroSection() {
 
 const HeroHeader = () => {
     const { t } = useTranslation()
+    const { checkAuth } = useAuthCheck()
     const [menuState, setMenuState] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
     const [isOnDarkSection, setIsOnDarkSection] = React.useState(false)
@@ -391,9 +393,20 @@ const HeroHeader = () => {
         setIsAuthDialogOpen(true)
     }, [])
 
-    const handleMeetingClick = React.useCallback(() => {
-        window.location.href = '/solicitar-reuniao'
-    }, [])
+    const handleMeetingClick = React.useCallback(async () => {
+        // Verificar se usuário está logado
+        const isAuthenticated = await checkAuth();
+        
+        if (isAuthenticated) {
+            // Se logado, redireciona para o formulário
+            window.location.href = '/solicitar-reuniao';
+        } else {
+            // Se não logado, abrir popup de login
+            console.log('🔓 [HERO] Usuário não logado - abrindo popup de login');
+            setAuthDialogTab("login");
+            setIsAuthDialogOpen(true);
+        }
+    }, [checkAuth])
 
     const handleLogout = React.useCallback(async () => {
         try {
