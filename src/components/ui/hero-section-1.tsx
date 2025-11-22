@@ -38,7 +38,7 @@ const transitionVariants = {
 
 export function HeroSection() {
     const { t } = useTranslation()
-    
+
     return (
         <>
             <HeroHeader />
@@ -100,7 +100,7 @@ export function HeroSection() {
                             <br />
                             <span className="inline">{t.hero.title3}</span>
                         </span>
-                        
+
                         {/* iPad/Desktop: layout original */}
                         <span className="hidden md:block">
                             <span className="hero-title block text-5xl md:text-[48px] lg:text-7xl xl:text-8xl 2xl:text-[96px] font-light leading-tight md:leading-[1.2] lg:leading-[1.15] xl:leading-[86px]">
@@ -199,25 +199,25 @@ const HeroHeader = () => {
     // Monitor user session using singleton
     React.useEffect(() => {
         setIsCheckingAuth(false) // Singleton já está inicializado
-        
+
         // Subscribe to auth session changes
         const unsubscribe = authSession.subscribe(async (user) => {
             setUser(user)
-            
+
             // Load avatar and check admin status if user exists
             if (user) {
                 // Verificar se tem login Google para priorizar avatar do Google
                 const identities = user.identities || []
                 const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
                 const googleAvatarUrl = hasGoogleIdentity ? user.user_metadata?.avatar_url : null
-                
+
                 // @ts-ignore - role and is_blocked columns may not be in generated types
                 const { data: profile, error: profileError } = await (supabase as any)
                     .from('users')
                     .select('avatar_url, role, is_blocked')
                     .eq('id', user.id)
                     .single()
-                
+
                 // Se usuário foi deletado ou não existe no banco
                 if (profileError && profileError.code === 'PGRST116') {
                     await supabase.auth.signOut()
@@ -226,7 +226,7 @@ const HeroHeader = () => {
                     setIsAdmin(false)
                     return
                 }
-                
+
                 // Se a coluna não existir (erro 406), ignorar e usar valores padrão
                 if (profileError && profileError.code === '406') {
                     console.log('[HeroSection] Columns role/is_blocked not found in users table, using defaults')
@@ -235,7 +235,7 @@ const HeroHeader = () => {
                     setIsAdmin(false)
                     return
                 }
-                
+
                 // Se usuário está bloqueado
                 if (!profileError && profile?.is_blocked) {
                     await supabase.auth.signOut()
@@ -244,12 +244,12 @@ const HeroHeader = () => {
                     setIsAdmin(false)
                     return
                 }
-                
+
                 if (!profileError && profile) {
                     // Priorizar Google avatar, depois avatar do banco
                     const finalAvatarUrl = googleAvatarUrl || profile.avatar_url || ''
                     saveAvatarUrl(finalAvatarUrl)
-                    
+
                     const isAdminResult = profile.role === 'admin'
                     setIsAdmin(isAdminResult)
                 } else {
@@ -272,39 +272,39 @@ const HeroHeader = () => {
     React.useEffect(() => {
         const reloadAvatar = async () => {
             const user = authSession.getUser()
-            
+
             if (user) {
                 // Sempre garantir que o user está setado primeiro
                 setUser(user)
-                
+
                 // Carregar avatar do localStorage primeiro (mais rápido)
-                const cachedAvatar = typeof window !== 'undefined' 
-                    ? localStorage.getItem('user_avatar_cache') 
+                const cachedAvatar = typeof window !== 'undefined'
+                    ? localStorage.getItem('user_avatar_cache')
                     : null
-                
+
                 if (cachedAvatar) {
                     setAvatarUrl(cachedAvatar)
                     avatarCache.current = cachedAvatar
                 }
-                
+
                 // Verificar se tem login Google para priorizar avatar do Google
                 const identities = user.identities || []
                 const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
                 const googleAvatarUrl = hasGoogleIdentity ? user.user_metadata?.avatar_url : null
-                
+
                 // Se tem Google avatar, usar e salvar
                 if (googleAvatarUrl) {
                     saveAvatarUrl(googleAvatarUrl)
                     return
                 }
-                
+
                 // Caso contrário, buscar do banco
                 const { data: profile } = await supabase
                     .from('users')
                     .select('avatar_url')
                     .eq('id', user.id)
                     .single()
-                
+
                 if (profile?.avatar_url) {
                     saveAvatarUrl(profile.avatar_url)
                 }
@@ -324,7 +324,7 @@ const HeroHeader = () => {
 
         document.addEventListener('visibilitychange', handleVisibilityChange)
         window.addEventListener('focus', handleFocus)
-        
+
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange)
             window.removeEventListener('focus', handleFocus)
@@ -334,28 +334,28 @@ const HeroHeader = () => {
     React.useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50)
-            
+
             // Detectar se estamos sobre uma seção com fundo preto
             const navbarHeight = 80
             const scrollPosition = window.scrollY + navbarHeight
-            
+
             // Selecionar todas as seções com fundo preto
             const darkSections = document.querySelectorAll('section.bg-black')
             let onDark = false
-            
+
             darkSections.forEach((section) => {
                 const rect = section.getBoundingClientRect()
                 const sectionTop = window.scrollY + rect.top
                 const sectionBottom = sectionTop + rect.height
-                
+
                 if (scrollPosition >= sectionTop && scrollPosition <= sectionBottom) {
                     onDark = true
                 }
             })
-            
+
             setIsOnDarkSection(onDark)
         }
-        
+
         handleScroll()
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
@@ -396,7 +396,7 @@ const HeroHeader = () => {
     const handleMeetingClick = React.useCallback(async () => {
         // Verificar se usuário está logado
         const isAuthenticated = await checkAuth();
-        
+
         if (isAuthenticated) {
             // Se logado, redireciona para o formulário
             window.location.href = '/solicitar-reuniao';
@@ -415,12 +415,12 @@ const HeroHeader = () => {
             setUser(null)
             setAvatarUrl('')
             avatarCache.current = ''
-            
+
             // Limpar cache do localStorage
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('user_avatar_cache')
             }
-            
+
             // Redirecionar para página inicial
             window.location.href = '/'
         } catch (error) {
@@ -446,14 +446,14 @@ const HeroHeader = () => {
             <nav
                 data-state={menuState && 'active'}
                 className="fixed z-20 w-full px-2 lg:px-2 group">
-                <div className={cn('mx-auto transition-all duration-500 ease-in-out border', 
+                <div className={cn('mx-auto transition-all duration-500 ease-in-out border',
                     // Mobile styles
                     'mt-2 px-4 py-3 rounded-xl max-w-[96%]',
-                    // Desktop styles  
+                    // Desktop styles
                     'lg:mt-4 lg:px-12 lg:py-4 lg:rounded-2xl',
                     isScrolled ? (
-                        isOnDarkSection 
-                            ? 'bg-black/90 backdrop-blur-md border-white/20 lg:bg-black/80 lg:backdrop-blur-lg lg:max-w-4xl lg:px-5' 
+                        isOnDarkSection
+                            ? 'bg-black/90 backdrop-blur-md border-white/20 lg:bg-black/80 lg:backdrop-blur-lg lg:max-w-4xl lg:px-5'
                             : 'bg-background/90 backdrop-blur-md border-border lg:bg-background/50 lg:backdrop-blur-lg lg:max-w-4xl lg:px-5'
                     ) : 'bg-background/60 backdrop-blur-sm border-border/50 lg:max-w-6xl lg:border-transparent lg:bg-transparent lg:backdrop-blur-none')}>
                     <div className="relative flex flex-wrap items-center justify-between gap-3 lg:gap-6 lg:gap-0">
@@ -474,7 +474,7 @@ const HeroHeader = () => {
                                     <Menu className={cn("in-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-5 duration-200", isOnDarkSection && "text-white")} />
                                     <X className={cn("group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-5 -rotate-180 scale-0 opacity-0 duration-200", isOnDarkSection && "text-white")} />
                                 </button>
-                                
+
                                 {/* Avatar - agora à direita do menu */}
                                 {user && (
                                     <div className="relative">
@@ -482,8 +482,8 @@ const HeroHeader = () => {
                                             onClick={() => setShowUserMenu(!showUserMenu)}
                                             className={cn(
                                                 "relative flex items-center justify-center w-8 h-8 rounded-full font-semibold text-xs border overflow-hidden transition-all duration-200",
-                                                isOnDarkSection 
-                                                    ? "border-white/40 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/60" 
+                                                isOnDarkSection
+                                                    ? "border-white/40 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/60"
                                                     : "border-black/30 text-black/70 hover:bg-black/5 hover:text-black hover:border-black/50",
                                                 !avatarUrl && (isOnDarkSection ? "bg-transparent" : "bg-transparent")
                                             )}
@@ -514,16 +514,16 @@ const HeroHeader = () => {
                                         {showUserMenu && (
                                             <>
                                                 {/* Backdrop to close menu */}
-                                                <div 
+                                                <div
                                                     className="fixed inset-0 z-30"
                                                     onClick={() => setShowUserMenu(false)}
                                                 />
-                                                
+
                                                 {/* Dropdown menu */}
                                                 <div className={cn(
                                                     "absolute right-0 top-full mt-2 w-[240px] rounded-lg shadow-lg border z-40 overflow-hidden",
-                                                    isOnDarkSection 
-                                                        ? "bg-black/95 border-white/20 backdrop-blur-xl" 
+                                                    isOnDarkSection
+                                                        ? "bg-black/95 border-white/20 backdrop-blur-xl"
                                                         : "bg-white border-gray-200"
                                                 )}>
                                                     {/* User info */}
@@ -554,8 +554,8 @@ const HeroHeader = () => {
                                                             }}
                                                             className={cn(
                                                                 "w-full px-3 py-2 text-xs flex items-center gap-2 transition-colors",
-                                                                isOnDarkSection 
-                                                                    ? "text-white hover:bg-white/10 active:bg-white/15" 
+                                                                isOnDarkSection
+                                                                    ? "text-white hover:bg-white/10 active:bg-white/15"
                                                                     : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
                                                             )}
                                                         >
@@ -569,8 +569,8 @@ const HeroHeader = () => {
                                                             }}
                                                             className={cn(
                                                                 "w-full px-3 py-2 text-xs flex items-center gap-2 transition-colors",
-                                                                isOnDarkSection 
-                                                                    ? "text-white hover:bg-white/10 active:bg-white/15" 
+                                                                isOnDarkSection
+                                                                    ? "text-white hover:bg-white/10 active:bg-white/15"
                                                                     : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
                                                             )}
                                                         >
@@ -621,8 +621,8 @@ const HeroHeader = () => {
                                                             onClick={handleLogout}
                                                             className={cn(
                                                                 "w-full px-3 py-2 text-xs flex items-center gap-2 transition-colors",
-                                                                isOnDarkSection 
-                                                                    ? "text-white hover:bg-red-500/20 hover:text-red-400 active:bg-red-500/25" 
+                                                                isOnDarkSection
+                                                                    ? "text-white hover:bg-red-500/20 hover:text-red-400 active:bg-red-500/25"
                                                                     : "text-gray-700 hover:bg-red-50 hover:text-red-600 active:bg-red-100"
                                                             )}
                                                         >
@@ -640,7 +640,7 @@ const HeroHeader = () => {
 
                         <div className="absolute inset-0 m-auto hidden size-fit lg:flex items-center">
                             <ul className="flex gap-2 items-center relative" onMouseLeave={handleMouseLeave}>
-                                <span 
+                                <span
                                     className={cn(
                                         "absolute rounded-lg transition-all duration-300 ease-out pointer-events-none",
                                         isOnDarkSection ? "bg-white/10" : "bg-muted"
@@ -663,8 +663,8 @@ const HeroHeader = () => {
                                             onMouseEnter={() => handleMouseEnter(index)}
                                             className={cn(
                                                 "block duration-150 px-3 py-2 rounded-lg relative z-10 text-sm font-medium",
-                                                isOnDarkSection 
-                                                    ? "text-white/80 hover:text-white" 
+                                                isOnDarkSection
+                                                    ? "text-white/80 hover:text-white"
                                                     : "text-muted-foreground hover:text-accent-foreground"
                                             )}>
                                             <span>{item.name}</span>
@@ -676,8 +676,8 @@ const HeroHeader = () => {
 
                         <div className={cn(
                             "group-data-[state=active]:block lg:group-data-[state=active]:flex mb-4 hidden w-full flex-wrap items-center justify-end space-y-6 rounded-2xl border p-5 shadow-2xl md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent",
-                            isOnDarkSection 
-                                ? "bg-black/90 backdrop-blur-md border-white/20 shadow-black/40" 
+                            isOnDarkSection
+                                ? "bg-black/90 backdrop-blur-md border-white/20 shadow-black/40"
                                 : "bg-background shadow-zinc-300/20"
                         )}>
                             <div className="lg:hidden w-full">
@@ -689,7 +689,7 @@ const HeroHeader = () => {
                                                 onClick={() => setMenuState(false)}
                                                 className={cn(
                                                     "block duration-150 px-4 py-2.5 rounded-lg transition-colors text-sm font-semibold",
-                                                    isOnDarkSection 
+                                                    isOnDarkSection
                                                         ? "text-white hover:text-white hover:bg-white/10 active:bg-white/15"
                                                         : "text-foreground hover:text-foreground hover:bg-muted active:bg-muted/80"
                                                 )}>
@@ -713,15 +713,15 @@ const HeroHeader = () => {
                                             onClick={() => setShowUserMenu(!showUserMenu)}
                                             className={cn(
                                                 "flex items-center gap-1 transition-all duration-300 cursor-pointer",
-                                                isOnDarkSection 
-                                                    ? "text-white/70 hover:text-white" 
+                                                isOnDarkSection
+                                                    ? "text-white/70 hover:text-white"
                                                     : "text-black/70 hover:text-black"
                                             )}
                                         >
                                             <div className={cn(
                                                 "relative flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm border overflow-hidden transition-colors",
-                                                isOnDarkSection 
-                                                    ? "border-white/40 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/60" 
+                                                isOnDarkSection
+                                                    ? "border-white/40 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/60"
                                                     : "border-black/30 text-black/70 hover:bg-black/5 hover:text-black hover:border-black/50",
                                                 !avatarUrl && (isOnDarkSection ? "bg-transparent" : "bg-transparent")
                                             )}>
@@ -755,16 +755,16 @@ const HeroHeader = () => {
                                         {showUserMenu && (
                                             <>
                                                 {/* Backdrop to close menu */}
-                                                <div 
+                                                <div
                                                     className="fixed inset-0 z-30"
                                                     onClick={() => setShowUserMenu(false)}
                                                 />
-                                                
+
                                                 {/* Dropdown menu - Desktop: abaixo do avatar */}
                                                 <div className={cn(
                                                     "absolute right-0 top-full mt-2 w-64 rounded-xl shadow-lg border z-40 overflow-hidden",
-                                                    isOnDarkSection 
-                                                        ? "bg-black/95 border-white/20 backdrop-blur-xl" 
+                                                    isOnDarkSection
+                                                        ? "bg-black/95 border-white/20 backdrop-blur-xl"
                                                         : "bg-white border-gray-200"
                                                 )}>
                                                     {/* User info */}
@@ -795,8 +795,8 @@ const HeroHeader = () => {
                                                             }}
                                                             className={cn(
                                                                 "w-full px-4 py-2 text-sm flex items-center gap-2 transition-colors",
-                                                                isOnDarkSection 
-                                                                    ? "text-white hover:bg-white/10" 
+                                                                isOnDarkSection
+                                                                    ? "text-white hover:bg-white/10"
                                                                     : "text-gray-700 hover:bg-gray-100"
                                                             )}
                                                         >
@@ -810,8 +810,8 @@ const HeroHeader = () => {
                                                             }}
                                                             className={cn(
                                                                 "w-full px-4 py-2 text-sm flex items-center gap-2 transition-colors",
-                                                                isOnDarkSection 
-                                                                    ? "text-white hover:bg-white/10" 
+                                                                isOnDarkSection
+                                                                    ? "text-white hover:bg-white/10"
                                                                     : "text-gray-700 hover:bg-gray-100"
                                                             )}
                                                         >
@@ -826,8 +826,8 @@ const HeroHeader = () => {
                                                                 }}
                                                                 className={cn(
                                                                     "w-full px-4 py-2 text-sm flex items-center gap-2 transition-colors border-t",
-                                                                    isOnDarkSection 
-                                                                        ? "text-blue-400 hover:bg-blue-500/20 border-white/10" 
+                                                                    isOnDarkSection
+                                                                        ? "text-blue-400 hover:bg-blue-500/20 border-white/10"
                                                                         : "text-blue-600 hover:bg-blue-50 border-gray-200"
                                                                 )}
                                                             >
@@ -839,8 +839,8 @@ const HeroHeader = () => {
                                                             onClick={handleLogout}
                                                             className={cn(
                                                                 "w-full px-4 py-2 text-sm flex items-center gap-2 transition-colors",
-                                                                isOnDarkSection 
-                                                                    ? "text-white hover:bg-red-500/20 hover:text-red-400" 
+                                                                isOnDarkSection
+                                                                    ? "text-white hover:bg-red-500/20 hover:text-red-400"
                                                                     : "text-gray-700 hover:bg-red-50 hover:text-red-600"
                                                             )}
                                                         >
@@ -860,7 +860,7 @@ const HeroHeader = () => {
                                             variant="outline"
                                             size="default"
                                             className={cn(
-                                                'transition-all duration-300 cursor-pointer text-xs h-9 px-4 lg:text-sm lg:h-11 lg:px-6 w-full sm:w-auto', 
+                                                'transition-all duration-300 cursor-pointer text-xs h-9 px-4 lg:text-sm lg:h-11 lg:px-6 w-full sm:w-auto',
                                                 isScrolled && 'lg:hidden lg:w-0 lg:opacity-0 lg:pointer-events-none',
                                                 isOnDarkSection && 'border-white/20 bg-white text-black hover:bg-white/90 active:bg-white/80'
                                             )}>
@@ -871,8 +871,8 @@ const HeroHeader = () => {
                                             size="default"
                                             className={cn(
                                                 'transition-all duration-300 cursor-pointer text-xs h-9 px-4 lg:text-sm lg:h-11 lg:px-6 w-full sm:w-auto',
-                                                isOnDarkSection 
-                                                    ? 'bg-white text-black hover:bg-white/90 active:bg-white/80' 
+                                                isOnDarkSection
+                                                    ? 'bg-white text-black hover:bg-white/90 active:bg-white/80'
                                                     : 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80'
                                             )}>
                                             <span>{isScrolled ? t.hero.ctaSchedule : t.nav.signup}</span>

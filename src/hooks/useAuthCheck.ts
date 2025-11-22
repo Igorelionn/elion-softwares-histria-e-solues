@@ -14,10 +14,10 @@ export const useAuthCheck = () => {
    */
   const checkAuth = useCallback(async (): Promise<boolean> => {
     setIsChecking(true);
-    
+
     try {
       console.log('🔐 [AUTH_CHECK] Verificando autenticação...');
-      
+
       // Timeout de 3 segundos para a verificação
       const sessionPromise = supabase.auth.getSession();
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -37,16 +37,16 @@ export const useAuthCheck = () => {
 
       const isAuthenticated = !!session?.user;
       console.log(
-        isAuthenticated 
-          ? '✅ [AUTH_CHECK] Usuário autenticado' 
+        isAuthenticated
+          ? '✅ [AUTH_CHECK] Usuário autenticado'
           : '❌ [AUTH_CHECK] Usuário NÃO autenticado'
       );
-      
+
       setIsChecking(false);
       return isAuthenticated;
     } catch (error: any) {
       console.error('❌ [AUTH_CHECK] Erro crítico:', error);
-      
+
       // Se timeout, tentar fallback com getUser
       if (error?.message?.includes('timeout')) {
         console.log('⚠️ [AUTH_CHECK] Timeout - tentando fallback...');
@@ -54,8 +54,8 @@ export const useAuthCheck = () => {
           const { data: { user } } = await supabase.auth.getUser();
           const isAuthenticated = !!user;
           console.log(
-            isAuthenticated 
-              ? '✅ [AUTH_CHECK] Fallback: Usuário autenticado' 
+            isAuthenticated
+              ? '✅ [AUTH_CHECK] Fallback: Usuário autenticado'
               : '❌ [AUTH_CHECK] Fallback: Usuário NÃO autenticado'
           );
           setIsChecking(false);
@@ -64,7 +64,7 @@ export const useAuthCheck = () => {
           console.error('❌ [AUTH_CHECK] Fallback falhou:', fallbackError);
         }
       }
-      
+
       setIsChecking(false);
       return false;
     }

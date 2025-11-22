@@ -11,7 +11,7 @@ export const ScheduleSection = () => {
   const { t } = useTranslation();
   const { checkAuth, isChecking } = useAuthCheck();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = React.useState(false);
-  
+
   const benefits = React.useMemo(() => [
     t.schedule.benefit1,
     t.schedule.benefit2,
@@ -22,7 +22,7 @@ export const ScheduleSection = () => {
   const handleScheduleClick = React.useCallback(async () => {
     // Verificar se usuário está logado
     const isAuthenticated = await checkAuth();
-    
+
     if (isAuthenticated) {
       // Se logado, redireciona para o formulário
       window.location.href = "/solicitar-reuniao";
@@ -37,7 +37,7 @@ export const ScheduleSection = () => {
     <section className="relative bg-black pt-16 md:pt-20 lg:pt-24 pb-20 md:pb-28 lg:pb-32 overflow-hidden" style={{ position: 'relative' }}>
       {/* Background decorativo */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-900/20 to-black"></div>
-      
+
       <div className="container z-10 mx-auto relative px-4 sm:px-6">
         {/* Título e descrição */}
         <motion.div
@@ -104,15 +104,15 @@ export const ScheduleSection = () => {
             className="space-y-6 md:space-y-8"
           >
             {/* Timeline de Benefícios */}
-            <div className="relative space-y-8">              
+            <div className="relative space-y-8">
               {benefits.map((benefit, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ 
+                  transition={{
                     duration: 0.9,
-                    ease: "easeOut" 
+                    ease: "easeOut"
                   }}
                   viewport={{ once: true, amount: 0.9 }}
                   className="flex items-start gap-4 relative"
@@ -122,7 +122,7 @@ export const ScheduleSection = () => {
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       whileInView={{ height: "calc(100% + 2rem)", opacity: 1 }}
-                      transition={{ 
+                      transition={{
                         duration: 1.2,
                         delay: 0.4,
                         ease: "easeInOut"
@@ -131,12 +131,12 @@ export const ScheduleSection = () => {
                       className="absolute left-[15px] top-8 w-[2px] bg-gradient-to-b from-white/50 via-white/30 to-white/10"
                     />
                   )}
-                  
+
                   {/* Marcador da timeline */}
                   <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
-                    transition={{ 
+                    transition={{
                       duration: 0.6,
                       delay: 0.3,
                       type: "spring",
@@ -172,7 +172,7 @@ export const ScheduleSection = () => {
                       </motion.span>
                     </motion.div>
                   </motion.div>
-                  
+
                   {/* Texto do benefício */}
                   <div className="flex-1 pt-0.5">
                     <span className="text-white/90 text-sm sm:text-base md:text-lg leading-relaxed">
