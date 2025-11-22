@@ -26,7 +26,12 @@ import {
   Shield,
   Trash2,
   Lock,
-  Unlock
+  Unlock,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Mail,
+  Phone
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -39,6 +44,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 
 // 🚀 SISTEMA DE CACHE OFFLINE-FIRST
 const ADMIN_CACHE_KEY = 'elion_admin_cache'
@@ -168,6 +176,10 @@ export default function AdminPage() {
   const [isUnblocking, setIsUnblocking] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [cacheMessage, setCacheMessage] = useState<string>('')
+
+  // Estados do Calendário
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null)
 
   // Refs para controlar loading
   const isLoadingRef = useRef(false)
@@ -983,6 +995,44 @@ export default function AdminPage() {
     )
   }, [users, searchTerm])
 
+  // Funções do Calendário
+  const getMeetingsForDay = (date: Date) => {
+    const formattedDate = format(date, 'yyyy-MM-dd')
+    return meetings.filter(
+      (m) =>
+        m.status === 'confirmed' &&
+        format(new Date(m.meeting_date), 'yyyy-MM-dd') === formattedDate
+    ).sort((a, b) => {
+      const dateA = new Date(a.meeting_date).getTime()
+      const dateB = new Date(b.meeting_date).getTime()
+      return dateA - dateB
+    })
+  }
+
+  const getDaysInMonth = () => {
+    const start = startOfWeek(startOfMonth(currentMonth), { locale: ptBR })
+    const end = endOfWeek(endOfMonth(currentMonth), { locale: ptBR })
+    return eachDayOfInterval({ start, end }).map((date) => ({
+      date,
+      isCurrentMonth: isSameMonth(date, currentMonth)
+    }))
+  }
+
+  const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
+  const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+  const goToToday = () => {
+    setCurrentMonth(new Date())
+    setSelectedCalendarDate(null)
+  }
+
+  const handleDayClick = (date: Date) => {
+    if (isSameDay(date, selectedCalendarDate || new Date())) {
+      setSelectedCalendarDate(null)
+    } else {
+      setSelectedCalendarDate(date)
+    }
+  }
+
   const filteredMeetings = useMemo(() => {
     return meetings.filter(meeting => {
       // Filtro por texto de busca
@@ -1161,6 +1211,13 @@ export default function AdminPage() {
             >
               <Calendar className="h-4 w-4 mr-2" />
               Reuniões
+            </TabsTrigger>
+            <TabsTrigger
+              value="calendar"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600"
+            >
+              <CalendarDays className="h-4 w-4 mr-2" />
+              Calendário
             </TabsTrigger>
           </TabsList>
 
@@ -1586,6 +1643,171 @@ export default function AdminPage() {
                 </div>
               </CardContent>
             </Card>
+                </motion.div>
+              </TabsContent>
+            )}
+          </AnimatePresence>
+
+          {/* Calendar Tab */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'calendar' && (
+              <TabsContent value="calendar" className="space-y-4" forceMount>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <Card className="border border-gray-200 bg-white rounded-lg">
+                    <CardHeader className="border-b border-gray-100 pb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg font-semibold text-gray-900">Calendário de Reuniões</CardTitle>
+                          <CardDescription className="text-sm text-gray-500 mt-1">
+                            Visualize todas as reuniões confirmadas
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      {/* Cabeçalho do Calendário */}
+                      <div className="flex items-center justify-between mb-6">
+                        <button
+                          onClick={goToPreviousMonth}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
+                          aria-label="Mês anterior"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={goToToday}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors"
+                          >
+                            Hoje
+                          </button>
+                          <button
+                            onClick={goToNextMonth}
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
+                            aria-label="Próximo mês"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Dias da Semana */}
+                      <div className="grid grid-cols-7 text-center text-sm font-medium text-gray-500 mb-4">
+                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                          <div key={day} className="py-2">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Grid do Calendário */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {getDaysInMonth().map((day, index) => {
+                          const dayMeetings = getMeetingsForDay(day.date)
+                          const isToday = isSameDay(day.date, new Date())
+                          const isSelected = selectedCalendarDate && isSameDay(day.date, selectedCalendarDate)
+
+                          return (
+                            <div
+                              key={index}
+                              className={cn(
+                                'relative h-28 p-1.5 rounded-lg flex flex-col overflow-hidden',
+                                day.isCurrentMonth ? 'bg-gray-50' : 'bg-gray-25 text-gray-400',
+                                isToday && 'ring-2 ring-black',
+                                dayMeetings.length > 0 && 'cursor-pointer hover:bg-gray-100 transition-colors',
+                                isSelected && 'bg-blue-50 ring-2 ring-blue-400'
+                              )}
+                              onClick={() => dayMeetings.length > 0 && handleDayClick(day.date)}
+                            >
+                              <span
+                                className={cn(
+                                  'text-xs font-medium self-end',
+                                  day.isCurrentMonth ? 'text-gray-800' : 'text-gray-400',
+                                  isToday && 'text-black'
+                                )}
+                              >
+                                {format(day.date, 'd')}
+                              </span>
+                              <div className="flex-1 overflow-y-auto mt-1 space-y-0.5 scrollbar-hide">
+                                {dayMeetings.slice(0, 2).map((meeting) => (
+                                  <div
+                                    key={meeting.id}
+                                    className="bg-blue-200 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-sm truncate"
+                                  >
+                                    {meeting.project_type}
+                                  </div>
+                                ))}
+                                {dayMeetings.length > 2 && (
+                                  <div className="text-[10px] text-gray-600 px-1.5 py-0.5">
+                                    +{dayMeetings.length - 2} mais
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Detalhes do Dia Selecionado */}
+                      {selectedCalendarDate && getMeetingsForDay(selectedCalendarDate).length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="mt-8 pt-6 border-t border-gray-200"
+                        >
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Reuniões em {format(selectedCalendarDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                          </h3>
+                          <div className="space-y-4">
+                            {getMeetingsForDay(selectedCalendarDate).map((meeting) => (
+                              <div key={meeting.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                <div className="flex items-start justify-between gap-4 mb-3">
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-900 mb-1">{meeting.project_type}</p>
+                                    <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                                      <Clock className="w-3 h-3" />
+                                      {format(new Date(meeting.meeting_date), 'HH:mm', { locale: ptBR })}
+                                    </p>
+                                  </div>
+                                  <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-700">
+                                    Confirmada
+                                  </span>
+                                </div>
+                                <div className="space-y-1.5 text-xs text-gray-600 mb-3">
+                                  <p className="flex items-center gap-1.5">
+                                    <Mail className="w-3 h-3" />
+                                    {meeting.email}
+                                  </p>
+                                  <p className="flex items-center gap-1.5">
+                                    <Phone className="w-3 h-3" />
+                                    {meeting.phone}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-gray-600 mb-3">
+                                  {meeting.project_description}
+                                </p>
+                                <div className="flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-gray-200">
+                                  <span>Prazo: {meeting.timeline}</span>
+                                  <span>•</span>
+                                  <span>Orçamento: {meeting.budget}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </motion.div>
               </TabsContent>
             )}
