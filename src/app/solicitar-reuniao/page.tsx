@@ -142,16 +142,16 @@ export default function SolicitarReuniaoPage() {
 
     let isMounted = true; // Flag para prevenir updates após unmount
 
-    // TIMEOUT DE SEGURANÇA: Se após 10 segundos ainda estiver carregando, forçar parada
+    // TIMEOUT DE SEGURANÇA: Se após 5 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        console.error('⚠️ [INIT] TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 10s');
+        console.error('⚠️ [INIT] TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 5s');
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 10000); // Timeout de segurança como fallback extremo
+    }, 5000); // Timeout de segurança reduzido para 5s
 
-    console.error('⏰ [INIT] Timeout de segurança configurado (10s)');
+    console.error('⏰ [INIT] Timeout de segurança configurado (5s)');
 
     // Executar verificação
     const runCheck = async () => {
@@ -277,23 +277,38 @@ export default function SolicitarReuniaoPage() {
         console.error('📥 [CHECK_MEETING] Cache vazio - iniciando query users...');
         const queryStart = performance.now();
 
-        console.error('🔍 [CHECK_MEETING] Executando: supabase.from(users).select(role)...');
-        const { data: userProfile, error: profileError } = await (supabase as any)
+        // OTIMIZADO: Adicionar timeout de 2s na query
+        const profilePromise = (supabase as any)
           .from('users')
           .select('role')
           .eq('id', userId)
           .single();
 
-        const queryTime = performance.now() - queryStart;
-        console.error(`⏱️ [CHECK_MEETING] Query users completou em ${queryTime.toFixed(2)}ms`);
-        console.error('📊 [CHECK_MEETING] Resultado users:', { data: userProfile, error: profileError });
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Query users timeout após 2s')), 2000)
+        );
 
-        if (profileError) {
-          console.error('⚠️ [CHECK_MEETING] Erro na query users:', profileError);
+        try {
+          console.error('🔍 [CHECK_MEETING] Executando: supabase.from(users).select(role) com timeout...');
+          const { data: userProfile, error: profileError } = await Promise.race([
+            profilePromise,
+            timeoutPromise
+          ]);
+
+          const queryTime = performance.now() - queryStart;
+          console.error(`⏱️ [CHECK_MEETING] Query users completou em ${queryTime.toFixed(2)}ms`);
+          console.error('📊 [CHECK_MEETING] Resultado users:', { data: userProfile, error: profileError });
+
+          if (profileError) {
+            console.error('⚠️ [CHECK_MEETING] Erro na query users:', profileError);
+            isAdmin = false;
+          } else {
+            isAdmin = userProfile?.role === 'admin';
+            console.error('✅ [CHECK_MEETING] isAdmin determinado:', isAdmin);
+          }
+        } catch (timeoutError) {
+          console.error('⏱️ [CHECK_MEETING] Timeout na query users - assumindo não-admin');
           isAdmin = false;
-        } else {
-          isAdmin = userProfile?.role === 'admin';
-          console.error('✅ [CHECK_MEETING] isAdmin determinado:', isAdmin);
         }
 
         // Armazenar no cache
@@ -317,37 +332,53 @@ export default function SolicitarReuniaoPage() {
       console.error('🔎 [CHECK_MEETING] Iniciando verificação de reuniões pendentes...');
       const meetingsQueryStart = performance.now();
 
-      console.error('🔍 [CHECK_MEETING] Executando: supabase.from(meetings).select()...');
-      const { data, error } = await (supabase as any)
+      // OTIMIZADO: Adicionar timeout de 2s na query de meetings
+      const meetingsPromise = (supabase as any)
         .from('meetings')
         .select('id, status')
         .eq('user_id', userId)
         .in('status', ['pending', 'confirmed'])
         .limit(1);
 
-      const meetingsQueryTime = performance.now() - meetingsQueryStart;
-      console.error(`⏱️ [CHECK_MEETING] Query meetings completou em ${meetingsQueryTime.toFixed(2)}ms`);
-      console.error('📊 [CHECK_MEETING] Resultado meetings:', { count: data?.length || 0, error });
+      const meetingsTimeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Query meetings timeout após 2s')), 2000)
+      );
 
-      if (error) {
-        console.error('⚠️ [CHECK_MEETING] Erro na query meetings:', error);
-        console.error('⏭️ [CHECK_MEETING] Permitindo continuar apesar do erro');
-        setHasExistingMeeting(false);
-        setIsCheckingMeeting(false);
-        const totalTime = performance.now() - startTime;
-        console.error(`⏱️ [CHECK_MEETING] Tempo total: ${totalTime.toFixed(2)}ms`);
-        return;
-      }
+      try {
+        console.error('🔍 [CHECK_MEETING] Executando: supabase.from(meetings).select() com timeout...');
+        const { data, error } = await Promise.race([
+          meetingsPromise,
+          meetingsTimeoutPromise
+        ]);
 
-      if (data && data.length > 0) {
-        console.error('🚫 [CHECK_MEETING] Reunião existente encontrada');
-        console.error('🔄 [CHECK_MEETING] Redirecionando em 2s...');
-        setHasExistingMeeting(true);
-        setTimeout(() => {
-          router.push('/reunioes-agendadas');
-        }, 2000);
-      } else {
-        console.error('✅ [CHECK_MEETING] Nenhuma reunião encontrada');
+        const meetingsQueryTime = performance.now() - meetingsQueryStart;
+        console.error(`⏱️ [CHECK_MEETING] Query meetings completou em ${meetingsQueryTime.toFixed(2)}ms`);
+        console.error('📊 [CHECK_MEETING] Resultado meetings:', { count: data?.length || 0, error });
+
+        if (error) {
+          console.error('⚠️ [CHECK_MEETING] Erro na query meetings:', error);
+          console.error('⏭️ [CHECK_MEETING] Permitindo continuar apesar do erro');
+          setHasExistingMeeting(false);
+          setIsCheckingMeeting(false);
+          const totalTime = performance.now() - startTime;
+          console.error(`⏱️ [CHECK_MEETING] Tempo total: ${totalTime.toFixed(2)}ms`);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          console.error('🚫 [CHECK_MEETING] Reunião existente encontrada');
+          console.error('🔄 [CHECK_MEETING] Redirecionando em 2s...');
+          setHasExistingMeeting(true);
+          setTimeout(() => {
+            router.push('/reunioes-agendadas');
+          }, 2000);
+        } else {
+          console.error('✅ [CHECK_MEETING] Nenhuma reunião encontrada');
+          setHasExistingMeeting(false);
+        }
+      } catch (timeoutError) {
+        console.error('⏱️ [CHECK_MEETING] Timeout na query meetings - permitindo continuar');
+        // Se der timeout, assumir que não tem reunião e deixar continuar
         setHasExistingMeeting(false);
       }
     } catch (error) {
