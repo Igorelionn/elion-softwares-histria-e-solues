@@ -133,8 +133,9 @@ export default function SolicitarReuniaoPage() {
 
   // Executar verificação inicial apenas uma vez
   useEffect(() => {
-    console.log('🚀 Componente montado - iniciando verificação');
-    console.log('🗑️ Limpando cache anterior');
+    const mountTime = performance.now();
+    console.log('🚀 [INIT] Componente montado - iniciando verificação');
+    console.log('🗑️ [INIT] Limpando cache anterior');
 
     // RESETAR CACHE ao montar (importante para múltiplas visitas)
     isAdminCache.current = null;
@@ -145,7 +146,8 @@ export default function SolicitarReuniaoPage() {
     // TIMEOUT DE SEGURANÇA: Se após 15 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        console.warn('⚠️ TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 15s');
+        const elapsed = performance.now() - mountTime;
+        console.warn(`⚠️ [TIMEOUT] SEGURANÇA: Forçando fim do carregamento após ${elapsed.toFixed(2)}ms`);
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
@@ -154,13 +156,16 @@ export default function SolicitarReuniaoPage() {
     // Executar verificação
     const runCheck = async () => {
       try {
-        await checkUser();
+        console.log(`🏁 [INIT] Iniciando runCheck após ${(performance.now() - mountTime).toFixed(2)}ms`);
+        await checkUser(mountTime);
       } catch (error) {
-        console.error('❌ Erro na verificação inicial:', error);
+        console.error('❌ [INIT] Erro na verificação inicial:', error);
         if (isMounted) {
           setIsCheckingMeeting(false);
         }
       } finally {
+        const totalTime = performance.now() - mountTime;
+        console.log(`🏁 [INIT] Finalizando runCheck após ${totalTime.toFixed(2)}ms`);
         clearTimeout(safetyTimeout);
       }
     };
@@ -170,7 +175,7 @@ export default function SolicitarReuniaoPage() {
     return () => {
       isMounted = false;
       clearTimeout(safetyTimeout);
-      console.log('🧹 Componente desmontado');
+      console.log('🧹 [INIT] Componente desmontado');
     };
   }, []); // Executa apenas na montagem
 
@@ -223,29 +228,56 @@ export default function SolicitarReuniaoPage() {
     };
   }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
 
-  const checkUser = async () => {
+  const checkUser = async (mountTime: number = performance.now()) => {
+    const startCheck = performance.now();
+    console.log(`👤 [AUTH] Iniciando checkUser após ${(startCheck - mountTime).toFixed(2)}ms da montagem`);
+
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Timeout de 5s para sessão (evita travamento silencioso)
+      let session = null;
+      let error = null;
+
+      try {
+        console.log('⏳ [AUTH] Solicitando sessão ao Supabase...');
+        const result = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout sessão 5s')), 5000)
+          )
+        ]) as any;
+
+        session = result.data?.session;
+        error = result.error;
+        console.log(`✅ [AUTH] Sessão obtida em ${(performance.now() - startCheck).toFixed(2)}ms`);
+      } catch (timeoutError) {
+        console.error(`⏰ [AUTH] TIMEOUT ao obter sessão após ${(performance.now() - startCheck).toFixed(2)}ms`);
+        console.warn('⚠️ [AUTH] Assumindo usuário não logado devido ao timeout');
+        // Timeout considerado como não logado para não bloquear o usuário
+        session = null;
+        error = null;
+      }
 
       if (error) {
-        console.error('Erro ao verificar sessão:', error);
+        console.error('❌ [AUTH] Erro ao verificar sessão:', error);
         setIsCheckingMeeting(false);
         return;
       }
 
       if (session?.user) {
+        console.log(`👤 [AUTH] Usuário logado: ${session.user.id}`);
         setUserId(session.user.id);
         // Verificar se já tem reunião agendada
         await checkExistingMeeting(session.user.id);
       } else {
+        console.log('👤 [AUTH] Usuário não logado');
         // Usuário não logado - mostrar popup de login/cadastro
         setUserId(null);
         setIsCheckingMeeting(false);
-        setAuthDialogTab("login");
+        setAuthDialogTab("login"); // Mantendo consistência com código anterior que usava login
         setIsAuthDialogOpen(true);
       }
     } catch (error) {
-      console.error('Erro ao verificar usuário:', error);
+      console.error('❌ [AUTH] Erro crítico ao verificar usuário:', error);
       setIsCheckingMeeting(false);
     }
   };
