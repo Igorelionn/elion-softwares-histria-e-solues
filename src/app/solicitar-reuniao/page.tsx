@@ -133,9 +133,8 @@ export default function SolicitarReuniaoPage() {
 
   // Executar verificação inicial apenas uma vez
   useEffect(() => {
-    const mountTime = performance.now();
-    console.log('🚀 [INIT] Componente montado - iniciando verificação');
-    console.log('🗑️ [INIT] Limpando cache anterior');
+    console.error('🚀 [INIT] Componente montado - iniciando verificação');
+    console.error('🗑️ [INIT] Limpando cache anterior');
 
     // RESETAR CACHE ao montar (importante para múltiplas visitas)
     isAdminCache.current = null;
@@ -143,29 +142,29 @@ export default function SolicitarReuniaoPage() {
 
     let isMounted = true; // Flag para prevenir updates após unmount
 
-    // TIMEOUT DE SEGURANÇA: Se após 15 segundos ainda estiver carregando, forçar parada
+    // TIMEOUT DE SEGURANÇA: Se após 10 segundos ainda estiver carregando, forçar parada
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        const elapsed = performance.now() - mountTime;
-        console.warn(`⚠️ [TIMEOUT] SEGURANÇA: Forçando fim do carregamento após ${elapsed.toFixed(2)}ms`);
+        console.error('⚠️ [INIT] TIMEOUT DE SEGURANÇA: Forçando fim do carregamento após 10s');
         setIsCheckingMeeting(false);
         setHasExistingMeeting(false);
       }
-    }, 15000); // Timeout de segurança como fallback extremo
+    }, 10000); // Timeout de segurança como fallback extremo
+    
+    console.error('⏰ [INIT] Timeout de segurança configurado (10s)');
 
     // Executar verificação
     const runCheck = async () => {
       try {
-        console.log(`🏁 [INIT] Iniciando runCheck após ${(performance.now() - mountTime).toFixed(2)}ms`);
-        await checkUser(mountTime);
+        console.error('▶️ [INIT] Iniciando runCheck...');
+        await checkUser();
       } catch (error) {
         console.error('❌ [INIT] Erro na verificação inicial:', error);
         if (isMounted) {
           setIsCheckingMeeting(false);
         }
       } finally {
-        const totalTime = performance.now() - mountTime;
-        console.log(`🏁 [INIT] Finalizando runCheck após ${totalTime.toFixed(2)}ms`);
+        console.error('✅ [INIT] runCheck finalizado, limpando timeout');
         clearTimeout(safetyTimeout);
       }
     };
@@ -175,7 +174,7 @@ export default function SolicitarReuniaoPage() {
     return () => {
       isMounted = false;
       clearTimeout(safetyTimeout);
-      console.log('🧹 [INIT] Componente desmontado');
+      console.error('🧹 [INIT] Componente desmontado');
     };
   }, []); // Executa apenas na montagem
 
@@ -228,190 +227,134 @@ export default function SolicitarReuniaoPage() {
     };
   }, [pendingSubmit]); // Re-executar apenas quando pendingSubmit mudar
 
-  const checkUser = async (mountTime: number = performance.now()) => {
-    const startCheck = performance.now();
-    console.log(`👤 [AUTH] Iniciando checkUser após ${(startCheck - mountTime).toFixed(2)}ms da montagem`);
-
+  const checkUser = async () => {
+    console.error('👤 [CHECK_USER] Iniciando verificação de usuário');
+    
     try {
-      // Timeout de 5s para sessão (evita travamento silencioso)
-      let session = null;
-      let error = null;
-
-      try {
-        console.log('⏳ [AUTH] Solicitando sessão ao Supabase...');
-        const result = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout sessão 5s')), 5000)
-          )
-        ]) as any;
-
-        session = result.data?.session;
-        error = result.error;
-        console.log(`✅ [AUTH] Sessão obtida em ${(performance.now() - startCheck).toFixed(2)}ms`);
-      } catch (timeoutError) {
-        console.error(`⏰ [AUTH] TIMEOUT ao obter sessão após ${(performance.now() - startCheck).toFixed(2)}ms`);
-        console.warn('⚠️ [AUTH] Assumindo usuário não logado devido ao timeout');
-        // Timeout considerado como não logado para não bloquear o usuário
-        session = null;
-        error = null;
-      }
+      console.error('🔐 [CHECK_USER] Chamando supabase.auth.getSession()...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.error('✅ [CHECK_USER] getSession() retornou:', { hasSession: !!session, hasError: !!error });
 
       if (error) {
-        console.error('❌ [AUTH] Erro ao verificar sessão:', error);
+        console.error('❌ [CHECK_USER] Erro ao verificar sessão:', error);
         setIsCheckingMeeting(false);
         return;
       }
 
       if (session?.user) {
-        console.log(`👤 [AUTH] Usuário logado: ${session.user.id}`);
+        console.error('✅ [CHECK_USER] Usuário logado, ID:', session.user.id);
         setUserId(session.user.id);
-        // Verificar se já tem reunião agendada
+        console.error('📞 [CHECK_USER] Chamando checkExistingMeeting...');
         await checkExistingMeeting(session.user.id);
+        console.error('✅ [CHECK_USER] checkExistingMeeting finalizado');
       } else {
-        console.log('👤 [AUTH] Usuário não logado');
-        // Usuário não logado - mostrar popup de login/cadastro
+        console.error('ℹ️ [CHECK_USER] Usuário não logado');
         setUserId(null);
         setIsCheckingMeeting(false);
-        setAuthDialogTab("login"); // Mantendo consistência com código anterior que usava login
-        setIsAuthDialogOpen(true);
       }
     } catch (error) {
-      console.error('❌ [AUTH] Erro crítico ao verificar usuário:', error);
+      console.error('❌ [CHECK_USER] Erro crítico:', error);
       setIsCheckingMeeting(false);
     }
   };
 
   const checkExistingMeeting = async (userId: string) => {
     const startTime = performance.now();
+    console.error('🔍 [CHECK_MEETING] === INÍCIO ===');
+    console.error('🔍 [CHECK_MEETING] User ID:', userId);
+    
     try {
-      console.log('🔍 [START] Verificando reuniões para usuário:', userId);
-
       // Verificar cache primeiro
+      console.error('💾 [CHECK_MEETING] Verificando cache isAdmin...');
       let isAdmin = isAdminCache.current;
+      console.error('💾 [CHECK_MEETING] Cache isAdmin:', isAdmin);
 
       if (isAdmin === null) {
-        console.log('📥 Cache vazio - consultando BD');
+        console.error('📥 [CHECK_MEETING] Cache vazio - iniciando query users...');
         const queryStart = performance.now();
 
-        // Query com timeout de 3s para prevenir stale connections
-        try {
-          const result = await Promise.race([
-            (supabase as any)
-              .from('users')
-              .select('role')
-              .eq('id', userId)
-              .single(),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Timeout após 3s')), 3000)
-            )
-          ]);
+        console.error('🔍 [CHECK_MEETING] Executando: supabase.from(users).select(role)...');
+        const { data: userProfile, error: profileError } = await (supabase as any)
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
 
-          const queryTime = performance.now() - queryStart;
-          console.log(`⏱️ Query users levou ${queryTime.toFixed(2)}ms`);
+        const queryTime = performance.now() - queryStart;
+        console.error(`⏱️ [CHECK_MEETING] Query users completou em ${queryTime.toFixed(2)}ms`);
+        console.error('📊 [CHECK_MEETING] Resultado users:', { data: userProfile, error: profileError });
 
-          if (result.error) {
-            console.error('⚠️ Erro ao verificar perfil:', result.error);
-            isAdmin = false;
-          } else {
-            isAdmin = result.data?.role === 'admin';
-          }
-        } catch (timeoutError) {
-          const queryTime = performance.now() - queryStart;
-          console.error(`⏰ TIMEOUT na query users após ${queryTime.toFixed(2)}ms`);
-          console.error('⚠️ Assumindo usuário não-admin e continuando...');
+        if (profileError) {
+          console.error('⚠️ [CHECK_MEETING] Erro na query users:', profileError);
           isAdmin = false;
+        } else {
+          isAdmin = userProfile?.role === 'admin';
+          console.error('✅ [CHECK_MEETING] isAdmin determinado:', isAdmin);
         }
 
         // Armazenar no cache
         isAdminCache.current = isAdmin;
-        console.log('💾 Cache atualizado - isAdmin:', isAdmin);
+        console.error('💾 [CHECK_MEETING] Cache atualizado');
       } else {
-        console.log('⚡ Usando cache - isAdmin:', isAdmin);
+        console.error('⚡ [CHECK_MEETING] Usando cache (sem query users)');
       }
 
-      console.log('👤 Usuário é admin?', isAdmin);
+      console.error('👤 [CHECK_MEETING] Usuário é admin?', isAdmin);
 
       // Se for admin, permitir agendar múltiplas reuniões
       if (isAdmin) {
-        console.log('✅ Admin detectado - permitindo agendamento');
+        console.error('✅ [CHECK_MEETING] Admin detectado - finalizando (sem verificar reuniões)');
         setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
         return;
       }
 
       // Para usuários comuns, verificar se já tem reunião
-      console.log('🔎 Verificando reuniões pendentes/confirmadas...');
+      console.error('🔎 [CHECK_MEETING] Iniciando verificação de reuniões pendentes...');
       const meetingsQueryStart = performance.now();
 
-      let data = null;
-      let error = null;
+      console.error('🔍 [CHECK_MEETING] Executando: supabase.from(meetings).select()...');
+      const { data, error } = await (supabase as any)
+        .from('meetings')
+        .select('id, status')
+        .eq('user_id', userId)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1);
 
-      // Query com timeout de 3s para prevenir stale connections
-      try {
-        const result = await Promise.race([
-          (supabase as any)
-            .from('meetings')
-            .select('id, status')
-            .eq('user_id', userId)
-            .in('status', ['pending', 'confirmed'])
-            .limit(1),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout após 3s')), 3000)
-          )
-        ]);
-
-        const meetingsQueryTime = performance.now() - meetingsQueryStart;
-        console.log(`⏱️ Query meetings levou ${meetingsQueryTime.toFixed(2)}ms`);
-
-        data = result.data;
-        error = result.error;
-      } catch (timeoutError) {
-        const meetingsQueryTime = performance.now() - meetingsQueryStart;
-        console.error(`⏰ TIMEOUT na query meetings após ${meetingsQueryTime.toFixed(2)}ms`);
-        console.error('⚠️ Assumindo sem reuniões e continuando...');
-        // Em caso de timeout, assumir que não há reuniões e permitir agendamento
-        data = null;
-        error = null;
-      }
+      const meetingsQueryTime = performance.now() - meetingsQueryStart;
+      console.error(`⏱️ [CHECK_MEETING] Query meetings completou em ${meetingsQueryTime.toFixed(2)}ms`);
+      console.error('📊 [CHECK_MEETING] Resultado meetings:', { count: data?.length || 0, error });
 
       if (error) {
-        console.error('⚠️ Erro ao verificar reunião existente:', error);
-        // IMPORTANTE: Se houver erro de RLS ou qualquer outro erro,
-        // permitir que o usuário continue e tente agendar.
-        // O erro real será tratado na tentativa de inserção.
-        console.log('⏭️ Permitindo continuar apesar do erro');
+        console.error('⚠️ [CHECK_MEETING] Erro na query meetings:', error);
+        console.error('⏭️ [CHECK_MEETING] Permitindo continuar apesar do erro');
         setHasExistingMeeting(false);
         setIsCheckingMeeting(false);
         const totalTime = performance.now() - startTime;
-        console.log(`⏱️ [END] Verificação completa em ${totalTime.toFixed(2)}ms`);
+        console.error(`⏱️ [CHECK_MEETING] Tempo total: ${totalTime.toFixed(2)}ms`);
         return;
       }
 
-      console.log('📊 Reuniões encontradas:', data?.length || 0);
-
       if (data && data.length > 0) {
-        console.log('🚫 Usuário já tem reunião agendada');
+        console.error('🚫 [CHECK_MEETING] Reunião existente encontrada');
+        console.error('🔄 [CHECK_MEETING] Redirecionando em 2s...');
         setHasExistingMeeting(true);
-        // Redirecionar para página de reuniões agendadas após 2 segundos
         setTimeout(() => {
           router.push('/reunioes-agendadas');
         }, 2000);
       } else {
-        // Não tem reunião - pode agendar
-        console.log('✅ Usuário pode agendar nova reunião');
+        console.error('✅ [CHECK_MEETING] Nenhuma reunião encontrada');
         setHasExistingMeeting(false);
       }
     } catch (error) {
-      console.error('❌ Erro crítico ao verificar reuniões:', error);
-      // Em caso de erro crítico, permitir continuar
-      // O backend validará na hora de inserir
+      console.error('❌ [CHECK_MEETING] Erro crítico:', error);
       setHasExistingMeeting(false);
     } finally {
       const totalTime = performance.now() - startTime;
-      console.log(`⏱️ [END] Verificação total em ${totalTime.toFixed(2)}ms`);
-      console.log('🏁 Finalizando verificação de reuniões');
+      console.error(`⏱️ [CHECK_MEETING] Tempo total: ${totalTime.toFixed(2)}ms`);
+      console.error('🏁 [CHECK_MEETING] Finalizando (setIsCheckingMeeting false)');
       setIsCheckingMeeting(false);
+      console.error('🔍 [CHECK_MEETING] === FIM ===');
     }
   };
 
@@ -793,7 +736,7 @@ export default function SolicitarReuniaoPage() {
       console.error('🔐 [HANDLE_SUBMIT] Usuário não logado, abrindo dialog');
       // Não está logado - abrir dialog de autenticação
       setPendingSubmit(true);
-      setAuthDialogTab("login");
+      setAuthDialogTab("signup");
       setIsAuthDialogOpen(true);
       return;
     }
@@ -883,24 +826,9 @@ export default function SolicitarReuniaoPage() {
   };
 
   // Mostrar tela de loading ou mensagem de reunião existente
-  if (isCheckingMeeting || hasExistingMeeting || (!userId && isAuthDialogOpen)) {
+  if (isCheckingMeeting || hasExistingMeeting) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
-        <AuthDialog
-          isOpen={isAuthDialogOpen}
-          onClose={() => {
-            setIsAuthDialogOpen(false);
-            setPendingSubmit(false);
-            // Se não estiver logado e fechar o dialog, redirecionar para home
-            if (!userId) {
-              router.push("/");
-            }
-          }}
-          defaultTab={authDialogTab}
-          preventRedirect={true}
-          redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/solicitar-reuniao` : '/solicitar-reuniao'}
-          onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
-        />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -933,20 +861,6 @@ export default function SolicitarReuniaoPage() {
                 />
               </div>
             </>
-          ) : !userId && isAuthDialogOpen ? (
-            <>
-              <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto">
-                <Calendar className="w-10 h-10 text-white" />
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl font-medium text-white">
-                  Bem-vindo(a)!
-                </h1>
-                <p className="text-white/60">
-                  Faça login ou crie uma conta para agendar sua reunião
-                </p>
-              </div>
-            </>
           ) : null}
         </motion.div>
       </div>
@@ -955,6 +869,18 @@ export default function SolicitarReuniaoPage() {
 
   return (
     <>
+      <AuthDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => {
+          setIsAuthDialogOpen(false);
+          setPendingSubmit(false);
+        }}
+        defaultTab={authDialogTab}
+        preventRedirect={true}
+        redirectTo={`${window.location.origin}/solicitar-reuniao`}
+        onBeforeGoogleLogin={saveMeetingDataToLocalStorage}
+      />
+
       <div className="min-h-screen bg-black flex flex-col">
         {/* Header com botão voltar */}
         <div className="absolute top-8 left-8 z-50">

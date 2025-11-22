@@ -46,12 +46,10 @@ export function AuthDialog({
   // Reset password form state
   const [resetEmail, setResetEmail] = useState("")
 
-  // Update tab when defaultTab changes or dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(defaultTab)
-    }
-  }, [defaultTab, isOpen])
+  // Update tab when defaultTab changes
+  useState(() => {
+    setActiveTab(defaultTab)
+  })
 
   // Prevent body scroll when dialog is open
   useEffect(() => {
@@ -356,8 +354,8 @@ export function AuthDialog({
                     <Image
                       src="/logo.png"
                       alt="Elion Softwares"
-                      width={150}
-                      height={46}
+                      width={120}
+                      height={37}
                       className="h-5 w-auto"
                       priority
                     />
