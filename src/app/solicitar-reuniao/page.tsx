@@ -510,14 +510,23 @@ export default function SolicitarReuniaoPage() {
       const formattedDate = selectedDate.toISOString();
 
       console.error('🕐 [TIME_SLOTS] Data formatada:', formattedDate);
-      console.error('🕐 [TIME_SLOTS] Buscando reuniões ocupadas via query direta...');
+      console.error('🕐 [TIME_SLOTS] Buscando reuniões ocupadas via query direta com timeout...');
 
-      // Query direta na tabela meetings (mais estável que RPC)
-      const { data: occupiedSlots, error } = await (supabase as any)
+      // OTIMIZADO: Adicionar timeout de 2s na query de horários disponíveis
+      const meetingsPromise = (supabase as any)
         .from('meetings')
         .select('meeting_time')
         .eq('meeting_date', formattedDate)
         .in('status', ['pending', 'confirmed']);
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Query time slots timeout após 2s')), 2000)
+      );
+
+      const { data: occupiedSlots, error } = await Promise.race([
+        meetingsPromise,
+        timeoutPromise
+      ]);
 
       const queryTime = performance.now() - startTime;
       console.error(`⏱️ [TIME_SLOTS] Query levou ${queryTime.toFixed(2)}ms`);
@@ -550,10 +559,16 @@ export default function SolicitarReuniaoPage() {
       setAvailableTimeSlots(available);
     } catch (error: any) {
       const queryTime = performance.now() - startTime;
-      console.error(`❌ [TIME_SLOTS] Erro após ${queryTime.toFixed(2)}ms:`, error);
-      console.error('❌ [TIME_SLOTS] Mensagem:', error?.message);
-      console.error('❌ [TIME_SLOTS] Stack:', error?.stack);
-      // Em caso de erro, mostrar todos os horários
+      
+      if (error?.message?.includes('timeout')) {
+        console.error(`⏱️ [TIME_SLOTS] Timeout após ${queryTime.toFixed(2)}ms - mostrando todos os horários`);
+      } else {
+        console.error(`❌ [TIME_SLOTS] Erro após ${queryTime.toFixed(2)}ms:`, error);
+        console.error('❌ [TIME_SLOTS] Mensagem:', error?.message);
+        console.error('❌ [TIME_SLOTS] Stack:', error?.stack);
+      }
+      
+      // Em caso de erro ou timeout, mostrar todos os horários (estratégia fail-safe)
       setAvailableTimeSlots(["09:00", "11:00", "14:00", "16:00", "18:00"]);
     } finally {
       const totalTime = performance.now() - startTime;
