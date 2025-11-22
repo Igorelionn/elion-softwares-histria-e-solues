@@ -29,6 +29,7 @@ export interface Profile {
   language: string
   created_at: string
   updated_at: string
+  is_admin: boolean // ✨ NOVO: Campo otimizado do banco
 }
 
 export interface ProfileUpdateParams {
@@ -267,6 +268,70 @@ export async function checkRPCAvailability(): Promise<boolean> {
     // Outro erro pode significar que a função existe mas falhou por outro motivo
     console.warn('[PROFILE-RPC] ⚠️ Erro ao verificar RPCs (mas podem estar disponíveis):', err)
     return true
+  }
+}
+
+// ============================================================================
+// FUNÇÃO: Verificar se é Admin (ULTRA-RÁPIDO)
+// ============================================================================
+
+/**
+ * Verifica rapidamente se o usuário autenticado é admin.
+ * Usa cache otimizado no banco de dados para máxima performance.
+ * 
+ * @returns true se é admin, false caso contrário
+ * 
+ * @example
+ * ```typescript
+ * const isAdmin = await checkIsAdminFast()
+ * if (isAdmin) {
+ *   console.log('Usuário é administrador')
+ * }
+ * ```
+ */
+export async function checkIsAdminFast(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('check_is_admin')
+
+    if (error) {
+      console.error('[PROFILE-RPC] Erro ao verificar admin:', error)
+      return false
+    }
+
+    return data === true
+  } catch (err: any) {
+    console.error('[PROFILE-RPC] Exceção ao verificar admin:', err)
+    return false
+  }
+}
+
+/**
+ * Verifica se é admin com timeout configurável.
+ * 
+ * @param timeoutMs - Timeout em milissegundos (padrão: 2000ms)
+ * @returns true se é admin, false caso contrário ou timeout
+ * 
+ * @example
+ * ```typescript
+ * const isAdmin = await checkIsAdminWithTimeout(1000) // 1 segundo
+ * ```
+ */
+export async function checkIsAdminWithTimeout(
+  timeoutMs: number = 2000
+): Promise<boolean> {
+  const timeoutPromise = new Promise<boolean>((resolve) =>
+    setTimeout(() => resolve(false), timeoutMs)
+  )
+
+  try {
+    const result = await Promise.race([
+      checkIsAdminFast(),
+      timeoutPromise
+    ])
+    return result
+  } catch (err: any) {
+    console.warn('[PROFILE-RPC] Timeout ao verificar admin')
+    return false
   }
 }
 

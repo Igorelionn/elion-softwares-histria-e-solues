@@ -315,39 +315,44 @@ export default function PerfilPage() {
 
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ BASIC DATA LOADED:', Date.now() - startTime, 'ms')
 
-                // 🔄 Query em BACKGROUND (não bloqueia, apenas atualiza dados)
-                // 🚀 OTIMIZAÇÃO RADICAL: Não fazer query na tabela users, trabalhar apenas com user_metadata
-                // A tabela users tem problemas de RLS que causam timeout. Vamos evitar totalmente.
-
-                if (FORCE_LOGS) console.error('[PERFIL] ✅ Usando APENAS user_metadata - evitando query problemática')
-
-                // Criar "profile" a partir dos dados que já temos
-                const profile = {
-                    id: session.user.id,
-                    full_name: session.user.user_metadata?.full_name || session.user.email || '',
-                    company: session.user.user_metadata?.company || '',
-                    avatar_url: googleAvatarUrl || session.user.user_metadata?.avatar_url || '',
-                    role: session.user.user_metadata?.role || 'user',
-                    updated_at: new Date().toISOString()
+                // 🚀 NOVA ESTRATÉGIA: Usar RPC otimizada do banco (com cache)
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ Usando RPC otimizada com cache de admin')
+                
+                let profile: any = null
+                let profileError: any = null
+                
+                try {
+                    // Tentar buscar do banco via RPC (com timeout de 2s)
+                    const timeoutPromise = new Promise<never>((_, reject) =>
+                        setTimeout(() => reject(new Error('RPC timeout após 2s')), 2000)
+                    )
+                    
+                    const rpcPromise = supabase.rpc('get_my_profile').single()
+                    
+                    const result = await Promise.race([rpcPromise, timeoutPromise])
+                    
+                    if (result.data) {
+                        profile = result.data
+                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Profile carregado via RPC otimizada')
+                    } else {
+                        throw new Error('Sem dados retornados do RPC')
+                    }
+                } catch (err: any) {
+                    // Fallback: Criar profile a partir do user_metadata
+                    if (FORCE_LOGS) console.error('[PERFIL] ⚠️ RPC falhou, usando user_metadata:', err.message)
+                    
+                    profile = {
+                        id: session.user.id,
+                        full_name: session.user.user_metadata?.full_name || session.user.email || '',
+                        company: session.user.user_metadata?.company || '',
+                        avatar_url: googleAvatarUrl || session.user.user_metadata?.avatar_url || '',
+                        role: session.user.user_metadata?.role || 'user',
+                        language: session.user.user_metadata?.language || 'pt',
+                        is_admin: session.user.user_metadata?.role === 'admin',
+                        updated_at: new Date().toISOString()
+                    }
+                    profileError = null // Não é erro crítico, temos fallback
                 }
-
-                const profileError = null
-
-                if (FORCE_LOGS) console.error('[PERFIL] ✅ Profile montado do user_metadata (0ms - instant)')
-
-                // NÃO fazer query no banco para evitar timeout
-                // let profile, profileError
-                // try {
-                //     const queryPromise = supabase
-                //     .from('users')
-                //         .select('id, full_name, company, avatar_url, role, updated_at')
-                //     .eq('id', session.user.id)
-                //     .maybeSingle()
-                //     ... código removido para evitar timeout
-                // } catch (err: any) {
-                //     profile = null
-                //     profileError = { message: err?.message || 'Erro na query' }
-                // }
 
                 const loadTime = Date.now() - startTime
                 if (FORCE_LOGS) console.error('[PERFIL] 📥 Carregamento total em', loadTime, 'ms')
@@ -400,8 +405,9 @@ export default function PerfilPage() {
                     setLanguage(profile.language)
                 }
 
+                    // Usar campo is_admin otimizado do banco (com cache)
                     // @ts-ignore - TypeScript não reconhece colunas customizadas
-                    setIsAdmin(profile.role === 'admin')
+                    setIsAdmin(profile.is_admin === true || profile.role === 'admin')
 
                     if (FORCE_LOGS) console.error('[PERFIL] ✅ SUCESSO COMPLETO em', Date.now() - startTime, 'ms')
             } else {
