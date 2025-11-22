@@ -1667,8 +1667,8 @@ export default function AdminPage() {
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Reuniões este mês</p>
                             <p className="text-2xl font-bold text-gray-900">
-                              {meetings.filter(m => 
-                                m.status === 'confirmed' && 
+                              {meetings.filter(m =>
+                                m.status === 'confirmed' &&
                                 isSameMonth(new Date(m.meeting_date), currentMonth)
                               ).length}
                             </p>
@@ -1686,8 +1686,8 @@ export default function AdminPage() {
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Pendentes</p>
                             <p className="text-2xl font-bold text-gray-900">
-                              {meetings.filter(m => 
-                                m.status === 'pending' && 
+                              {meetings.filter(m =>
+                                m.status === 'pending' &&
                                 isSameMonth(new Date(m.meeting_date), currentMonth)
                               ).length}
                             </p>
@@ -1705,8 +1705,8 @@ export default function AdminPage() {
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Concluídas</p>
                             <p className="text-2xl font-bold text-gray-900">
-                              {meetings.filter(m => 
-                                m.status === 'completed' && 
+                              {meetings.filter(m =>
+                                m.status === 'completed' &&
                                 isSameMonth(new Date(m.meeting_date), currentMonth)
                               ).length}
                             </p>
@@ -1728,7 +1728,7 @@ export default function AdminPage() {
                             Visualize e gerencie todas as reuniões confirmadas
                           </CardDescription>
                         </div>
-                        
+
                         {/* Busca Rápida */}
                         <div className="relative w-full sm:w-64">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1783,8 +1783,8 @@ export default function AdminPage() {
                       </div>
 
                       {/* Verificar se há reuniões neste mês */}
-                      {meetings.filter(m => 
-                        m.status === 'confirmed' && 
+                      {meetings.filter(m =>
+                        m.status === 'confirmed' &&
                         isSameMonth(new Date(m.meeting_date), currentMonth)
                       ).length === 0 ? (
                         <div className="py-16 text-center">
@@ -1859,7 +1859,7 @@ export default function AdminPage() {
                           const dayMeetings = getMeetingsForDay(day.date)
                           const isToday = isSameDay(day.date, new Date())
                           const isSelected = selectedCalendarDate && isSameDay(day.date, selectedCalendarDate)
-                          
+
                           const getProjectColor = (projectType: string) => {
                             const type = projectType.toLowerCase()
                             if (type.includes('website') || type.includes('site')) return 'bg-blue-500'
@@ -1877,8 +1877,8 @@ export default function AdminPage() {
                               whileTap={dayMeetings.length > 0 ? { scale: 0.98 } : {}}
                               className={cn(
                                 'relative min-h-[100px] p-2 rounded-xl flex flex-col transition-all duration-200 border',
-                                day.isCurrentMonth 
-                                  ? 'bg-white border-gray-200' 
+                                day.isCurrentMonth
+                                  ? 'bg-white border-gray-200'
                                   : 'bg-gray-50 border-gray-100 opacity-50',
                                 isToday && 'ring-2 ring-black border-black',
                                 dayMeetings.length > 0 && 'cursor-pointer hover:shadow-md hover:border-gray-300',
@@ -2077,8 +2077,8 @@ export default function AdminPage() {
                       </AnimatePresence>
                         </>
                       )}
-                    </CardContent>
-                  </Card>
+              </CardContent>
+            </Card>
                 </motion.div>
               </TabsContent>
             )}

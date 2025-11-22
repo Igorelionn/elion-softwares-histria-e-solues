@@ -43,38 +43,14 @@ interface CachedProfile {
     timestamp: number
 }
 
-// 🔄 ATUALIZAÇÃO EM BACKGROUND: Tenta atualizar dados do banco sem bloquear UI
+// 🔄 ATUALIZAÇÃO EM BACKGROUND: DESABILITADA (evitar queries problemáticas na tabela users)
 const updateFromDatabaseInBackground = async (session: any) => {
     if (!session?.user?.id) return
-
-    try {
-        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Atualização em background iniciada...')
-
-        // OTIMIZADO: Usar Promise.race com timeout de 3s
-        const queryPromise = supabase
-            .from('users')
-            .select('id, full_name, company, avatar_url, role, updated_at')
-            .eq('id', session.user.id)
-            .maybeSingle()
-
-        const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Background query timeout após 3s')), 3000)
-        )
-
-        const result = await Promise.race([queryPromise, timeoutPromise])
-
-        if (result.data) {
-            // Atualizar caches
-            cachedProfile = result.data
-            cachedProfileTimestamp = Date.now()
-            setLocalCache(result.data)
-
-            if (FORCE_LOGS) console.error('[PERFIL] ✅ Cache atualizado em background')
-        }
-    } catch (err) {
-        // Silenciosamente ignorar erros em background
-        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Atualização em background falhou (ignorando):', err)
-    }
+    
+    // NÃO fazer query no banco para evitar timeout
+    // A tabela users tem problemas de RLS que causam recursão infinita
+    // Vamos trabalhar apenas com user_metadata
+    if (FORCE_LOGS) console.error('[PERFIL] ℹ️ Atualização em background desabilitada (evitando query problemática)')
 }
 
 // 🔧 FUNÇÕES DE CACHE LOCALSTORAGE (OTIMIZADAS)
@@ -340,152 +316,41 @@ export default function PerfilPage() {
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ BASIC DATA LOADED:', Date.now() - startTime, 'ms')
 
                 // 🔄 Query em BACKGROUND (não bloqueia, apenas atualiza dados)
-                const queryStartTime = performance.now()
-
-                let profile, profileError
-                try {
-                    // OTIMIZADO: Query com timeout de 3s usando Promise.race
-                    if (FORCE_LOGS) console.error('[PERFIL] 🔍 Executando query com timeout de 3s...')
-
-                    const queryPromise = supabase
-                    .from('users')
-                        .select('id, full_name, company, avatar_url, role, updated_at')
-                    .eq('id', session.user.id)
-                    .maybeSingle()
-
-                    const timeoutPromise = new Promise<never>((_, reject) =>
-                        setTimeout(() => reject(new Error('Query profile timeout após 3s')), 3000)
-                    )
-
-                    const result = await Promise.race([queryPromise, timeoutPromise])
-
-                    if (result.data) {
-                    profile = result.data
-                        profileError = null
-                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Query direta bem-sucedida')
-                    } else {
-                        // Estratégia 2: Query simplificada como fallback
-                        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentativa 2: Query simplificada (fallback)')
-
-                        const fallbackQueryPromise = supabase
-                            .from('users')
-                            .select('id, full_name, company, avatar_url')
-                            .eq('id', session.user.id)
-                            .maybeSingle()
-
-                        const fallbackTimeoutPromise = new Promise<never>((_, reject) =>
-                            setTimeout(() => reject(new Error('Fallback query timeout após 3s')), 3000)
-                        )
-
-                        const fallbackResult = await Promise.race([fallbackQueryPromise, fallbackTimeoutPromise])
-
-                        profile = fallbackResult.data
-                        profileError = fallbackResult.error
-                    }
-
-                    const queryEndTime = performance.now()
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏱️ Query HTTP levou:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
-                } catch (err: any) {
-                    const queryEndTime = performance.now()
-                    console.error('[PERFIL] ❌ Query falhou:', err)
-                    console.error('[PERFIL] ⏱️ Falhou após:', (queryEndTime - queryStartTime).toFixed(2), 'ms')
-                    profile = null
-                    profileError = { message: err?.message || 'Erro na query' }
+                // 🚀 OTIMIZAÇÃO RADICAL: Não fazer query na tabela users, trabalhar apenas com user_metadata
+                // A tabela users tem problemas de RLS que causam timeout. Vamos evitar totalmente.
+                
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ Usando APENAS user_metadata - evitando query problemática')
+                
+                // Criar "profile" a partir dos dados que já temos
+                const profile = {
+                    id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || session.user.email || '',
+                    company: session.user.user_metadata?.company || '',
+                    avatar_url: googleAvatarUrl || session.user.user_metadata?.avatar_url || '',
+                    role: session.user.user_metadata?.role || 'user',
+                    updated_at: new Date().toISOString()
                 }
+                
+                const profileError = null
+                
+                if (FORCE_LOGS) console.error('[PERFIL] ✅ Profile montado do user_metadata (0ms - instant)')
+
+                // NÃO fazer query no banco para evitar timeout
+                // let profile, profileError
+                // try {
+                //     const queryPromise = supabase
+                //     .from('users')
+                //         .select('id, full_name, company, avatar_url, role, updated_at')
+                //     .eq('id', session.user.id)
+                //     .maybeSingle()
+                //     ... código removido para evitar timeout
+                // } catch (err: any) {
+                //     profile = null
+                //     profileError = { message: err?.message || 'Erro na query' }
+                // }
 
                 const loadTime = Date.now() - startTime
                 if (FORCE_LOGS) console.error('[PERFIL] 📥 Carregamento total em', loadTime, 'ms')
-
-                // ✅ TRATAMENTO DE ERRO: Se houve erro na query
-                if (profileError) {
-                    console.error('[PERFIL] ❌ Erro ao carregar perfil:', profileError)
-                    console.error('[PERFIL] 📋 Detalhes do erro:', {
-                        message: profileError.message,
-                        code: profileError.code,
-                        details: profileError.details,
-                        hint: profileError.hint
-                    })
-
-                    // 🛡️ TENTATIVA DE RETRY: Se for timeout, tentar novamente uma vez
-                    if (profileError.message?.includes('timeout') || profileError.message?.includes('Timeout')) {
-                        if (FORCE_LOGS) console.error('[PERFIL] ⏰ TIMEOUT detectado, tentando retry...')
-
-                        // Aguardar 1 segundo antes do retry
-                        await new Promise(resolve => setTimeout(resolve, 1000))
-
-                        try {
-                            if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentando query novamente com timeout...')
-
-                            const retryQueryPromise = supabase
-                                .from('users')
-                                .select('id, full_name, company, avatar_url, role, updated_at')
-                                .eq('id', session.user.id)
-                                .maybeSingle()
-
-                            const retryTimeoutPromise = new Promise<never>((_, reject) =>
-                                setTimeout(() => reject(new Error('Retry query timeout após 3s')), 3000)
-                            )
-
-                            const retryResult = await Promise.race([retryQueryPromise, retryTimeoutPromise])
-
-                            if (retryResult.data) {
-                                if (FORCE_LOGS) console.error('[PERFIL] ✅ Retry bem-sucedido!')
-                                profile = retryResult.data
-                                profileError = null
-                            } else if (retryResult.error) {
-                                console.error('[PERFIL] ❌ Retry falhou com erro:', retryResult.error)
-                            }
-                        } catch (retryErr: any) {
-                            console.error('[PERFIL] ❌ Retry também falhou:', retryErr)
-                        }
-                    }
-
-                    // Se ainda há erro após retry
-                    if (profileError) {
-                        if (FORCE_LOGS) console.error('[PERFIL] ⚠️ Falha total na query, mantendo dados básicos')
-
-                        // ✅ Manter dados básicos já configurados acima
-                        // Interface já está funcional com dados do user_metadata
-
-                    setLoading(false)
-                    isLoadingRef.current = false
-                    isCurrentlyLoading = false
-                    loadingInProgressRef.current = false
-
-                        // Mensagem clara sobre o status
-                        setError('Perfil carregado com dados básicos. Funcionalidades limitadas até conectar ao servidor.')
-
-                        if (FORCE_LOGS) console.error('[PERFIL] ✅ Modo offline ativado - interface funcional')
-                return
-                    }
-            }
-
-                // ✅ TRATAMENTO DE VAZIO: Se não retornou dados
-                if (!profile) {
-                    console.warn('[PERFIL] ⚠️ Nenhum dado de perfil retornado!')
-                    console.warn('[PERFIL] 📋 User ID buscado:', session.user.id)
-                    console.warn('[PERFIL] 💡 Possível causa: Usuário não existe na tabela users')
-
-                    // Ainda assim, configurar dados básicos do user_metadata
-                    // Check if user has password mesmo sem perfil
-            const identities = session.user.identities || []
-                    const hasEmailIdentity = identities.some((identity: any) => identity.provider === 'email')
-                    const hasGoogleIdentity = identities.some((identity: any) => identity.provider === 'google')
-
-                    // Se tem login Google, sempre usar a imagem do Google
-                    const googleAvatarUrl = hasGoogleIdentity ? session.user.user_metadata?.avatar_url : null
-
-                    setFullName(session.user.user_metadata?.full_name || session.user.email || '')
-                    setAvatarUrl(googleAvatarUrl || '')
-            setHasPassword(hasEmailIdentity)
-
-                    setLoading(false)
-                    isLoadingRef.current = false
-                    isCurrentlyLoading = false
-                    loadingInProgressRef.current = false
-                    if (FORCE_LOGS) console.error('[PERFIL] ⏹️ Loading encerrado (perfil vazio)')
-                    return
-                }
 
                 // ✅ SUCESSO: Dados retornados
                 if (FORCE_LOGS) console.error('[PERFIL] 📄 Dados recebidos:', {
