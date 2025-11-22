@@ -131,21 +131,30 @@ export function HeroSection() {
                                 },
                                 ...transitionVariants,
                             }}>
-                            <div className="relative mt-8 sm:mt-12 md:mt-16 lg:mt-16 xl:mt-20 overflow-visible px-2 sm:px-4 md:px-4 lg:px-6 xl:px-12 2xl:px-20 flex justify-center">
+                            <div className="relative mt-8 sm:mt-12 md:mt-16 lg:mt-16 xl:mt-20 overflow-visible px-2 sm:px-4 md:px-4 lg:px-6 xl:px-12 2xl:px-20">
                                 <div
                                     aria-hidden
                                     className="bg-gradient-to-b to-background absolute inset-0 z-10 from-transparent from-35%"
                                 />
-                                <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative max-w-[95%] md:max-w-[90%] lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-hidden rounded-xl sm:rounded-2xl border p-2 sm:p-3 md:p-3 lg:p-4 shadow-lg shadow-zinc-950/15 ring-1">
-                                    <Image
-                                        className="bg-background relative rounded-xl sm:rounded-2xl w-full h-auto object-contain"
-                                        src="/imagem-site-app.png"
-                                        alt="app screen"
-                                        width={2700}
-                                        height={1440}
-                                        priority
-                                        quality={95}
-                                    />
+                                <div className="flex flex-col xl:flex-row items-center xl:items-start gap-6 xl:gap-8 justify-center max-w-7xl mx-auto">
+                                    {/* Imagem Principal */}
+                                    <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative max-w-[95%] md:max-w-[90%] lg:max-w-4xl xl:max-w-3xl overflow-hidden rounded-xl sm:rounded-2xl border p-2 sm:p-3 md:p-3 lg:p-4 shadow-lg shadow-zinc-950/15 ring-1 flex-shrink-0">
+                                        <Image
+                                            className="bg-background relative rounded-xl sm:rounded-2xl w-full h-auto object-contain"
+                                            src="/imagem-site-app.png"
+                                            alt="app screen"
+                                            width={2700}
+                                            height={1440}
+                                            priority
+                                            quality={95}
+                                        />
+                                    </div>
+                                    {/* Texto Descritivo */}
+                                    <div className="hidden xl:flex flex-col justify-center max-w-sm xl:max-w-md">
+                                        <p className="text-sm lg:text-base text-white/70 dark:text-white/60 leading-relaxed">
+                                            {t.developments.auction.videoDescription}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </AnimatedGroup>
