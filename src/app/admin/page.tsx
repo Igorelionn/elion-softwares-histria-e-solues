@@ -176,16 +176,16 @@ export default function AdminPage() {
   const loadStats = useCallback(async () => {
     try {
       if (FORCE_LOGS) console.log('[ADMIN] 📊 Carregando estatísticas...')
-      
+
       // OTIMIZADO: RPC com timeout de 5s
       const rpcPromise = supabase.rpc('get_admin_stats')
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('loadStats timeout após 5s')), 5000)
       )
-      
+
       // @ts-ignore - RPC function not in generated types
       const { data, error } = await Promise.race([rpcPromise, timeoutPromise])
-      
+
       if (!error && data) {
         setStats(data)
         if (FORCE_LOGS) console.log('[ADMIN] ✅ Estatísticas carregadas:', data)
@@ -200,15 +200,15 @@ export default function AdminPage() {
   const loadUsers = useCallback(async () => {
     try {
       if (FORCE_LOGS) console.log('[ADMIN] 👥 Carregando usuários...')
-      
+
       // OTIMIZADO: getUser com timeout de 3s
       const userPromise = supabase.auth.getUser()
       const userTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('getUser timeout após 3s')), 3000)
       )
-      
+
       const { data: { user } } = await Promise.race([userPromise, userTimeoutPromise])
-      
+
       if (!user) {
         if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Usuário não autenticado')
         return null
@@ -220,7 +220,7 @@ export default function AdminPage() {
         .select('role')
         .eq('id', user.id)
         .single() as Promise<{ data: { role: string } | null; error: any }>
-      
+
       const profileTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Profile query timeout após 3s')), 3000)
       )
@@ -238,7 +238,7 @@ export default function AdminPage() {
       const usersRpcTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('get_all_users timeout após 5s')), 5000)
       )
-      
+
       // @ts-ignore - RPC function not in generated types
       const { data, error } = await Promise.race([usersRpcPromise, usersRpcTimeoutPromise])
 
@@ -249,17 +249,17 @@ export default function AdminPage() {
         return usersData
       } else if (error) {
         if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Erro no RPC, tentando fallback...')
-        
+
         // OTIMIZADO: Fallback query com timeout de 5s
         const fallbackPromise = supabase
           .from('users')
           .select('*')
           .order('created_at', { ascending: false })
-        
+
         const fallbackTimeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Users fallback timeout após 5s')), 5000)
         )
-        
+
         const { data: fallbackData, error: fallbackError } = await Promise.race([
           fallbackPromise,
           fallbackTimeoutPromise
@@ -281,13 +281,13 @@ export default function AdminPage() {
   const loadMeetings = useCallback(async () => {
     try {
       if (FORCE_LOGS) console.log('[ADMIN] 📅 Carregando reuniões...')
-      
+
       // OTIMIZADO: RPC get_all_meetings com timeout de 5s
       const meetingsRpcPromise = supabase.rpc('get_all_meetings')
       const meetingsRpcTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('get_all_meetings timeout após 5s')), 5000)
       )
-      
+
       // @ts-ignore - RPC function not in generated types
       const { data, error } = await Promise.race([meetingsRpcPromise, meetingsRpcTimeoutPromise])
 
@@ -305,7 +305,7 @@ export default function AdminPage() {
         return transformedData
       } else if (error) {
         if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Erro no RPC, tentando fallback...')
-        
+
         // OTIMIZADO: Fallback query com timeout de 5s
         const meetingsFallbackPromise = (supabase as any)
           .from('meetings')
@@ -314,11 +314,11 @@ export default function AdminPage() {
             users (full_name, email)
           `)
           .order('created_at', { ascending: false })
-        
+
         const meetingsFallbackTimeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Meetings fallback timeout após 5s')), 5000)
         )
-        
+
         // @ts-ignore - Table not in generated types
         const { data: fallbackData, error: fallbackError } = await Promise.race([
           meetingsFallbackPromise,

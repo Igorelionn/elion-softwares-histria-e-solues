@@ -42,7 +42,6 @@ export const translations = {
       auction: {
         title: 'Solução para administração de leilões',
         description: 'Software orquestrado a fim de proporcionar excelência administrativa em seus próximos leilões.',
-        videoDescription: 'Plataforma web desenvolvida para gestão completa de leilões, integrando controle administrativo, automação de processos e análise de dados em tempo real.',
       },
       feature1: {
         title: 'Envio Automatizado de Emails',
@@ -302,7 +301,6 @@ export const translations = {
       auction: {
         title: 'Auction management solution',
         description: 'Orchestrated software to provide administrative excellence in your next auctions.',
-        videoDescription: 'Web platform developed for complete auction management, integrating administrative control, process automation and real-time data analysis.',
       },
       feature1: {
         title: 'Automated Email Sending',
@@ -562,7 +560,6 @@ export const translations = {
       auction: {
         title: 'Solución para administración de subastas',
         description: 'Software orquestado para proporcionar excelencia administrativa en sus próximas subastas.',
-        videoDescription: 'Plataforma web desarrollada para gestión completa de subastas, integrando control administrativo, automatización de procesos y análisis de datos en tiempo real.',
       },
       feature1: {
         title: 'Envío Automatizado de Correos',
@@ -821,7 +818,6 @@ export const translations = {
       auction: {
         title: 'Solution pour l\'administration des enchères',
         description: 'Logiciel orchestré pour fournir l\'excellence administrative dans vos prochaines enchères.',
-        videoDescription: 'Plateforme web développée pour la gestion complète des enchères, intégrant le contrôle administratif, l\'automatisation des processus et l\'analyse de données en temps réel.',
       },
       feature1: {
         title: 'Envoi Automatisé d\'E-mails',
@@ -1084,7 +1080,6 @@ export const translations = {
       auction: {
         title: 'Lösung für die Auktionsverwaltung',
         description: 'Orchestrierte Software zur Bereitstellung administrativer Exzellenz in Ihren nächsten Auktionen.',
-        videoDescription: 'Webplattform für die vollständige Auktionsverwaltung, die administrative Kontrolle, Prozessautomatisierung und Echtzeitdatenanalyse integriert.',
       },
       feature1: {
         title: 'Automatisierter E-Mail-Versand',
@@ -1317,7 +1312,6 @@ export const translations = {
       auction: {
         title: 'Soluzione per l\'amministrazione delle aste',
         description: 'Software orchestrato per fornire eccellenza amministrativa nelle tue prossime aste.',
-        videoDescription: 'Piattaforma web sviluppata per la gestione completa delle aste, integrando controllo amministrativo, automazione dei processi e analisi dei dati in tempo reale.',
       },
       feature1: {
         title: 'Invio Automatizzato di Email',
@@ -1550,7 +1544,6 @@ export const translations = {
       auction: {
         title: '拍卖管理解决方案',
         description: '为您的下一次拍卖提供卓越行政管理的编排软件。',
-        videoDescription: '专为拍卖完整管理开发的网络平台，集成行政控制、流程自动化和实时数据分析。',
       },
       feature1: {
         title: '自动化电子邮件发送',
@@ -1783,7 +1776,6 @@ export const translations = {
       auction: {
         title: 'オークション管理ソリューション',
         description: '次のオークションで優れた管理を提供するためにオーケストレーションされたソフトウェア。',
-        videoDescription: 'オークションの完全な管理のために開発されたWebプラットフォームで、管理制御、プロセスの自動化、リアルタイムデータ分析を統合します。',
       },
       feature1: {
         title: '自動化されたメール送信',

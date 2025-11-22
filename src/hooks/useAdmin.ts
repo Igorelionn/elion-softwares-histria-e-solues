@@ -66,35 +66,35 @@ export function useAdmin() {
   const checkAdminStatus = async () => {
     try {
       const startTime = Date.now()
-      if (FORCE_LOGS) console.log('[useAdmin] 📡 Buscando sessão do usuário...')
+      if (FORCE_LOGS) console.log('[useAdmin] 📡 Buscando usuário...')
 
-      // OTIMIZADO: getSession com timeout de 3s
-      const sessionPromise = supabase.auth.getSession()
-      const sessionTimeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('getSession timeout após 3s')), 3000)
+      // OTIMIZADO: getUser com timeout de 3s (mais rápido que getSession)
+      const userPromise = supabase.auth.getUser()
+      const userTimeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('getUser timeout após 3s')), 3000)
       )
 
-      const { data: { session }, error: sessionError } = await Promise.race([
-        sessionPromise,
-        sessionTimeoutPromise
+      const { data: { user }, error: userError } = await Promise.race([
+        userPromise,
+        userTimeoutPromise
       ])
 
-      if (sessionError) {
-        console.error('[useAdmin] ❌ Erro ao buscar sessão:', sessionError)
+      if (userError) {
+        console.error('[useAdmin] ❌ Erro ao buscar usuário:', userError)
         setIsAdmin(false)
         setLoading(false)
-        setError('Erro ao verificar sessão')
+        setError('Erro ao verificar usuário')
         return
       }
 
-      if (!session?.user) {
-        if (FORCE_LOGS) console.log('[useAdmin] ⚠️ Nenhuma sessão ativa')
+      if (!user) {
+        if (FORCE_LOGS) console.log('[useAdmin] ⚠️ Nenhum usuário autenticado')
         setIsAdmin(false)
         setLoading(false)
         return
       }
 
-      if (FORCE_LOGS) console.log('[useAdmin] 👤 Sessão encontrada para:', session.user.email)
+      if (FORCE_LOGS) console.log('[useAdmin] 👤 Usuário encontrado:', user.email)
 
       // OTIMIZADO: Buscar role com timeout de 3s
       if (FORCE_LOGS) console.log('[useAdmin] 📡 Buscando role do usuário na tabela users...')
@@ -103,7 +103,7 @@ export function useAdmin() {
       const queryPromise = supabase
         .from('users')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single() as Promise<{ data: { role: string } | null; error: any }>
 
       const queryTimeoutPromise = new Promise<never>((_, reject) =>
@@ -127,7 +127,7 @@ export function useAdmin() {
       }
 
       if (!profile) {
-        console.warn('[useAdmin] ⚠️ Profile não encontrado para user:', session.user.id)
+        console.warn('[useAdmin] ⚠️ Profile não encontrado para user:', user.id)
         setIsAdmin(false)
         setLoading(false)
         setError('Perfil não encontrado')

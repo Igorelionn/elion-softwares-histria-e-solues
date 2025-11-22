@@ -32,8 +32,8 @@ export const translations = {
       paragraph4: '',
     },
     developments: {
-      title: 'Engenharia de Software Especializada',
-      subtitle: 'Soluções tecnológicas orientadas a resultados e excelência operacional.',
+      title: 'Desenvolvimentos',
+      subtitle: 'arquiteturas digitais que materializam objetivos de negócio.',
       auction: {
         title: 'Solução para administração de leilões',
         description: 'Software orquestrado a fim de proporcionar excelência administrativa em seus próximos leilões.',
