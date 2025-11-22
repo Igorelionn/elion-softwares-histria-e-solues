@@ -50,21 +50,18 @@ const updateFromDatabaseInBackground = async (session: any) => {
     try {
         if (FORCE_LOGS) console.error('[PERFIL] 🔄 Atualização em background iniciada...')
 
-        // OTIMIZADO: Timeout de 2s para background usando Promise.race
-        const backgroundProfilePromise = supabase
+        // OTIMIZADO: Usar Promise.race com timeout de 3s
+        const queryPromise = supabase
             .from('users')
             .select('id, full_name, company, avatar_url, role, updated_at')
             .eq('id', session.user.id)
             .maybeSingle()
 
-        const backgroundTimeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Background query timeout após 2s')), 2000)
+        const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Background query timeout após 3s')), 3000)
         )
 
-        const result = await Promise.race([
-            backgroundProfilePromise,
-            backgroundTimeoutPromise
-        ])
+        const result = await Promise.race([queryPromise, timeoutPromise])
 
         if (result.data) {
             // Atualizar caches
@@ -347,46 +344,40 @@ export default function PerfilPage() {
 
                 let profile, profileError
                 try {
-                    // OTIMIZADO: Query com timeout de 2s
-                    if (FORCE_LOGS) console.error('[PERFIL] 🔍 Executando query com timeout de 2s...')
+                    // OTIMIZADO: Query com timeout de 3s usando Promise.race
+                    if (FORCE_LOGS) console.error('[PERFIL] 🔍 Executando query com timeout de 3s...')
 
-                    const profilePromise = supabase
+                    const queryPromise = supabase
                         .from('users')
                         .select('id, full_name, company, avatar_url, role, updated_at')
                         .eq('id', session.user.id)
                         .maybeSingle()
 
                     const timeoutPromise = new Promise<never>((_, reject) =>
-                        setTimeout(() => reject(new Error('Query profile timeout após 2s')), 2000)
+                        setTimeout(() => reject(new Error('Query profile timeout após 3s')), 3000)
                     )
 
-                    const result = await Promise.race([
-                        profilePromise,
-                        timeoutPromise
-                    ])
+                    const result = await Promise.race([queryPromise, timeoutPromise])
 
                     if (result.data) {
                         profile = result.data
                         profileError = null
                         if (FORCE_LOGS) console.error('[PERFIL] ✅ Query direta bem-sucedida')
                     } else {
-                        // Estratégia 2: Query simplificada como fallback com timeout
-                        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentativa 2: Query simplificada (fallback) com timeout...')
+                        // Estratégia 2: Query simplificada como fallback
+                        if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentativa 2: Query simplificada (fallback)')
 
-                        const fallbackProfilePromise = supabase
+                        const fallbackQueryPromise = supabase
                             .from('users')
                             .select('id, full_name, company, avatar_url')
                             .eq('id', session.user.id)
                             .maybeSingle()
 
                         const fallbackTimeoutPromise = new Promise<never>((_, reject) =>
-                            setTimeout(() => reject(new Error('Fallback query timeout após 2s')), 2000)
+                            setTimeout(() => reject(new Error('Fallback query timeout após 3s')), 3000)
                         )
 
-                        const fallbackResult = await Promise.race([
-                            fallbackProfilePromise,
-                            fallbackTimeoutPromise
-                        ])
+                        const fallbackResult = await Promise.race([fallbackQueryPromise, fallbackTimeoutPromise])
 
                         profile = fallbackResult.data
                         profileError = fallbackResult.error
@@ -425,20 +416,17 @@ export default function PerfilPage() {
                         try {
                             if (FORCE_LOGS) console.error('[PERFIL] 🔄 Tentando query novamente com timeout...')
 
-                            const retryProfilePromise = supabase
+                            const retryQueryPromise = supabase
                                 .from('users')
                                 .select('id, full_name, company, avatar_url, role, updated_at')
                                 .eq('id', session.user.id)
                                 .maybeSingle()
 
                             const retryTimeoutPromise = new Promise<never>((_, reject) =>
-                                setTimeout(() => reject(new Error('Retry query timeout após 2s')), 2000)
+                                setTimeout(() => reject(new Error('Retry query timeout após 3s')), 3000)
                             )
 
-                            const retryResult = await Promise.race([
-                                retryProfilePromise,
-                                retryTimeoutPromise
-                            ])
+                            const retryResult = await Promise.race([retryQueryPromise, retryTimeoutPromise])
 
                             if (retryResult.data) {
                                 if (FORCE_LOGS) console.error('[PERFIL] ✅ Retry bem-sucedido!')
@@ -773,20 +761,11 @@ export default function PerfilPage() {
 
             console.log('🔗 URL pública gerada:', publicUrl)
 
-            // Update profile with new avatar URL com timeout
-            const updateAvatarPromise = supabase
+            // Update profile with new avatar URL
+            const { error: updateError } = await supabase
                 .from('users')
                 .update({ avatar_url: publicUrl })
                 .eq('id', user.id)
-
-            const updateTimeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Update avatar timeout após 3s')), 3000)
-            )
-
-            const { error: updateError } = await Promise.race([
-                updateAvatarPromise,
-                updateTimeoutPromise
-            ])
 
             if (updateError) {
                 console.error('❌ Erro ao atualizar perfil:', updateError)
@@ -930,20 +909,11 @@ export default function PerfilPage() {
                 }
             }
 
-            // Delete user profile from database (cascade will handle related data) com timeout
-            const deleteProfilePromise = supabase
+            // Delete user profile from database (cascade will handle related data)
+            const { error: deleteProfileError } = await supabase
                 .from('users')
                 .delete()
                 .eq('id', user.id)
-
-            const deleteTimeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Delete profile timeout após 3s')), 3000)
-            )
-
-            const { error: deleteProfileError } = await Promise.race([
-                deleteProfilePromise,
-                deleteTimeoutPromise
-            ])
 
             if (deleteProfileError) throw deleteProfileError
 
