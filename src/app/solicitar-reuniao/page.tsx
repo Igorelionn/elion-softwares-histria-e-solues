@@ -150,7 +150,7 @@ export default function SolicitarReuniaoPage() {
         setHasExistingMeeting(false);
       }
     }, 10000); // Timeout de segurança como fallback extremo
-    
+
     console.error('⏰ [INIT] Timeout de segurança configurado (10s)');
 
     // Executar verificação
@@ -231,8 +231,19 @@ export default function SolicitarReuniaoPage() {
     console.error('👤 [CHECK_USER] Iniciando verificação de usuário');
     
     try {
-      console.error('🔐 [CHECK_USER] Chamando supabase.auth.getSession()...');
-      const { data: { session }, error } = await supabase.auth.getSession();
+      console.error('🔐 [CHECK_USER] Chamando supabase.auth.getSession() com timeout de 5s...');
+      
+      // TIMEOUT FORÇADO: getSession tem 5s para responder, senão abortamos
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('getSession timeout após 5s')), 5000)
+      );
+      
+      const { data: { session }, error } = await Promise.race([
+        sessionPromise,
+        timeoutPromise
+      ]);
+      
       console.error('✅ [CHECK_USER] getSession() retornou:', { hasSession: !!session, hasError: !!error });
 
       if (error) {
@@ -252,8 +263,27 @@ export default function SolicitarReuniaoPage() {
         setUserId(null);
         setIsCheckingMeeting(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [CHECK_USER] Erro crítico:', error);
+      
+      // Se foi timeout do getSession, tentar fallback
+      if (error?.message?.includes('getSession timeout')) {
+        console.error('⚠️ [CHECK_USER] getSession travou - usando fallback');
+        
+        // Fallback: tentar getUserSession que é mais leve
+        try {
+          const user = (await supabase.auth.getUser()).data.user;
+          if (user) {
+            console.error('✅ [CHECK_USER] Fallback funcionou! User ID:', user.id);
+            setUserId(user.id);
+            await checkExistingMeeting(user.id);
+            return;
+          }
+        } catch (fallbackError) {
+          console.error('❌ [CHECK_USER] Fallback também falhou:', fallbackError);
+        }
+      }
+      
       setIsCheckingMeeting(false);
     }
   };
@@ -262,7 +292,7 @@ export default function SolicitarReuniaoPage() {
     const startTime = performance.now();
     console.error('🔍 [CHECK_MEETING] === INÍCIO ===');
     console.error('🔍 [CHECK_MEETING] User ID:', userId);
-    
+
     try {
       // Verificar cache primeiro
       console.error('💾 [CHECK_MEETING] Verificando cache isAdmin...');

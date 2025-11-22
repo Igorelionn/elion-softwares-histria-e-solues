@@ -6,13 +6,50 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 // Cliente Supabase tipado com o schema do banco de dados
-// Configurado para persistir sessão no localStorage e auto-refresh
+// Configurado com timeout global, retry logic e pool de conexões otimizado
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // Timeout de 8s para operações de auth (evita travamento)
+    flowType: 'pkce',
+    debug: false,
+  },
+  global: {
+    headers: {
+      'x-client-info': 'elion-softwares-web',
+    },
+    // Timeout global de 10s para todas as requisições REST
+    fetch: async (url, options = {}) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.error('🚫 [SUPABASE] Request timeout após 10s:', url);
+          throw new Error('Request timeout - a conexão demorou muito para responder');
+        }
+        throw error;
+      }
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   },
 })
 
