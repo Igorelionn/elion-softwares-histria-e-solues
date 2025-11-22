@@ -327,11 +327,12 @@ export default function PerfilPage() {
                         setTimeout(() => reject(new Error('RPC timeout após 2s')), 2000)
                     )
                     
+                    // @ts-ignore - TypeScript não reconhece funções RPC personalizadas
                     const rpcPromise = supabase.rpc('get_my_profile').single()
                     
-                    const result = await Promise.race([rpcPromise, timeoutPromise])
+                    const result: any = await Promise.race([rpcPromise, timeoutPromise])
                     
-                    if (result.data) {
+                    if (result && result.data) {
                         profile = result.data
                         if (FORCE_LOGS) console.error('[PERFIL] ✅ Profile carregado via RPC otimizada')
                     } else {

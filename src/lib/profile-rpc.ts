@@ -14,6 +14,7 @@
  */
 
 import { supabase } from './supabase'
+import type { GetMyProfileResult } from '@/types/supabase-rpc'
 
 // ============================================================================
 // TIPOS
@@ -45,10 +46,10 @@ export interface ProfileUpdateParams {
 
 /**
  * Busca o perfil do usuário autenticado usando RPC seguro.
- * 
+ *
  * @returns Profile ou null se não encontrado
  * @throws Error se ocorrer erro na chamada RPC
- * 
+ *
  * @example
  * ```typescript
  * const profile = await getProfileViaRPC()
@@ -59,6 +60,7 @@ export interface ProfileUpdateParams {
  */
 export async function getProfileViaRPC(): Promise<Profile | null> {
   try {
+    // @ts-ignore - TypeScript não reconhece funções RPC personalizadas
     const { data, error } = await supabase
       .rpc('get_my_profile')
       .single()
@@ -82,10 +84,10 @@ export async function getProfileViaRPC(): Promise<Profile | null> {
 
 /**
  * Busca o perfil do usuário com timeout configurável.
- * 
+ *
  * @param timeoutMs - Timeout em milissegundos (padrão: 5000ms)
  * @returns Profile ou null se timeout/não encontrado
- * 
+ *
  * @example
  * ```typescript
  * const profile = await getProfileWithTimeout(3000) // 3 segundos
@@ -119,10 +121,10 @@ export async function getProfileWithTimeout(
 
 /**
  * Atualiza o perfil do usuário autenticado usando RPC seguro.
- * 
+ *
  * @param params - Campos a atualizar (apenas os fornecidos serão atualizados)
  * @returns Profile atualizado ou null se erro
- * 
+ *
  * @example
  * ```typescript
  * const updated = await updateProfileViaRPC({
@@ -135,6 +137,7 @@ export async function updateProfileViaRPC(
   params: ProfileUpdateParams
 ): Promise<Profile | null> {
   try {
+    // @ts-ignore - TypeScript não reconhece funções RPC personalizadas
     const { data, error } = await supabase
       .rpc('update_my_profile', {
         p_full_name: params.full_name ?? null,
@@ -163,11 +166,11 @@ export async function updateProfileViaRPC(
 
 /**
  * Atualiza o perfil com timeout configurável.
- * 
+ *
  * @param params - Campos a atualizar
  * @param timeoutMs - Timeout em milissegundos (padrão: 5000ms)
  * @returns Profile atualizado ou null se timeout/erro
- * 
+ *
  * @example
  * ```typescript
  * const updated = await updateProfileWithTimeout({
@@ -205,10 +208,10 @@ export async function updateProfileWithTimeout(
 /**
  * Sincroniza dados do user_metadata com a tabela users usando RPC.
  * Útil para garantir consistência após login.
- * 
+ *
  * @param session - Sessão do Supabase Auth
  * @returns true se sincronizado com sucesso, false caso contrário
- * 
+ *
  * @example
  * ```typescript
  * const { data: { session } } = await supabase.auth.getSession()
@@ -224,7 +227,7 @@ export async function syncUserMetadataWithDatabase(
 
   try {
     const metadata = session.user.user_metadata || {}
-    
+
     // Atualizar apenas se houver dados no metadata
     if (!metadata.full_name && !metadata.company && !metadata.avatar_url) {
       console.log('[PROFILE-RPC] Nenhum dado no user_metadata para sincronizar')
@@ -252,7 +255,7 @@ export async function syncUserMetadataWithDatabase(
 /**
  * Verifica se as funções RPC estão disponíveis no banco de dados.
  * Útil para debug e verificação de migração.
- * 
+ *
  * @returns true se RPCs estão disponíveis, false caso contrário
  */
 export async function checkRPCAvailability(): Promise<boolean> {
@@ -278,9 +281,9 @@ export async function checkRPCAvailability(): Promise<boolean> {
 /**
  * Verifica rapidamente se o usuário autenticado é admin.
  * Usa cache otimizado no banco de dados para máxima performance.
- * 
+ *
  * @returns true se é admin, false caso contrário
- * 
+ *
  * @example
  * ```typescript
  * const isAdmin = await checkIsAdminFast()
@@ -291,6 +294,7 @@ export async function checkRPCAvailability(): Promise<boolean> {
  */
 export async function checkIsAdminFast(): Promise<boolean> {
   try {
+    // @ts-ignore - TypeScript não reconhece funções RPC personalizadas
     const { data, error } = await supabase.rpc('check_is_admin')
 
     if (error) {
@@ -307,10 +311,10 @@ export async function checkIsAdminFast(): Promise<boolean> {
 
 /**
  * Verifica se é admin com timeout configurável.
- * 
+ *
  * @param timeoutMs - Timeout em milissegundos (padrão: 2000ms)
  * @returns true se é admin, false caso contrário ou timeout
- * 
+ *
  * @example
  * ```typescript
  * const isAdmin = await checkIsAdminWithTimeout(1000) // 1 segundo
