@@ -6,10 +6,10 @@ import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, ArrowLeft, Calendar, Clock, Mail, Phone, Briefcase, DollarSign, FileText, ChevronDown, ChevronUp, Search, Filter, X, CalendarClock, XCircle } from 'lucide-react'
+import { Loader2, ArrowLeft, Calendar, Clock, Mail, Phone, Briefcase, DollarSign, FileText, ChevronDown, ChevronUp, Search, Filter, X, CalendarClock, XCircle, LayoutList, CalendarDays } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { GlassCalendarInput } from '@/components/ui/glass-calendar-input'
-import { format } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -56,6 +56,11 @@ export default function ReuniõesAgendadasPage() {
     const [newMeetingDate, setNewMeetingDate] = useState<Date | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
     const [actionError, setActionError] = useState('')
+
+    // Estados do Calendário
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+    const [currentMonth, setCurrentMonth] = useState(new Date())
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
     useEffect(() => {
         // Previne múltiplas chamadas simultâneas
@@ -413,6 +418,28 @@ export default function ReuniõesAgendadasPage() {
         filterMeetings()
     }, [filterMeetings])
 
+    // Funções do Calendário
+    const getConfirmedMeetings = () => {
+        return meetings.filter(meeting => meeting.status === 'confirmed')
+    }
+
+    const getMeetingsForDate = (date: Date) => {
+        const confirmed = getConfirmedMeetings()
+        return confirmed.filter(meeting => 
+            isSameDay(new Date(meeting.meeting_date), date)
+        )
+    }
+
+    const getDaysInMonth = () => {
+        const start = startOfWeek(startOfMonth(currentMonth), { locale: ptBR })
+        const end = endOfWeek(endOfMonth(currentMonth), { locale: ptBR })
+        return eachDayOfInterval({ start, end })
+    }
+
+    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
+    const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+    const goToToday = () => setCurrentMonth(new Date())
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'pending':
@@ -654,17 +681,48 @@ export default function ReuniõesAgendadasPage() {
                                     )}
                                 </div>
                             </div>
-                            {(searchTerm || statusFilter !== 'all') && (
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('')
-                                        setStatusFilter('all')
-                                    }}
-                                    className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition-colors font-medium"
-                                >
-                                    Limpar filtros
-                                </button>
-                            )}
+                            <div className="flex items-center gap-3">
+                                {(searchTerm || statusFilter !== 'all') && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('')
+                                            setStatusFilter('all')
+                                        }}
+                                        className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition-colors font-medium"
+                                    >
+                                        Limpar filtros
+                                    </button>
+                                )}
+                                {/* Toggle View Mode */}
+                                {statusFilter === 'confirmed' && (
+                                    <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1">
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={cn(
+                                                "p-2 rounded-md transition-all cursor-pointer",
+                                                viewMode === 'list'
+                                                    ? "bg-white text-gray-900 shadow-sm"
+                                                    : "text-gray-500 hover:text-gray-700"
+                                            )}
+                                            title="Visualização em lista"
+                                        >
+                                            <LayoutList className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('calendar')}
+                                            className={cn(
+                                                "p-2 rounded-md transition-all cursor-pointer",
+                                                viewMode === 'calendar'
+                                                    ? "bg-white text-gray-900 shadow-sm"
+                                                    : "text-gray-500 hover:text-gray-700"
+                                            )}
+                                            title="Visualização em calendário"
+                                        >
+                                            <CalendarDays className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -736,7 +794,178 @@ export default function ReuniõesAgendadasPage() {
                             </Button>
                         </div>
                     </div>
+                ) : viewMode === 'calendar' && statusFilter === 'confirmed' ? (
+                    /* Visualização em Calendário */
+                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                        {/* Cabeçalho do Calendário */}
+                        <div className="px-6 py-5 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">
+                                    {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={goToToday}
+                                        className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        Hoje
+                                    </button>
+                                    <button
+                                        onClick={prevMonth}
+                                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                                        title="Mês anterior"
+                                    >
+                                        <ChevronDown className="w-4 h-4 rotate-90" />
+                                    </button>
+                                    <button
+                                        onClick={nextMonth}
+                                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                                        title="Próximo mês"
+                                    >
+                                        <ChevronDown className="w-4 h-4 -rotate-90" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Grid do Calendário */}
+                        <div className="p-6">
+                            {/* Dias da Semana */}
+                            <div className="grid grid-cols-7 gap-px mb-2">
+                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                                    <div key={day} className="text-center py-2 text-xs font-medium text-gray-500">
+                                        {day}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Dias do Mês */}
+                            <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden">
+                                {getDaysInMonth().map((day, idx) => {
+                                    const dayMeetings = getMeetingsForDate(day)
+                                    const isCurrentMonth = isSameMonth(day, currentMonth)
+                                    const isToday = isSameDay(day, new Date())
+                                    const isSelected = selectedDate && isSameDay(day, selectedDate)
+                                    const hasMeetings = dayMeetings.length > 0
+
+                                    return (
+                                        <motion.button
+                                            key={idx}
+                                            onClick={() => {
+                                                if (hasMeetings) {
+                                                    setSelectedDate(isSameDay(day, selectedDate || new Date()) ? null : day)
+                                                }
+                                            }}
+                                            whileHover={hasMeetings ? { scale: 1.05 } : {}}
+                                            whileTap={hasMeetings ? { scale: 0.95 } : {}}
+                                            className={cn(
+                                                "min-h-[80px] bg-white p-2 relative group transition-all cursor-pointer",
+                                                !isCurrentMonth && "text-gray-300",
+                                                isCurrentMonth && "text-gray-900",
+                                                isToday && "ring-2 ring-gray-900 ring-inset",
+                                                isSelected && "bg-gray-50",
+                                                hasMeetings && "hover:bg-gray-50 cursor-pointer",
+                                                !hasMeetings && "cursor-default"
+                                            )}
+                                        >
+                                            {/* Número do Dia */}
+                                            <div className={cn(
+                                                "text-sm font-medium mb-1",
+                                                isToday && "w-6 h-6 bg-gray-900 text-white rounded-full flex items-center justify-center text-xs"
+                                            )}>
+                                                {format(day, 'd')}
+                                            </div>
+
+                                            {/* Indicador de Reuniões */}
+                                            {hasMeetings && (
+                                                <div className="space-y-1">
+                                                    {dayMeetings.slice(0, 2).map((meeting, i) => (
+                                                        <div
+                                                            key={meeting.id}
+                                                            className="text-[10px] text-left px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded truncate group-hover:bg-gray-200 transition-colors"
+                                                            title={meeting.project_type}
+                                                        >
+                                                            {meeting.project_type}
+                                                        </div>
+                                                    ))}
+                                                    {dayMeetings.length > 2 && (
+                                                        <div className="text-[10px] text-gray-500 px-1.5">
+                                                            +{dayMeetings.length - 2} mais
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </motion.button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Reuniões do Dia Selecionado */}
+                        <AnimatePresence>
+                            {selectedDate && getMeetingsForDate(selectedDate).length > 0 && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden border-t border-gray-100"
+                                >
+                                    <div className="px-6 py-5 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-semibold text-gray-900">
+                                                Reuniões em {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                                            </h3>
+                                            <button
+                                                onClick={() => setSelectedDate(null)}
+                                                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {getMeetingsForDate(selectedDate).map((meeting) => (
+                                                <div
+                                                    key={meeting.id}
+                                                    className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                                                                {meeting.project_type}
+                                                            </h4>
+                                                            <div className="space-y-1 text-xs text-gray-600">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Mail className="w-3 h-3 text-gray-400" />
+                                                                    <span className="truncate">{meeting.email}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Phone className="w-3 h-3 text-gray-400" />
+                                                                    <span>{meeting.phone}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                setExpandedMeeting(meeting.id)
+                                                                setViewMode('list')
+                                                                setSelectedDate(null)
+                                                            }}
+                                                            className="text-xs text-gray-600 hover:text-gray-900 font-medium cursor-pointer"
+                                                        >
+                                                            Ver detalhes →
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 ) : (
+                    /* Visualização em Lista */
                     <div className="space-y-4">
                         {filteredMeetings.map((meeting) => (
                             <motion.div
