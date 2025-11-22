@@ -37,14 +37,14 @@ export function useAdmin() {
     setLoading(true)
 
     const timeout = setTimeout(() => {
-      console.warn('[useAdmin] ⏰ TIMEOUT: Verificação demorou mais de 30s, cancelando...')
+      console.warn('[useAdmin] ⏰ TIMEOUT: Verificação demorou mais de 10s, cancelando...')
       if (isMounted) {
         adminCache.isLoading = false
         setIsAdmin(false)
         setLoading(false)
         setError('Timeout na verificação de permissões')
       }
-    }, 30000) // Aumentado para 30s para conexões lentas
+    }, 10000) // Reduzido para 10s (queries agora têm timeout de 3s)
 
     timeoutId = timeout
 
@@ -68,8 +68,16 @@ export function useAdmin() {
       const startTime = Date.now()
       if (FORCE_LOGS) console.log('[useAdmin] 📡 Buscando sessão do usuário...')
 
-      // Primeiro verificar se há uma sessão válida
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      // OTIMIZADO: getSession com timeout de 3s
+      const sessionPromise = supabase.auth.getSession()
+      const sessionTimeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('getSession timeout após 3s')), 3000)
+      )
+
+      const { data: { session }, error: sessionError } = await Promise.race([
+        sessionPromise,
+        sessionTimeoutPromise
+      ])
 
       if (sessionError) {
         console.error('[useAdmin] ❌ Erro ao buscar sessão:', sessionError)
@@ -88,15 +96,24 @@ export function useAdmin() {
 
       if (FORCE_LOGS) console.log('[useAdmin] 👤 Sessão encontrada para:', session.user.email)
 
-      // Agora buscar o perfil do usuário
+      // OTIMIZADO: Buscar role com timeout de 3s
       if (FORCE_LOGS) console.log('[useAdmin] 📡 Buscando role do usuário na tabela users...')
       const queryStartTime = Date.now()
 
-      const { data: profile, error: profileError } = await supabase
+      const queryPromise = supabase
         .from('users')
         .select('role')
         .eq('id', session.user.id)
-        .single() as { data: { role: string } | null; error: any }
+        .single() as Promise<{ data: { role: string } | null; error: any }>
+
+      const queryTimeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Query role timeout após 3s')), 3000)
+      )
+
+      const { data: profile, error: profileError } = await Promise.race([
+        queryPromise,
+        queryTimeoutPromise
+      ])
 
       const queryTime = Date.now() - queryStartTime
       if (FORCE_LOGS) console.log(`[useAdmin] ⏱️ Query levou ${queryTime}ms`)
