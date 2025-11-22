@@ -38,7 +38,7 @@ export const translations = {
     },
     developments: {
       title: 'Soluções Tecnológicas',
-      subtitle: 'engenharias digitais que concretizam estratégias empresariais.',
+      subtitle: 'que executam estratégias empresariais.',
       auction: {
         title: 'Solução para administração de leilões',
         description: 'Software orquestrado a fim de proporcionar excelência administrativa em seus próximos leilões.',
@@ -297,7 +297,7 @@ export const translations = {
     },
     developments: {
       title: 'Technological Solutions',
-      subtitle: 'digital engineering that materializes business strategies.',
+      subtitle: 'that execute business strategies.',
       auction: {
         title: 'Auction management solution',
         description: 'Orchestrated software to provide administrative excellence in your next auctions.',
@@ -556,7 +556,7 @@ export const translations = {
     },
     developments: {
       title: 'Soluciones Tecnológicas',
-      subtitle: 'ingenierías digitales que concretan estrategias empresariales.',
+      subtitle: 'que ejecutan estrategias empresariales.',
       auction: {
         title: 'Solución para administración de subastas',
         description: 'Software orquestado para proporcionar excelencia administrativa en sus próximas subastas.',
@@ -814,7 +814,7 @@ export const translations = {
     },
     developments: {
       title: 'Solutions Technologiques',
-      subtitle: 'ingénieries numériques qui concrétisent les stratégies d\'entreprise.',
+      subtitle: 'qui exécutent les stratégies d\'entreprise.',
       auction: {
         title: 'Solution pour l\'administration des enchères',
         description: 'Logiciel orchestré pour fournir l\'excellence administrative dans vos prochaines enchères.',
@@ -1076,7 +1076,7 @@ export const translations = {
     },
     developments: {
       title: 'Technologische Lösungen',
-      subtitle: 'digitale Ingenieurskunst, die Geschäftsstrategien realisiert.',
+      subtitle: 'die Geschäftsstrategien umsetzen.',
       auction: {
         title: 'Lösung für die Auktionsverwaltung',
         description: 'Orchestrierte Software zur Bereitstellung administrativer Exzellenz in Ihren nächsten Auktionen.',
@@ -1308,7 +1308,7 @@ export const translations = {
     },
     developments: {
       title: 'Soluzioni Tecnologiche',
-      subtitle: 'ingegnerie digitali che concretizzano strategie aziendali.',
+      subtitle: 'che eseguono strategie aziendali.',
       auction: {
         title: 'Soluzione per l\'amministrazione delle aste',
         description: 'Software orchestrato per fornire eccellenza amministrativa nelle tue prossime aste.',
@@ -1540,7 +1540,7 @@ export const translations = {
     },
     developments: {
       title: '技术解决方案',
-      subtitle: '实现商业战略的数字工程。',
+      subtitle: '执行企业战略。',
       auction: {
         title: '拍卖管理解决方案',
         description: '为您的下一次拍卖提供卓越行政管理的编排软件。',
@@ -1772,7 +1772,7 @@ export const translations = {
     },
     developments: {
       title: '技術ソリューション',
-      subtitle: 'ビジネス戦略を実現するデジタルエンジニアリング。',
+      subtitle: 'ビジネス戦略を実行します。',
       auction: {
         title: 'オークション管理ソリューション',
         description: '次のオークションで優れた管理を提供するためにオーケストレーションされたソフトウェア。',
