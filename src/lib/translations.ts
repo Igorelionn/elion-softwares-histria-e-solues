@@ -37,8 +37,8 @@ export const translations = {
       paragraph4: 'Cada projeto é uma obra de engenharia digital, criteriosamente selecionada para assegurar o mais elevado padrão de qualidade e desenvolvida sob medida, refletindo nossa convicção de que tecnologia e propósito devem caminhar em harmonia absoluta.',
     },
     developments: {
-      title: 'Engenharia de Software Especializada',
-      subtitle: 'Soluções tecnológicas orientadas a resultados e excelência operacional.',
+      title: 'Soluções Tecnológicas',
+      subtitle: 'engenharias digitais que concretizam estratégias empresariais.',
       auction: {
         title: 'Solução para administração de leilões',
         description: 'Software orquestrado a fim de proporcionar excelência administrativa em seus próximos leilões.',
@@ -296,8 +296,8 @@ export const translations = {
       paragraph4: 'Each project is a work of digital engineering, carefully selected to ensure the highest standard of quality and custom-developed, reflecting our conviction that technology and purpose must walk in absolute harmony.',
     },
     developments: {
-      title: 'Developments',
-      subtitle: 'digital architectures that materialize business objectives.',
+      title: 'Technological Solutions',
+      subtitle: 'digital engineering that materializes business strategies.',
       auction: {
         title: 'Auction management solution',
         description: 'Orchestrated software to provide administrative excellence in your next auctions.',
@@ -555,8 +555,8 @@ export const translations = {
       paragraph4: 'Cada proyecto es una obra de ingeniería digital, cuidadosamente seleccionada para asegurar el más alto estándar de calidad y desarrollada a medida, reflejando nuestra convicción de que la tecnología y el propósito deben caminar en armonía absoluta.',
     },
     developments: {
-      title: 'Desarrollos',
-      subtitle: 'arquitecturas digitales que materializan objetivos de negocio.',
+      title: 'Soluciones Tecnológicas',
+      subtitle: 'ingenierías digitales que concretan estrategias empresariales.',
       auction: {
         title: 'Solución para administración de subastas',
         description: 'Software orquestado para proporcionar excelencia administrativa en sus próximas subastas.',
@@ -813,8 +813,8 @@ export const translations = {
       paragraph4: 'Chaque projet est une œuvre d\'ingénierie numérique, soigneusement sélectionnée pour garantir le plus haut niveau de qualité et développée sur mesure, reflétant notre conviction que la technologie et le but doivent marcher en harmonie absolue.',
     },
     developments: {
-      title: 'Développements',
-      subtitle: 'architectures numériques qui matérialisent les objectifs commerciaux.',
+      title: 'Solutions Technologiques',
+      subtitle: 'ingénieries numériques qui concrétisent les stratégies d\'entreprise.',
       auction: {
         title: 'Solution pour l\'administration des enchères',
         description: 'Logiciel orchestré pour fournir l\'excellence administrative dans vos prochaines enchères.',
@@ -1075,8 +1075,8 @@ export const translations = {
       paragraph4: 'Jedes Projekt ist ein Werk digitaler Ingenieurskunst, sorgfältig ausgewählt, um höchste Qualität zu gewährleisten und maßgeschneidert entwickelt, was unsere Überzeugung widerspiegelt, dass Technologie und Zweck in absoluter Harmonie gehen müssen.',
     },
     developments: {
-      title: 'Entwicklungen',
-      subtitle: 'digitale Architekturen, die Geschäftsziele materialisieren.',
+      title: 'Technologische Lösungen',
+      subtitle: 'digitale Ingenieurskunst, die Geschäftsstrategien realisiert.',
       auction: {
         title: 'Lösung für die Auktionsverwaltung',
         description: 'Orchestrierte Software zur Bereitstellung administrativer Exzellenz in Ihren nächsten Auktionen.',
@@ -1307,8 +1307,8 @@ export const translations = {
       paragraph4: 'Ogni progetto è un\'opera di ingegneria digitale, accuratamente selezionata per garantire il più alto livello di qualità e sviluppata su misura, riflettendo la nostra convinzione che tecnologia e scopo debbano camminare in armonia assoluta.',
     },
     developments: {
-      title: 'Sviluppi',
-      subtitle: 'architetture digitali che materializzano obiettivi di business.',
+      title: 'Soluzioni Tecnologiche',
+      subtitle: 'ingegnerie digitali che concretizzano strategie aziendali.',
       auction: {
         title: 'Soluzione per l\'amministrazione delle aste',
         description: 'Software orchestrato per fornire eccellenza amministrativa nelle tue prossime aste.',
@@ -1539,8 +1539,8 @@ export const translations = {
       paragraph4: '每个项目都是数字工程的作品，经过精心挑选以确保最高质量水平，并根据量身定制开发，反映了我们的信念：技术和目标必须在绝对和谐中前进。',
     },
     developments: {
-      title: '开发项目',
-      subtitle: '将业务目标具体化的数字架构。',
+      title: '技术解决方案',
+      subtitle: '实现商业战略的数字工程。',
       auction: {
         title: '拍卖管理解决方案',
         description: '为您的下一次拍卖提供卓越行政管理的编排软件。',
@@ -1771,8 +1771,8 @@ export const translations = {
       paragraph4: '各プロジェクトは、最高レベルの品質を保証するために慎重に選択され、カスタマイズされて開発されたデジタルエンジニアリングの作品であり、テクノロジーと目的が絶対的な調和の中で進まなければならないという私たちの信念を反映しています。',
     },
     developments: {
-      title: '開発',
-      subtitle: 'ビジネス目標を具現化するデジタルアーキテクチャ。',
+      title: '技術ソリューション',
+      subtitle: 'ビジネス戦略を実現するデジタルエンジニアリング。',
       auction: {
         title: 'オークション管理ソリューション',
         description: '次のオークションで優れた管理を提供するためにオーケストレーションされたソフトウェア。',
