@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activity_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "blocked_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activity_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit_logs: {
         Row: {
           action: string
@@ -60,6 +105,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      admin_role_cache: {
+        Row: {
+          cached_at: string
+          is_admin: boolean
+          user_id: string
+        }
+        Insert: {
+          cached_at?: string
+          is_admin?: boolean
+          user_id: string
+        }
+        Update: {
+          cached_at?: string
+          is_admin?: boolean
+          user_id?: string
+        }
+        Relationships: []
       }
       admin_users: {
         Row: {
@@ -163,6 +226,54 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_users: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          deletion_reason: string | null
+          email: string
+          full_name: string | null
+          id: string
+          original_role: string | null
+          user_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          deletion_reason?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          original_role?: string | null
+          user_id: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          deletion_reason?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          original_role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deleted_users_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "blocked_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deleted_users_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faq: {
         Row: {
           answer: string
@@ -258,6 +369,87 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      meetings: {
+        Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          budget: string
+          cancelled_at: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          meeting_date: string
+          meeting_time: string | null
+          phone: string
+          project_description: string
+          project_type: string
+          reschedule_count: number | null
+          status: string | null
+          timeline: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          budget: string
+          cancelled_at?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          meeting_date: string
+          meeting_time?: string | null
+          phone: string
+          project_description: string
+          project_type: string
+          reschedule_count?: number | null
+          status?: string | null
+          timeline: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          budget?: string
+          cancelled_at?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          meeting_date?: string
+          meeting_time?: string | null
+          phone?: string
+          project_description?: string
+          project_type?: string
+          reschedule_count?: number | null
+          status?: string | null
+          timeline?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "blocked_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -402,48 +594,173 @@ export type Database = {
           },
         ]
       }
+      user_monthly_cancellations: {
+        Row: {
+          cancellation_count: number | null
+          created_at: string | null
+          id: string
+          month: number
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          cancellation_count?: number | null
+          created_at?: string | null
+          id?: string
+          month: number
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          cancellation_count?: number | null
+          created_at?: string | null
+          id?: string
+          month?: number
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
           bio: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           company: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          is_blocked: boolean | null
+          language: string | null
           phone: string | null
           position: string | null
+          role: string | null
           updated_at: string
+          version: number | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           company?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
+          is_blocked?: boolean | null
+          language?: string | null
           phone?: string | null
           position?: string | null
+          role?: string | null
           updated_at?: string
+          version?: number | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           company?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          is_blocked?: boolean | null
+          language?: string | null
           phone?: string | null
           position?: string | null
+          role?: string | null
           updated_at?: string
+          version?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "blocked_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      blocked_users_view: {
+        Row: {
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          is_blocked: boolean | null
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_blocked?: boolean | null
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_blocked?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "blocked_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occupied_time_slots: {
+        Row: {
+          meeting_date: string | null
+          meeting_time: string | null
+        }
+        Insert: {
+          meeting_date?: string | null
+          meeting_time?: string | null
+        }
+        Update: {
+          meeting_date?: string | null
+          meeting_time?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
@@ -556,26 +873,3 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const

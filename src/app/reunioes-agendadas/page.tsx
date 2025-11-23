@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase-client'
+import { useGlobalAuth } from '@/contexts/GlobalAuthContext'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,7 +36,12 @@ interface Meeting {
 
 export default function ReuniõesAgendadasPage() {
     const router = useRouter()
-    const [user, setUser] = useState<SupabaseUser | null>(null)
+    const { user: globalUser, isAdmin: globalIsAdmin } = useGlobalAuth()
+
+    // Supabase client singleton
+    const supabase = getSupabaseClient()
+
+    const [user, setUser] = useState<SupabaseUser | null>(globalUser)
     const [loading, setLoading] = useState(true)
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([])
@@ -425,7 +431,7 @@ export default function ReuniõesAgendadasPage() {
 
     const getMeetingsForDate = (date: Date) => {
         const confirmed = getConfirmedMeetings()
-        return confirmed.filter(meeting => 
+        return confirmed.filter(meeting =>
             isSameDay(new Date(meeting.meeting_date), date)
         )
     }
@@ -919,6 +925,8 @@ export default function ReuniõesAgendadasPage() {
                                             <button
                                                 onClick={() => setSelectedDate(null)}
                                                 className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                                aria-label="Fechar detalhes da data"
+                                                title="Fechar"
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase-client'
+import { useGlobalAuth } from '@/contexts/GlobalAuthContext'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,8 +15,8 @@ import { cn } from '@/lib/utils'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { useTranslation } from '@/contexts/LanguageContext'
 
-// Flag para forçar logs em produção
-const FORCE_LOGS = true
+// ✅ Logs apenas em desenvolvimento
+const FORCE_LOGS = process.env.NODE_ENV !== 'production'
 
 // 🛡️ CONTROLE GLOBAL: Evitar múltiplas cargas simultâneas
 let lastLoadTimestamp = 0
@@ -127,9 +128,13 @@ export default function PerfilPage() {
     const isLoadingRef = useRef(false)
     const loadingInProgressRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
+    const { user: globalUser, isAdmin: globalIsAdmin, loading: globalAuthLoading } = useGlobalAuth()
 
-    const [user, setUser] = useState<SupabaseUser | null>(null)
-    const [loading, setLoading] = useState(true)
+    // Supabase client singleton
+    const supabase = getSupabaseClient()
+
+    const [user, setUser] = useState<SupabaseUser | null>(globalUser)
+    const [loading, setLoading] = useState(globalAuthLoading)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
 
@@ -317,21 +322,21 @@ export default function PerfilPage() {
 
                 // 🚀 NOVA ESTRATÉGIA: Usar RPC otimizada do banco (com cache)
                 if (FORCE_LOGS) console.error('[PERFIL] ✅ Usando RPC otimizada com cache de admin')
-                
+
                 let profile: any = null
                 let profileError: any = null
-                
+
                 try {
                     // Tentar buscar do banco via RPC (com timeout de 2s)
                     const timeoutPromise = new Promise<never>((_, reject) =>
                         setTimeout(() => reject(new Error('RPC timeout após 2s')), 2000)
                     )
-                    
+
                     // @ts-ignore - TypeScript não reconhece funções RPC personalizadas
                     const rpcPromise = supabase.rpc('get_my_profile').single()
-                    
+
                     const result: any = await Promise.race([rpcPromise, timeoutPromise])
-                    
+
                     if (result && result.data) {
                         profile = result.data
                         if (FORCE_LOGS) console.error('[PERFIL] ✅ Profile carregado via RPC otimizada')
@@ -341,7 +346,7 @@ export default function PerfilPage() {
                 } catch (err: any) {
                     // Fallback: Criar profile a partir do user_metadata
                     if (FORCE_LOGS) console.error('[PERFIL] ⚠️ RPC falhou, usando user_metadata:', err.message)
-                    
+
                     profile = {
                         id: session.user.id,
                         full_name: session.user.user_metadata?.full_name || session.user.email || '',

@@ -1,9 +1,9 @@
 /**
  * Helper functions para autenticação otimizada
- * Resolve o problema de timeout do getSession() do Supabase
+ * ATUALIZADO: Usa o singleton global do Supabase
  */
 
-import { supabase } from './supabase'
+import { getSupabaseClient } from './supabase-client'
 import type { User } from '@supabase/supabase-js'
 
 /**
@@ -22,22 +22,26 @@ export function getUserIdFromStorage(): string | null {
   if (typeof window === 'undefined') return null
 
   try {
-    // Construir a chave correta do localStorage
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-    const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
-    const storageKey = `sb-${projectRef}-auth-token`
-
-    const stored = localStorage.getItem(storageKey)
-    if (!stored) return null
-
-    const parsed = JSON.parse(stored)
-
-    // Tentar diferentes estruturas que o Supabase pode usar
-    return (
-      parsed?.currentSession?.user?.id ||
-      parsed?.user?.id ||
-      parsed?.access_token ? parsed.user?.id : null
+    // Procurar por todas as chaves de auth do Supabase
+    const keys = Object.keys(localStorage).filter(key =>
+      key.includes('supabase') && key.includes('auth-token')
     )
+
+    for (const key of keys) {
+      const stored = localStorage.getItem(key)
+      if (!stored) continue
+
+      const parsed = JSON.parse(stored)
+
+      // Tentar diferentes estruturas que o Supabase pode usar
+      return (
+        parsed?.currentSession?.user?.id ||
+        parsed?.user?.id ||
+        null
+      )
+    }
+
+    return null
   } catch (error) {
     console.error('[AUTH_HELPER] Erro ao ler localStorage:', error)
     return null
@@ -51,20 +55,24 @@ export function getUserFromStorage(): User | null {
   if (typeof window === 'undefined') return null
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-    const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
-    const storageKey = `sb-${projectRef}-auth-token`
-
-    const stored = localStorage.getItem(storageKey)
-    if (!stored) return null
-
-    const parsed = JSON.parse(stored)
-
-    return (
-      parsed?.currentSession?.user ||
-      parsed?.user ||
-      null
+    const keys = Object.keys(localStorage).filter(key =>
+      key.includes('supabase') && key.includes('auth-token')
     )
+
+    for (const key of keys) {
+      const stored = localStorage.getItem(key)
+      if (!stored) continue
+
+      const parsed = JSON.parse(stored)
+
+      return (
+        parsed?.currentSession?.user ||
+        parsed?.user ||
+        null
+      )
+    }
+
+    return null
   } catch (error) {
     console.error('[AUTH_HELPER] Erro ao ler user do localStorage:', error)
     return null
@@ -72,51 +80,46 @@ export function getUserFromStorage(): User | null {
 }
 
 /**
- * Versão otimizada de getSession() que evita timeouts
+ * Versão otimizada que evita timeouts
  *
  * ESTRATÉGIA:
  * 1. Primeiro tenta localStorage (instantâneo)
- * 2. Se não encontrar, tenta getUser() com timeout curto (mais leve que getSession)
- * 3. Nunca usa getSession() diretamente pois trava em conexões stale
+ * 2. Se não encontrar, tenta getSession() que é mais confiável que getUser()
  *
- * @param timeoutMs - Timeout em milissegundos (padrão: 2000ms)
+ * @param timeoutMs - Timeout em milissegundos (padrão: 5000ms)
  * @returns Promise com o usuário ou null
  */
-export async function getSessionOptimized(timeoutMs: number = 2000): Promise<SessionResult> {
+export async function getSessionOptimized(timeoutMs: number = 5000): Promise<SessionResult> {
   try {
     // PASSO 1: Tentar localStorage primeiro (mais rápido)
     const userFromStorage = getUserFromStorage()
     if (userFromStorage) {
-      console.log('[AUTH_HELPER] ✅ Usuário encontrado no localStorage')
       return { user: userFromStorage, error: null }
     }
 
-    // PASSO 2: Se não encontrou, tentar getUser() com timeout
-    console.log('[AUTH_HELPER] 🔍 localStorage vazio, tentando getUser()...')
-
-    const userPromise = supabase.auth.getUser()
+    // PASSO 2: Se não encontrou, tentar getSession() com timeout
+    const supabase = getSupabaseClient()
+    const sessionPromise = supabase.auth.getSession()
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`getUser timeout após ${timeoutMs}ms`)), timeoutMs)
+      setTimeout(() => reject(new Error(`getSession timeout após ${timeoutMs}ms`)), timeoutMs)
     })
 
     try {
-      const { data, error } = await Promise.race([userPromise, timeoutPromise])
+      const { data, error } = await Promise.race([sessionPromise, timeoutPromise])
 
       if (error) {
-        console.error('[AUTH_HELPER] ❌ Erro no getUser:', error)
+        console.error('[AUTH_HELPER] ❌ Erro no getSession:', error)
         return { user: null, error: error as Error }
       }
 
-      if (data?.user) {
-        console.log('[AUTH_HELPER] ✅ Usuário encontrado via getUser()')
-        return { user: data.user, error: null }
+      if (data?.session?.user) {
+        return { user: data.session.user, error: null }
       }
 
-      console.log('[AUTH_HELPER] ℹ️ Nenhum usuário logado')
       return { user: null, error: null }
 
     } catch (timeoutError) {
-      console.error('[AUTH_HELPER] ⏱️ Timeout no getUser:', timeoutError)
+      console.error('[AUTH_HELPER] ⏱️ Timeout no getSession:', timeoutError)
       // Se deu timeout, assumir que não há usuário logado
       return { user: null, error: timeoutError as Error }
     }
@@ -168,4 +171,3 @@ export function useUserIdSync(): string | null {
   if (typeof window === 'undefined') return null
   return getUserIdFromStorage()
 }
-

@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAdmin } from '@/hooks/useAdmin'
-import { supabase } from '@/lib/supabase'
+import { useGlobalAuth } from '@/contexts/GlobalAuthContext'
+import { getSupabaseClient } from '@/lib/supabase-client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,12 +47,13 @@ import {
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { useDebounce } from '@/hooks/useDebounce'
 
 // 🚀 SISTEMA DE CACHE OFFLINE-FIRST
 const ADMIN_CACHE_KEY = 'elion_admin_cache'
 const ADMIN_CACHE_TIMESTAMP_KEY = 'elion_admin_timestamp'
 const CACHE_DURATION = 60000 // 1 minuto para dados de admin (mais curto devido à natureza dos dados)
-const FORCE_LOGS = true
+const FORCE_LOGS = process.env.NODE_ENV !== 'production' // ✅ Logs apenas em desenvolvimento
 
 let cachedAdminData: any = null
 let cachedAdminTimestamp = 0
@@ -156,13 +157,18 @@ interface Meeting {
 
 export default function AdminPage() {
   const router = useRouter()
-  const { isAdmin, loading: adminLoading, error: adminError } = useAdmin()
+  const { isAdmin, loading: adminLoading, error: adminError } = useGlobalAuth()
+
+  // Supabase client singleton
+  const supabase = getSupabaseClient()
 
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  // ✅ OTIMIZADO: Debounce na busca para evitar queries a cada tecla digitada
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -190,6 +196,7 @@ export default function AdminPage() {
       if (FORCE_LOGS) console.log('[ADMIN] 📊 Carregando estatísticas...')
 
       // OTIMIZADO: RPC com timeout de 5s
+      // @ts-ignore - RPC function not in generated types
       const rpcPromise = supabase.rpc('get_admin_stats')
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('loadStats timeout após 5s')), 5000)
@@ -227,6 +234,7 @@ export default function AdminPage() {
       }
 
       // OTIMIZADO: Query profile com timeout de 3s
+      // @ts-ignore - Coluna 'role' existe mas pode não estar nos tipos gerados
       const profilePromise = supabase
         .from('users')
         .select('role')
@@ -246,6 +254,7 @@ export default function AdminPage() {
       }
 
       // OTIMIZADO: RPC get_all_users com timeout de 5s
+      // @ts-ignore - RPC function not in generated types
       const usersRpcPromise = supabase.rpc('get_all_users')
       const usersRpcTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('get_all_users timeout após 5s')), 5000)
@@ -295,6 +304,7 @@ export default function AdminPage() {
       if (FORCE_LOGS) console.log('[ADMIN] 📅 Carregando reuniões...')
 
       // OTIMIZADO: RPC get_all_meetings com timeout de 5s
+      // @ts-ignore - RPC function not in generated types
       const meetingsRpcPromise = supabase.rpc('get_all_meetings')
       const meetingsRpcTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('get_all_meetings timeout após 5s')), 5000)
@@ -988,12 +998,13 @@ export default function AdminPage() {
     }
   }
 
+  // ✅ OTIMIZADO: Usa debounced search para evitar re-renders frequentes
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      user.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     )
-  }, [users, searchTerm])
+  }, [users, debouncedSearchTerm])
 
   // Funções do Calendário
   const getMeetingsForDay = (date: Date) => {

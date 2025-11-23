@@ -12,41 +12,24 @@ interface AdminStats {
   completedMeetings: number
 }
 
+// ✅ OTIMIZADO: Usa RPC única ao invés de 6 queries separadas
 async function fetchAdminStats(): Promise<AdminStats> {
-  // Buscar estatísticas de usuários
-  const { count: totalUsers } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true })
+  // Usar função RPC get_admin_stats (1 query ao invés de 6)
+  const { data, error } = await supabase.rpc('get_admin_stats')
 
-  const { count: blockedUsers } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_blocked', true)
+  if (error) {
+    console.error('[useAdminStats] Erro ao buscar stats via RPC:', error)
+    throw error
+  }
 
-  const activeUsers = (totalUsers || 0) - (blockedUsers || 0)
-
-  // Buscar estatísticas de reuniões
-  const { count: totalMeetings } = await supabase
-    .from('meetings')
-    .select('*', { count: 'exact', head: true })
-
-  const { count: pendingMeetings } = await supabase
-    .from('meetings')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending')
-
-  const { count: completedMeetings } = await supabase
-    .from('meetings')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'completed')
-
+  // Converter formato do RPC para interface esperada
   return {
-    totalUsers: totalUsers || 0,
-    blockedUsers: blockedUsers || 0,
-    activeUsers,
-    totalMeetings: totalMeetings || 0,
-    pendingMeetings: pendingMeetings || 0,
-    completedMeetings: completedMeetings || 0,
+    totalUsers: data?.total_users || 0,
+    blockedUsers: data?.blocked_users || 0,
+    activeUsers: (data?.total_users || 0) - (data?.blocked_users || 0),
+    totalMeetings: data?.total_meetings || 0,
+    pendingMeetings: data?.pending_meetings || 0,
+    completedMeetings: data?.completed_meetings || 0,
   }
 }
 
