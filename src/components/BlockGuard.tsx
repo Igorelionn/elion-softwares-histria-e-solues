@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useGlobalAuth } from '@/hooks/useGlobalAuth'
 
 /**
  * Componente que verifica se o usuário está bloqueado
@@ -11,6 +12,7 @@ import { supabase } from '@/lib/supabase'
 export function BlockGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  const { user, session } = useGlobalAuth()
   const [isChecking, setIsChecking] = useState(true)
   const [isBlocked, setIsBlocked] = useState(false)
 
@@ -93,10 +95,9 @@ export function BlockGuard({ children }: { children: React.ReactNode }) {
 
     const initCheck = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (session?.user && mounted) {
-          await checkBlockStatus(session.user.id)
+        // Usar user e session do contexto global (sem chamadas ao Supabase)
+        if (user && mounted) {
+          await checkBlockStatus(user.id)
         }
       } catch (err) {
         console.error('Erro na verificação inicial:', err)
@@ -133,9 +134,9 @@ export function BlockGuard({ children }: { children: React.ReactNode }) {
 
     // Verificar periodicamente (a cada 30 segundos)
     const interval = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user && mounted) {
-        await checkBlockStatus(session.user.id)
+      // Usar user do contexto global (sem chamadas ao Supabase)
+      if (user && mounted) {
+        await checkBlockStatus(user.id)
       }
     }, 30000) // 30 segundos
 

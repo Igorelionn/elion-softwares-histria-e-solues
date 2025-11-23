@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAdmin } from '@/hooks/useAdmin'
+import { useGlobalAuth } from '@/hooks/useGlobalAuth'
 import { supabase } from '@/lib/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -158,6 +159,7 @@ interface Meeting {
 export default function AdminPage() {
   const router = useRouter()
   const { isAdmin, loading: adminLoading, error: adminError } = useAdmin()
+  const { user: currentUser } = useGlobalAuth()
 
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -217,34 +219,14 @@ export default function AdminPage() {
     try {
       if (FORCE_LOGS) console.log('[ADMIN] 👥 Carregando usuários...')
 
-      // OTIMIZADO: getUser com timeout de 3s
-      const userPromise = supabase.auth.getUser()
-      const userTimeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('getUser timeout após 3s')), 3000)
-      )
-
-      const { data: { user } } = await Promise.race([userPromise, userTimeoutPromise])
-
-      if (!user) {
+      // Usar currentUser do contexto global (sem chamadas ao Supabase)
+      if (!currentUser) {
         if (FORCE_LOGS) console.log('[ADMIN] ⚠️ Usuário não autenticado')
         return null
       }
 
-      // OTIMIZADO: Query profile com timeout de 3s
-      // @ts-ignore - Coluna 'role' existe mas pode não estar nos tipos gerados
-      const profilePromise = supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single() as Promise<{ data: { role: string } | null; error: any }>
-
-      const profileTimeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Profile query timeout após 3s')), 3000)
-      )
-
-      const { data: profile } = await Promise.race([profilePromise, profileTimeoutPromise])
-
-      if (profile?.role !== 'admin') {
+      // Verificar se é admin usando o contexto global (sem queries adicionais)
+      if (!isAdmin) {
         console.warn('[ADMIN] ⚠️ Usuário não é admin, redirecionando...')
         router.push('/')
         return null
@@ -294,7 +276,7 @@ export default function AdminPage() {
       console.error('[ADMIN] ❌ Erro ao carregar usuários:', error)
     }
     return null
-  }, [router])
+  }, [router, currentUser, isAdmin])
 
   const loadMeetings = useCallback(async () => {
     try {
@@ -600,16 +582,7 @@ export default function AdminPage() {
     }, 30000)
 
     try {
-      // 1. Verificar autenticação do admin atual
-      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
-
-      if (authError) {
-        console.error('❌ Erro de autenticação:', authError)
-        toast.error('Erro de autenticação')
-        setIsBlocking(false)
-        return
-      }
-
+      // 1. Verificar autenticação e permissões (usando contexto global)
       if (!currentUser) {
         console.error('❌ Usuário não autenticado')
         toast.error('Você precisa estar autenticado')
@@ -617,15 +590,8 @@ export default function AdminPage() {
         return
       }
 
-      // 2. Verificar se o admin tem permissões
-      const { data: adminProfile, error: adminCheckError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', currentUser.id)
-        .single() as { data: { role: string } | null; error: any }
-
-      if (adminCheckError || !adminProfile || adminProfile.role !== 'admin') {
-        console.error('❌ Sem permissões de admin:', adminCheckError)
+      if (!isAdmin) {
+        console.error('❌ Sem permissões de admin')
         toast.error('Você não tem permissões de administrador')
         setIsBlocking(false)
         return
@@ -765,25 +731,16 @@ export default function AdminPage() {
     }, 30000)
 
     try {
-      // 1. Verificar autenticação do admin
-      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
-
-      if (authError || !currentUser) {
-        console.error('❌ Erro de autenticação:', authError)
+      // 1. Verificar autenticação e permissões (usando contexto global)
+      if (!currentUser) {
+        console.error('❌ Usuário não autenticado')
         toast.error('Você precisa estar autenticado')
         setIsUnblocking(null)
         return
       }
 
-      // 2. Verificar permissões de admin
-      const { data: adminProfile, error: adminCheckError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', currentUser.id)
-        .single() as { data: { role: string } | null; error: any }
-
-      if (adminCheckError || !adminProfile || adminProfile.role !== 'admin') {
-        console.error('❌ Sem permissões de admin:', adminCheckError)
+      if (!isAdmin) {
+        console.error('❌ Sem permissões de admin')
         toast.error('Você não tem permissões de administrador')
         setIsUnblocking(null)
         return
