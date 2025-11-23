@@ -11,6 +11,7 @@ import { FlipWords } from '@/components/ui/flip-words'
 import { AuthDialog } from '@/components/ui/auth-dialog'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { authSession } from '@/lib/auth-session'
 import { useTranslation } from '@/contexts/LanguageContext'
 import { toast } from 'sonner'
 import { useAuthCheck } from '@/hooks/useAuthCheck'
@@ -195,41 +196,15 @@ const HeroHeader = () => {
         }
     }, [])
 
-    // Monitor user session
+    // Monitor user session using singleton
     React.useEffect(() => {
-        // Check initial session
-        const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            setUser(session?.user || null)
-            setIsCheckingAuth(false)
-            
-            if (session?.user) {
-                await loadUserProfile(session.user)
-            }
-        }
-        
-        checkSession()
+        setIsCheckingAuth(false) // Singleton já está inicializado
 
         // Subscribe to auth session changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            const user = session?.user || null
+        const unsubscribe = authSession.subscribe(async (user) => {
             setUser(user)
 
             // Load avatar and check admin status if user exists
-            if (user) {
-                await loadUserProfile(user)
-            } else {
-                saveAvatarUrl('')
-                setIsAdmin(false)
-            }
-        })
-
-        return () => subscription.unsubscribe()
-    }, [saveAvatarUrl])
-
-    // Function to load user profile
-    const loadUserProfile = React.useCallback(async (user: SupabaseUser) => {
-        try {
             if (user) {
                 // Verificar se tem login Google para priorizar avatar do Google
                 const identities = user.identities || []
@@ -282,19 +257,21 @@ const HeroHeader = () => {
                     saveAvatarUrl(fallbackUrl)
                     setIsAdmin(false)
                 }
+            } else {
+                saveAvatarUrl('')
+                setIsAdmin(false)
             }
-        } catch (error) {
-            console.error('Error loading user profile:', error)
-            saveAvatarUrl('')
-            setIsAdmin(false)
+        })
+
+        return () => {
+            unsubscribe()
         }
-    }, [saveAvatarUrl])
+    }, [])
 
     // Reload avatar when user returns to tab
     React.useEffect(() => {
         const reloadAvatar = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            const user = session?.user
+            const user = authSession.getUser()
 
             if (user) {
                 // Sempre garantir que o user está setado primeiro

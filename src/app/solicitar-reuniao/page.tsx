@@ -11,8 +11,7 @@ import { GlassCalendarInput } from "@/components/ui/glass-calendar-input";
 import { CountrySelector, formatPhoneByCountry, countries, type Country } from "@/components/ui/country-selector";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { getSupabaseClient } from "@/lib/supabase-client";
-import { useGlobalAuth } from "@/contexts/GlobalAuthContext";
+import { supabase } from "@/lib/supabase";
 import { AuthDialog } from "@/components/ui/auth-dialog";
 
 interface Question {
@@ -108,11 +107,6 @@ const questions: Question[] = [
 
 export default function SolicitarReuniaoPage() {
   const router = useRouter();
-  const { user: globalUser } = useGlobalAuth();
-
-  // Supabase client singleton
-  const supabase = getSupabaseClient();
-
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<{ [key: number]: string | string[] }>({});
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);

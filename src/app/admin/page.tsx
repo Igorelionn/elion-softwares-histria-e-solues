@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useGlobalAuth } from '@/contexts/GlobalAuthContext'
-import { getSupabaseClient } from '@/lib/supabase-client'
+import { useAdmin } from '@/hooks/useAdmin'
+import { supabase } from '@/lib/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -157,10 +157,7 @@ interface Meeting {
 
 export default function AdminPage() {
   const router = useRouter()
-  const { isAdmin, loading: adminLoading, error: adminError } = useGlobalAuth()
-
-  // Supabase client singleton
-  const supabase = getSupabaseClient()
+  const { isAdmin, loading: adminLoading, error: adminError } = useAdmin()
 
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<User[]>([])

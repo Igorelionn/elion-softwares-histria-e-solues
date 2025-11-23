@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { getSupabaseClient } from '@/lib/supabase-client'
-import { useGlobalAuth } from '@/contexts/GlobalAuthContext'
+import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -128,13 +127,9 @@ export default function PerfilPage() {
     const isLoadingRef = useRef(false)
     const loadingInProgressRef = useRef(false)
     const { t, language, setLanguage } = useTranslation()
-    const { user: globalUser, isAdmin: globalIsAdmin, loading: globalAuthLoading } = useGlobalAuth()
 
-    // Supabase client singleton
-    const supabase = getSupabaseClient()
-
-    const [user, setUser] = useState<SupabaseUser | null>(globalUser)
-    const [loading, setLoading] = useState(globalAuthLoading)
+    const [user, setUser] = useState<SupabaseUser | null>(null)
+    const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
 

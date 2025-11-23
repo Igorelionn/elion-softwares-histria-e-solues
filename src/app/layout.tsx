@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { GlobalAuthProvider } from "@/contexts/GlobalAuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
@@ -70,17 +69,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="relative">
       <head>
-        {/* Apple touch icon - Warning do Edge Tools é falso positivo, já está no <head> */}
-        {/* eslint-disable-next-line @next/next/no-head-element */}
-        <link rel="apple-touch-icon" href="/favicon.png" />
-
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
-        {/* Theme color - warning esperado: não suportado por Firefox/Opera mas funcional em Chrome/Safari/Edge */}
-<meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Elion Softwares" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
 
         {/* Preconnect para recursos externos críticos */}
         <link rel="preconnect" href="https://images.unsplash.com" />
@@ -91,15 +86,13 @@ export default function RootLayout({
       <body className="antialiased relative">
         <StructuredData />
         <SecurityURLCleaner />
-        <GlobalAuthProvider>
-          <QueryProvider>
-            <LanguageProvider>
-              <BlockGuard>
-                {children}
-              </BlockGuard>
-            </LanguageProvider>
-          </QueryProvider>
-        </GlobalAuthProvider>
+        <QueryProvider>
+        <LanguageProvider>
+          <BlockGuard>
+            {children}
+          </BlockGuard>
+        </LanguageProvider>
+        </QueryProvider>
         <Toaster />
       </body>
     </html>
